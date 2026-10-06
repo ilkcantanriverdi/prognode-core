@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MQTTnet.Server" Version="5.2.0.1603" />
+    <ProjectReference Include="..\..\src\Prognode.Protocols.Mqtt\Prognode.Protocols.Mqtt.csproj" />
+    <ProjectReference Include="..\..\src\Prognode.Protocols.OpcUa\Prognode.Protocols.OpcUa.csproj" />
+    <ProjectReference Include="..\..\src\Prognode.Protocols.Modbus\Prognode.Protocols.Modbus.csproj" />
+    <ProjectReference Include="..\..\src\Prognode.Protocols.S7\Prognode.Protocols.S7.csproj" />
+    <ProjectReference Include="..\..\src\Prognode.Core\Prognode.Core.csproj" />
+  </ItemGroup>
+</Project>

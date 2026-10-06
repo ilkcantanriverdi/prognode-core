@@ -1,0 +1,126 @@
+/* HF6.1: REAL Core Trend Studio, matching the approved spacious concept.
+   All signal and event information comes from existing Core Historian APIs. */
+html,body{min-height:0!important}
+.app.core-embedded.hf61-studio{height:100dvh;min-height:0!important;overflow:hidden}
+.hf61-studio>.main{min-height:0;overflow:hidden}
+.hf61-titleline{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:21px 25px 13px;background:var(--bg)}
+.hf61-titleline h1{margin:5px 0;font-size:25px;font-weight:760;letter-spacing:-.65px;line-height:1.2}
+.hf61-titleline p{margin:6px 0 0;font-size:12px;line-height:1.5;color:var(--muted)}
+.hf61-eyebrow{font-size:10px;font-weight:800;letter-spacing:1.8px;color:var(--cyan)}
+.hf61-data-chip{border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--muted);font-size:10px;font-weight:750;white-space:nowrap;letter-spacing:.4px}
+.app.core-embedded.hf61-studio .toolbar.hf61-tools{min-height:58px;padding:6px 25px 14px;border:0;gap:9px}
+.hf61-tools .linked-label{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:11px;white-space:nowrap}
+.hf61-tools .linked-label input{accent-color:var(--cyan)}
+.hf61-tools .hf61-more{position:relative;z-index:35}
+.hf61-more>summary{border:1px solid var(--border);background:var(--panel2);border-radius:8px;padding:10px 12px;font-size:11px;font-weight:720;cursor:pointer;list-style:none;white-space:nowrap}
+.hf61-more>summary::-webkit-details-marker{display:none}
+.hf61-more-content{position:absolute;right:0;top:calc(100% + 8px);width:min(475px,85vw);padding:15px;background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:0 15px 38px rgba(0,0,0,.26);display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.hf61-more-content .toolbar-title{width:100%;font-size:12px}
+.hf61-more-content .timebar{display:flex;overflow:auto;max-width:100%}
+.app.core-embedded .view.hf61-view{display:grid;grid-template-columns:242px minmax(0,1fr);gap:16px;align-items:stretch;padding:0 25px 20px;overflow:hidden;min-height:0}
+.hf61-explorer{min-width:0;min-height:0;overflow-y:auto;align-self:stretch;border:1px solid var(--border);border-radius:15px;background:var(--panel);padding:19px 14px;display:flex;flex-direction:column;gap:14px;scrollbar-width:thin}
+.hf61-explorer-head h2{font-size:15px;line-height:1.3;margin:2px 0 8px;font-weight:760}
+.hf61-explorer-head p{font-size:11px;color:var(--muted);line-height:1.5;margin:0}
+.hf61-search{width:100%;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);padding:11px 12px;min-height:38px;font-size:12px;outline:none}
+.hf61-search:focus{border-color:var(--cyan)}
+.hf61-explorer-list{display:flex;flex-direction:column;gap:7px}
+.hf61-signal{border:1px solid var(--border);border-radius:11px;background:var(--panel2);min-height:54px;width:100%;padding:10px 9px;display:flex;align-items:center;gap:8px;text-align:left;color:var(--text)}
+.hf61-signal:hover,.hf61-signal.is-selected{border-color:color-mix(in srgb,var(--cyan) 48%,var(--border));background:color-mix(in srgb,var(--cyan) 6%,var(--panel2))}
+.hf61-series-dot{width:8px;height:8px;flex:none;background:var(--hf61-series);border-radius:50%}
+.hf61-signal-copy{display:flex;flex:1;flex-direction:column;gap:5px;min-width:0}
+.hf61-signal-copy strong{font-size:11px;font-weight:720;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hf61-signal-copy small{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hf61-signal-state{color:var(--cyan);font-size:15px;font-weight:740}
+.hf61-muted{font-size:12px;line-height:1.55;color:var(--muted)}
+.hf61-open-drawer{border:1px solid var(--border);border-radius:9px;color:var(--text);background:var(--panel2);min-height:36px;padding:10px;font-size:11px;font-weight:750;cursor:pointer}
+.hf61-quality{margin-top:auto;border:1px solid var(--border);border-radius:10px;padding:13px 12px;background:color-mix(in srgb,var(--cyan) 4%,var(--panel2))}
+.hf61-quality strong{font-size:11px}
+.hf61-quality p{font-size:10px;line-height:1.6;color:var(--muted);margin:9px 0}
+.hf61-quality span{display:inline-block;border-radius:7px;border:1px solid #26614b;background:#123b31;color:#83daba;font-size:9px;font-weight:800;padding:7px}
+.hf61-view .board{overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;min-height:0;border-radius:0}
+.app.core-embedded.hf61-studio .board-top{height:auto;min-height:36px;padding:7px 1px 12px;background:transparent;border:0;flex-shrink:0}
+.app.core-embedded.hf61-studio .grid{flex:none!important;display:grid;grid-template-columns:minmax(0,1fr);grid-auto-rows:auto;align-content:start;gap:13px;padding:0;overflow:visible;min-height:0}
+.app.core-embedded.hf61-studio .grid[data-layout="columns"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+.app.core-embedded.hf61-studio .grid>.chart{height:350px!important;min-height:350px;border-radius:15px;box-shadow:none;display:flex;flex-direction:column}
+.app.core-embedded.hf61-studio .grid>.chart.wide{grid-column:1/-1}
+.app.core-embedded.hf61-studio .grid.maximized{display:block;grid-template-columns:1fr}
+.app.core-embedded.hf61-studio .grid.maximized>.chart.is-max{height:min(72vh,730px)!important;min-height:480px}
+.app.core-embedded.hf61-studio .chart-head{min-height:68px;flex-wrap:wrap;align-content:center;gap:7px 8px;padding:11px 16px}
+.app.core-embedded.hf61-studio .chart-title{font-size:12px;min-width:130px}
+.app.core-embedded.hf61-studio .chart-head .value{font-size:14px}
+.app.core-embedded.hf61-studio .plot-frame{margin:3px 12px 0}
+.app.core-embedded.hf61-studio .chart-foot{height:auto;min-height:38px;gap:8px;padding:7px 14px;flex-wrap:wrap}
+.hf61-range-pills{display:flex;gap:4px;align-items:center}
+.hf61-range{border:1px solid var(--border);border-radius:7px;padding:7px 8px;background:var(--panel2);font-size:10px;min-width:31px;cursor:pointer}
+.hf61-range.selected{color:var(--cyan);background:var(--cyanfaint);border-color:var(--cyan)}
+.hf61-events{margin:14px 0 2px;border:1px solid var(--border);border-radius:15px;padding:18px 20px 13px;background:var(--panel)}
+.hf61-events-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.hf61-events-head h2{font-size:14px;margin:0;font-weight:740}
+.hf61-events-head span{font-size:9px;letter-spacing:.8px;font-weight:760;border:1px solid var(--border);padding:7px 9px;border-radius:7px;color:var(--muted)}
+.hf61-table-wrap{overflow-x:auto}
+.hf61-events table{border-collapse:collapse;width:100%;font-size:11px}
+.hf61-events th{text-align:left;color:var(--muted);font-weight:750;letter-spacing:.5px;font-size:9px;padding:10px 8px;border-bottom:1px solid var(--border)}
+.hf61-events td{padding:12px 8px;border-bottom:1px solid var(--border);line-height:1.5}
+.hf61-events tbody tr:last-child td{border:0}
+.hf61-events-empty{text-align:center;color:var(--muted);padding:28px 8px!important}
+.hf61-event-status{display:inline-block;border-radius:6px;padding:5px 7px;background:var(--panel2);color:var(--cyan);font-size:10px;font-weight:760}
+html[data-theme="light"] .hf61-quality span{background:#def5ed;color:#126f54}
+@media(max-width:1120px){.app.core-embedded .view.hf61-view{grid-template-columns:204px minmax(0,1fr);gap:11px;padding:0 15px 15px}.hf61-titleline{padding:17px 15px 12px}.app.core-embedded.hf61-studio .toolbar.hf61-tools{padding:6px 15px 12px}.app.core-embedded.hf61-studio .grid>.chart{min-height:320px;height:320px!important}.hf61-range-pills{max-width:100%;overflow:auto}.app.core-embedded.hf61-studio .grid[data-layout="columns"] .chart-head{min-height:95px}}
+@media(max-width:760px){.hf61-titleline{padding:15px 14px 8px}.hf61-titleline h1{font-size:22px}.hf61-titleline p{font-size:11px}.hf61-data-chip{display:none}.app.core-embedded.hf61-studio .toolbar.hf61-tools{padding:8px 14px 10px;gap:7px}.app.core-embedded .view.hf61-view{display:block;padding:0 13px 13px;overflow-y:auto}.hf61-explorer{max-height:260px;overflow:auto;margin-bottom:12px;padding:14px}.hf61-explorer-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.hf61-quality{display:none}.hf61-view .board{overflow:visible}.app.core-embedded.hf61-studio .grid,.app.core-embedded.hf61-studio .grid[data-layout="columns"]{grid-template-columns:1fr!important}.app.core-embedded.hf61-studio .grid>.chart{height:330px!important;min-height:330px}.app.core-embedded.hf61-studio .chart-head{min-height:81px}.hf61-events{margin-bottom:20px;padding:15px}}
+@media(max-width:430px){.hf61-explorer-list{grid-template-columns:1fr}.hf61-titleline p{max-width:265px}.hf61-more-content{right:-8px;width:calc(100vw - 30px)}}
+
+/* HF6.2: advanced tools occupy their own flow row; no nested popover or clipping. */
+.hf62-layout-control{display:flex;gap:8px;align-items:center;font-size:11px;color:var(--muted);white-space:nowrap}
+.hf62-layout-control select{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:9px 25px 9px 9px;font-size:11px;min-height:36px;cursor:pointer}
+.hf62-advanced[hidden]{display:none!important}
+.hf62-advanced{flex:none;min-width:0;padding:0 25px 14px;background:var(--bg);border-bottom:1px solid var(--border);max-height:min(240px,35dvh);overflow:auto;scrollbar-width:thin}
+.hf62-advanced .hf61-more-content{position:static!important;z-index:auto;width:100%;max-width:none;box-shadow:none;padding:12px;display:flex;gap:9px;align-items:center;flex-wrap:wrap;border-radius:12px}
+.hf62-advanced .hf61-more-content .toolbar-title{width:auto;max-width:100%;flex:0 0 100%;overflow:hidden;text-overflow:ellipsis}
+.hf62-advanced .timebar{display:flex!important;flex-wrap:wrap;gap:5px;border:0;padding:0;max-width:none;overflow:visible}
+.hf62-advanced .timebar .btn{display:inline-flex!important}
+.hf62-advanced .btn{min-height:32px}
+.hf62-more-toggle[aria-expanded="true"]{color:var(--cyan);border-color:var(--cyan);background:var(--cyanfaint)}
+.app.core-embedded.hf61-studio .toolbar.hf61-tools{overflow:visible;flex-wrap:wrap;height:auto;min-height:58px;padding-top:8px;padding-bottom:9px}
+/* Slot targets: choose a grid, then place a Historian signal into any free cell. */
+.app.core-embedded.hf61-studio .grid{grid-template-columns:repeat(var(--hf62-cols,1),minmax(0,1fr));grid-auto-flow:row;min-width:0}
+.app.core-embedded.hf61-studio .grid[data-layout="columns"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+.app.core-embedded.hf61-studio .grid[data-layout="three"]{grid-template-columns:repeat(3,minmax(0,1fr))}
+.app.core-embedded.hf61-studio .grid[data-layout="rows"]{grid-template-columns:minmax(0,1fr)}
+.hf62-slot{min-height:170px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;border:1px dashed var(--border);background:color-mix(in srgb,var(--panel) 70%,transparent);border-radius:15px;padding:22px;color:var(--muted);text-align:center;font-size:12px;cursor:pointer}
+.app.core-embedded.hf61-studio .grid[data-n="0"]>.hf62-slot,.app.core-embedded.hf61-studio .grid[data-n="1"]>.hf62-slot{min-height:104px;max-height:118px;padding:14px;gap:4px}
+.app.core-embedded.hf61-studio .grid[data-n="0"]>.hf62-slot .hf62-slot-icon,.app.core-embedded.hf61-studio .grid[data-n="1"]>.hf62-slot .hf62-slot-icon{font-size:18px}
+.hf62-slot:hover,.hf62-slot.drop-on{border-color:var(--cyan);background:var(--cyanfaint);color:var(--text);outline:2px solid color-mix(in srgb,var(--cyan) 30%,transparent)}
+.hf62-slot-icon{font-size:25px;font-weight:300;line-height:1;color:var(--cyan)}
+.hf61-explorer .hf61-signal[draggable="true"]{cursor:grab}
+.hf61-explorer .hf61-signal[draggable="true"]:active{cursor:grabbing}
+.hf61-explorer .hf61-signal.dragging{opacity:.53}
+.app.core-embedded.hf61-studio .grid>.chart.wide{grid-column:span min(2,var(--hf62-cols,1))}
+@media(max-width:1199px){.app.core-embedded.hf61-studio .grid[data-layout="three"]{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.app.core-embedded.hf61-studio .grid,.app.core-embedded.hf61-studio .grid[data-layout="three"],.app.core-embedded.hf61-studio .grid[data-layout="columns"]{grid-template-columns:1fr!important}.hf62-slot{min-height:110px}.hf62-advanced{padding:0 13px 10px;max-height:min(235px,35dvh)}.hf62-advanced .hf61-more-content{padding:10px}.app.core-embedded.hf61-studio .toolbar.hf61-tools{gap:8px}}
+
+/* Full screen hides the explorer; remove its reserved 242px grid column too. */
+html.charts-only .app.core-embedded .view.hf61-view{display:flex;grid-template-columns:none;gap:0;padding:0;width:100%;min-width:0}
+html.charts-only .app.core-embedded .view.hf61-view>.board{width:100%;min-width:0;flex:1}
+html.charts-only .app.core-embedded.hf61-studio .grid{height:100%;grid-template-rows:minmax(0,1fr)!important;grid-auto-rows:minmax(0,1fr)!important;align-content:stretch!important;overflow:hidden!important}
+html.charts-only .app.core-embedded.hf61-studio .grid>.chart{height:100%!important;min-height:0!important}
+html.charts-only .app.core-embedded.hf61-studio .grid>.hf62-slot{display:none!important}
+
+/* Compact chart toolbar: one range selector, clear actions, accessible settings. */
+.app.core-embedded.hf61-studio .chart-head{min-height:82px;padding:10px 13px;gap:7px 9px}
+.app.core-embedded.hf61-studio .chart-title{flex:1 1 120px;min-width:0;font-size:13px}
+.app.core-embedded.hf61-studio .chart-ctrl{flex:1 0 100%;width:100%;margin-left:0;justify-content:flex-end;flex-wrap:wrap;gap:7px}
+.app.core-embedded.hf61-studio .hf61-range-pills{display:none}
+.app.core-embedded.hf61-studio .chart-range{min-width:88px;min-height:31px;padding:5px 9px;font-size:11px;border-radius:7px}
+.app.core-embedded.hf61-studio .chart-hold{min-height:31px;min-width:68px;padding:5px 9px;font-size:10px;border-radius:7px}
+.app.core-embedded.hf61-studio .chart-ctrl .small-action{width:auto;min-width:52px;height:31px;padding:5px 8px;font-size:10px;font-weight:700;border-radius:7px}
+.app.core-embedded.hf61-studio .settings{width:min(300px,calc(100vw - 24px));max-height:min(440px,calc(100dvh - 24px));padding:15px;gap:8px;background:var(--bar);border-color:var(--cyan);border-radius:12px;box-shadow:0 20px 50px #0009;z-index:100}
+.app.core-embedded.hf61-studio .settings-head{padding-bottom:10px;border-bottom:1px solid var(--border)}
+.app.core-embedded.hf61-studio .settings-head strong{white-space:normal;line-height:1.35;font-size:12px}
+.app.core-embedded.hf61-studio .settings-head button{width:auto;min-width:62px;height:30px;padding:5px 9px;color:var(--text);font-size:11px;font-weight:700;text-align:center}
+.app.core-embedded.hf61-studio .setting{min-height:32px;font-size:11px}
+.app.core-embedded.hf61-studio .setting select{min-width:130px;min-height:30px;margin-left:auto;color:var(--text);background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:4px 8px}
+
+/* HF6.3: prominent but non-blocking view-only status. */
+.hf63-access-hint{margin:0 0 12px;padding:10px 14px;border:1px solid #855f30;border-radius:10px;background:#352a1f;color:#f0cca0;font-size:12px;line-height:1.5}
+.hf63-access-hint[hidden]{display:none!important}
+.hf63-readonly-control{cursor:not-allowed!important;opacity:.56}

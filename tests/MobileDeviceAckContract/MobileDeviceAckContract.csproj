@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Prognode.Core/Prognode.Core.csproj" />
+    <ProjectReference Include="../../src/Prognode.Alarm/Prognode.Alarm.csproj" />
+    <ProjectReference Include="../../src/Prognode.Web/Prognode.Web.csproj" />
+    <ProjectReference Include="../../src/Prognode.Data/Prognode.Data.csproj" />
+    <ProjectReference Include="../../src/Prognode.Notifications/Prognode.Notifications.csproj" />
+    <ProjectReference Include="../../src/Prognode.RemoteAccess/Prognode.RemoteAccess.csproj" />
+  </ItemGroup>
+</Project>

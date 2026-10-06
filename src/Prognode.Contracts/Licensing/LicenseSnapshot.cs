@@ -1,0 +1,25 @@
+namespace Prognode.Contracts.Licensing;
+
+public sealed record LicenseSnapshot(
+    string LicenseId,
+    string Customer,
+    string Plan,
+    string Status,
+    bool IsValid,
+    DateTimeOffset? ExpiresAt,
+    DateTimeOffset? GraceUntil,
+    LicenseEntitlements Entitlements,
+    string Source,
+    string? SiteName = null,
+    string? AssignedUserId = null,
+    string? AssignedUserName = null,
+    string? AssignedUserEmail = null,
+    string? Organization = null,
+    string? PortalRole = null,
+    string? IndustrialRole = null,
+    string? BillingPeriod = null,
+    DateTimeOffset? ValidFrom = null,
+    int GracePeriodDays = 7,
+    bool LegacyUnlimitedTagCapacity = false,
+    string PricingVersion = "LEGACY_V1_7",
+    string LicenseType = "CUSTOMER");

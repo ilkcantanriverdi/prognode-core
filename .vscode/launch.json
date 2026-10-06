@@ -1,0 +1,119 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "_PROGNODE Server runtime",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Prognode.Host/bin/Debug/net10.0/Prognode.Host.dll",
+      "cwd": "${workspaceFolder}/src/Prognode.Host",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://0.0.0.0:5080"
+      },
+      "console": "internalConsole",
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+https?://(?:0\\.0\\.0\\.0|127\\.0\\.0\\.1|localhost):(\\d+)",
+        "uriFormat": "http://127.0.0.1:%s"
+      },
+      "stopAtEntry": false,
+      "presentation": {
+        "hidden": true,
+        "group": "PROGNODE"
+      }
+    },
+    {
+      "name": "_PROGNODE Windows Agent runtime",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Prognode.Agent.Windows/bin/Debug/net10.0-windows10.0.19041.0/PROGNODE.Agent.exe",
+      "cwd": "${workspaceFolder}/src/Prognode.Agent.Windows",
+      "env": {
+        "PROGNODE_CORE_URL": "http://127.0.0.1:5080"
+      },
+      "console": "internalConsole",
+      "stopAtEntry": false,
+      "presentation": {
+        "hidden": true,
+        "group": "PROGNODE"
+      }
+    },
+    {
+      "name": "PROGNODE Server only",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build PROGNODE Host",
+      "program": "${workspaceFolder}/src/Prognode.Host/bin/Debug/net10.0/Prognode.Host.dll",
+      "cwd": "${workspaceFolder}/src/Prognode.Host",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://0.0.0.0:5080"
+      },
+      "console": "internalConsole",
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+https?://(?:0\\.0\\.0\\.0|127\\.0\\.0\\.1|localhost):(\\d+)",
+        "uriFormat": "http://127.0.0.1:%s"
+      },
+      "presentation": {
+        "order": 2,
+        "group": "PROGNODE"
+      }
+    },
+    {
+      "name": "PROGNODE Server \u2014 License Test",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build PROGNODE Host",
+      "program": "${workspaceFolder}/src/Prognode.Host/bin/Debug/net10.0/Prognode.Host.dll",
+      "cwd": "${workspaceFolder}/src/Prognode.Host",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://0.0.0.0:5080"
+      },
+      "console": "internalConsole",
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+https?://(?:0\\.0\\.0\\.0|127\\.0\\.0\\.1|localhost):(\\d+)",
+        "uriFormat": "http://127.0.0.1:%s"
+      },
+      "presentation": {
+        "order": 3,
+        "group": "PROGNODE"
+      }
+    },
+    {
+      "name": "PROGNODE Windows Agent only",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build PROGNODE Agent",
+      "program": "${workspaceFolder}/src/Prognode.Agent.Windows/bin/Debug/net10.0-windows10.0.19041.0/PROGNODE.Agent.exe",
+      "cwd": "${workspaceFolder}/src/Prognode.Agent.Windows",
+      "env": {
+        "PROGNODE_CORE_URL": "http://127.0.0.1:5080"
+      },
+      "console": "internalConsole",
+      "stopAtEntry": false,
+      "presentation": {
+        "order": 4,
+        "group": "PROGNODE"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "PROGNODE SERVER + AGENT",
+      "configurations": [
+        "_PROGNODE Server runtime",
+        "_PROGNODE Windows Agent runtime"
+      ],
+      "preLaunchTask": "build PROGNODE",
+      "stopAll": true,
+      "presentation": {
+        "order": 1,
+        "group": "PROGNODE"
+      }
+    }
+  ]
+}

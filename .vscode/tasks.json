@@ -1,0 +1,39 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build PROGNODE",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/PROGNODE.sln"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "build PROGNODE Host",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/src/Prognode.Host/Prognode.Host.csproj"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build PROGNODE Agent",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/src/Prognode.Agent.Windows/Prognode.Agent.Windows.csproj"
+      ],
+      "problemMatcher": "$msCompile"
+    }
+  ]
+}

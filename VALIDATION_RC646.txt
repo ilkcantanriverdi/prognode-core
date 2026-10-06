@@ -1,0 +1,24 @@
+RC6.4.6 source package validation — 2026-09-26
+
+TESTED IN THIS PACKAGING ENVIRONMENT
+- v8→v9 SQLite schema DDL (extracted directly from production DatabaseInitializer): PASS
+- Existing v8 alarm_events record retained across the simulated additive migration: PASS
+- Alarm event + notification event + eligible outbox one-transaction crash rollback: PASS
+- Same three rows commit atomically and survive database reopen: PASS
+- All Host .js files pass Node syntax check: PASS
+- All source .csproj XML parse: PASS
+- JSON configuration syntax parse: PASS
+- Generated ZIP archive integrity: PASS (289 source/docs/test files; SHA256 provided with download).
+- Real customer .pgnlicense/private signing key/database not included in source distribution: path/filename scan.
+
+NOT PERFORMED / IMPORTANT LIMITS
+- `dotnet build` + package restore (.NET SDK unavailable here): NOT RUN. Windows .NET 10 build required.
+- Flutter/Dart analysis, plugin resolution, Android APK/iOS build (SDK unavailable): NOT RUN.
+- Production Linux/Windows service test, Windows Agent, Modbus, physical Samsung Android 16 / One UI 8.5 test: NOT RUN.
+- Real API production, cloud relay, FCM/APNs service keys, background push, remote cellular ACK: NOT DEPLOYED/NOT VERIFIED.
+- Client/UI authenticated endpoint smoke test: included PowerShell script for the Windows dev machine; not run here.
+
+SECURITY:
+- LAN plain HTTP loopback-only. LAN TLS/private firewall manually opt in via administrator helper.
+- FCM/APNs push provider, production TLS certs and full remote Web relay remain prerequisites and have a separate handoff.
+- Commercial yearly 5/10/25 tier cutover. Existing signed legacy monthly documents remain verifiable.

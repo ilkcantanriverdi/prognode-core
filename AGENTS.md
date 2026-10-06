@@ -1,0 +1,12 @@
+# ProgNode Core çalışma sınırları
+
+- Kaynak temeli PROGNODE_HF6_7.zip. `mobile/Prognode.Mobile` eski referanstır; güncel mobil repo `C:\prognode\prognode-mobile`.
+- Saha PLC, alarm, historian ve SQLite Core'a aittir. Bulut web/account/control bu repoya taşınmamalı.
+- SDK `global.json` ile seçilir. Windows üzerinde `pwsh -File scripts/Validate-Baseline.ps1` çözümü derler ve altı console contract projesini ayrı çalıştırır. `dotnet test` tek başına bu console testlerini çalıştırmaz.
+- İlave bağımlılıksız kontroller: `node tests/test-trend-logic.cjs`, `python tests/test_hf65_manual_pairing_static.py`.
+- NuGet `packages.lock.json` dosyalarını koru. Baseline kontrolü locked restore kullanır; bilinçli bağımlılık güncellemesinde `-UpdateLockFile` ver ve diff'i incele.
+- Gerçek servis/PLC/veri dizini yerine izole test verisi kullan. Servis kurulumu, firewall/TLS kurulumu ve backup restore normal unit test adımı değildir.
+- QR/TLS pinning, occurrence bazlı ACK, Ed25519 imza doğrulama ve ticari lisans davranışını koru.
+- HF6.7 trial kaynak geliştirmesidir; 14 gün/1 cihaz/10 tag kodda mevcut, ürün politikası ve runtime enforcement tamamlanmış varsayılmamalı.
+- Build/console testleri geçse bile fiziksel cihaz, installer, saha performansı ve production onayı ayrı raporlanır.
+- MQTT ve OPC UA field-test v1 sınırları `docs/PROTOCOL_CONNECTORS_V1.md` içindedir. MQTT yalnız topic abonesidir; OPC UA yalnız güvenilir SignAndEncrypt NodeId okumasıdır. Gerçek broker/OPC sunucusu kabulü ayrı yapılmalıdır.

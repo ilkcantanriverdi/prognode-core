@@ -1,0 +1,49 @@
+<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>PROGNODE Trend Studio</title><link rel="icon" type="image/png" href="/assets/prognode-favicon.png"/>
+<link rel="stylesheet" href="/trend-hf3plus.css?v=20261002-customer-ui"/><link rel="stylesheet" href="/customer-trend-v2.css?v=rc647-hf6-acceptance-v1"/><link rel="stylesheet" href="/trend-hf61.css?v=20261004-fullscreen-fit"/></head><body>
+<button id="fullscreen-alarm-indicator" class="fullscreen-alarm-indicator" type="button" hidden aria-live="polite" aria-label="Aktif alarmlar">🔔 <span id="fullscreen-alarm-count">0</span></button>
+<div id="app" class="app core-embedded hf61-studio"><main class="main"><div aria-hidden="true" style="display:none"><button id="collapse"></button><button id="theme"></button><button id="help"></button><button data-lang="tr"></button><button data-lang="en"></button></div>
+<div class="hf61-titleline"><div><span class="hf61-eyebrow" data-hf61-tr="PROSES ANALİZİ" data-hf61-en="PROCESS ANALYSIS">PROSES ANALİZİ</span><h1>Trend Studio</h1><p data-hf61-tr="Bağımsız grafikler, gerçek zaman damgaları ve okunabilir proses bağlamı." data-hf61-en="Independent charts, real timestamps and readable process context.">Bağımsız grafikler, gerçek zaman damgaları ve okunabilir proses bağlamı.</p></div><span class="hf61-data-chip" id="hf61-source">CORE · HISTORIAN</span></div>
+<div id="hf63-access-hint" class="hf63-access-hint" role="status" hidden>Salt görüntüleme: trend ayarlarını değiştirmek için giriş yapın.</div>
+<div class="toolbar hf61-tools">
+ <button class="btn primary" data-i18n="add" id="add">+ Historian'dan ekle</button>
+ <button class="btn live" id="live">● LIVE</button>
+ <label class="linked-label" title="Farklı grafiklerde aynı zamanın gerçek kaydını göster"><input id="sync-cursor" type="checkbox"/><span data-i18n="linked">Ortak imleç</span></label>
+ <button class="btn" data-i18n="compare" id="compare">⇄ Karşılaştır</button>
+ <button class="btn" id="charts-only-toggle" type="button" data-hf61-tr="⛶ Yalnız grafikler" data-hf61-en="⛶ Charts only">⛶ Yalnız grafikler</button>
+ <button class="btn danger" id="clear-all-charts" type="button" data-hf61-tr="× Tüm trendleri kaldır" data-hf61-en="× Remove all trends">× Tüm trendleri kaldır</button>
+ <label class="hf62-layout-control"><span data-hf61-tr="Yerleşim" data-hf61-en="Layout">Yerleşim</span>
+ <select id="hf62-layout-select" aria-label="Trend Studio layout">
+  <option value="auto" selected data-hf61-tr="Otomatik" data-hf61-en="Auto">Otomatik</option>
+  <option value="rows" data-hf61-tr="Alt alta" data-hf61-en="Stacked">Alt alta</option>
+  <option value="columns" data-hf61-tr="2 sütun" data-hf61-en="2 columns">2 sütun</option>
+  <option value="three" data-hf61-tr="3 sütun" data-hf61-en="3 columns">3 sütun</option>
+  <option value="four" data-hf61-tr="4 sütun" data-hf61-en="4 columns">4 sütun</option>
+  <option value="five" data-hf61-tr="5 sütun" data-hf61-en="5 columns">5 sütun</option>
+ </select></label>
+ <div class="grow"></div>
+ <button class="btn hf62-more-toggle" id="hf62-more-toggle" type="button" aria-controls="hf62-advanced" aria-expanded="false" data-hf61-tr="Diğer araçlar ↓" data-hf61-en="More tools ↓">Diğer araçlar ↓</button>
+</div>
+<div class="hf62-advanced" id="hf62-advanced" hidden><div class="hf61-more-content"><span class="toolbar-title" id="active-chart"></span>
+ <div aria-label="Seçili grafik zaman aralığı" class="timebar" role="group">
+ <button class="btn" data-window="5">5m</button><button class="btn active" data-window="15">15m</button><button class="btn" data-window="60">1h</button><button class="btn" data-window="480">8h</button><button class="btn" data-window="1440">24h</button><button class="btn" data-window="10080">7d</button><button class="btn" data-window="43200">30d</button><button class="btn" data-window="525600">1y</button></div>
+ <button class="btn" id="export-csv" type="button">↓ CSV</button><button class="btn" id="save-layout" data-i18n="saveLayout">▣ Düzeni kaydet</button><button class="btn" id="reset-layout" data-i18n="restoreDefault">↺ Varsayılan</button><button class="btn" id="resetAll">⊞ Reset Zoom</button><span id="saved-hint"></span>
+ </div></div>
+<div class="view hf61-view">
+<aside class="hf61-explorer" aria-label="Signal explorer"><div class="hf61-explorer-head"><h2 data-hf61-tr="Sinyal gezgini" data-hf61-en="Signal explorer">Signal explorer</h2><p data-hf61-tr="Historian sinyalleri arasından seçim yapın" data-hf61-en="Search or choose Historian signals">Search or choose Historian signals</p></div><input class="hf61-search" id="hf61-explorer-search" type="search" autocomplete="off" data-hf61-placeholder-tr="Sinyal veya cihaz ara..." data-hf61-placeholder-en="Search signals or devices..." placeholder="Search signals or devices..."/><div id="hf61-explorer-list" class="hf61-explorer-list" aria-live="polite"><p class="hf61-muted">Loading Historian signals...</p></div><button class="hf61-open-drawer" id="hf61-explorer-add" type="button" data-hf61-en="+ Add from Historian">+ Add from Historian</button><div class="hf61-quality"><strong data-hf61-tr="Veri kalitesi" data-hf61-en="Data quality">Data quality</strong><p data-hf61-tr="BAD ve STALE kayıtlar grafikte boşluk olarak görünür; eksik ölçümler tahmin edilmez." data-hf61-en="BAD and STALE records appear as gaps; missing readings are never invented.">BAD and STALE records appear as gaps; missing readings are never invented.</p><span data-hf61-tr="GERÇEK KAYITLAR" data-hf61-en="REAL RECORDS">REAL RECORDS</span></div></aside>
+<div class="board">
+<div class="board-top"><span class="boardstatus"><b id="board-count">0</b> <span data-hf61-tr="açık grafik" data-hf61-en="open charts">açık grafik</span> <span style="margin:0 8px;color:var(--border)">│</span><b id="available-signal-count">0</b> <span data-hf61-tr="kayıtlı sinyal" data-hf61-en="recorded signals">kayıtlı sinyal</span></span><input id="trend-open-filter" class="trend-open-filter" type="search" autocomplete="off" data-hf61-placeholder-tr="Açık trendlerde filtrele..." data-hf61-placeholder-en="Filter open trends..." placeholder="Açık trendlerde filtrele..."/><span id="sync-info" title="Senkronize gerçek kayıtlar"></span><div class="grow"></div><span class="range-ctrl"><span data-i18n="colWidth">Sol sütun</span><input aria-label="Sol sütun genişliği" id="col-width" max="70" min="30" step="1" type="range" value="50"/><span id="col-width-value">50%</span></span><div class="hidden comparebar" id="compare-actions"><span id="compare-count">0 <span data-i18n="selected">seçili</span></span><button class="btn active" data-i18n="showCompare" disabled="" id="compare-open">Karşılaştırmayı aç</button></div><span class="pill" data-i18n="multiLayout" id="layout-tag">Otomatik yerleşim</span></div>
+<div aria-label="Trend grafik panelleri" class="grid" data-n="0" data-layout="rows" id="grid"></div>
+<section class="hf61-events" aria-label="Recorded process events"><div class="hf61-events-head"><h2 data-hf61-tr="Proses olayları" data-hf61-en="Process events">Proses olayları</h2><span data-hf61-tr="KAYDEDİLEN VERİLER" data-hf61-en="RECORDED DATA">KAYDEDİLEN VERİLER</span></div><div class="hf61-table-wrap"><table><thead><tr><th data-hf61-tr="ZAMAN" data-hf61-en="TIME">ZAMAN</th><th data-hf61-tr="OLAY" data-hf61-en="EVENT">OLAY</th><th data-hf61-tr="SİNYAL / PARTİ" data-hf61-en="SIGNAL / BATCH">SİNYAL / PARTİ</th><th data-hf61-tr="DURUM" data-hf61-en="STATE">DURUM</th></tr></thead><tbody id="hf61-events-body"><tr><td colspan="4" class="hf61-events-empty">Henüz kaydedilmiş olay yok.</td></tr></tbody></table></div></section>
+</div>
+<div aria-hidden="true" class="drawer hidden" id="drawer">
+<div class="drawer-head"><strong data-i18n="selectSignals">Historian sinyalleri</strong><div class="grow"></div><button aria-label="Kapat" class="small-action" id="drawer-close">✕</button></div>
+<div class="drawer-body"><input class="search" data-ph="search" id="search" placeholder="Tag veya cihaz ara..."/><div class="drawer-guide" data-i18n="dragGuide">Tekli veya çoklu seç, ekle ya da sinyalleri doğrudan grafik alanına sürükle. Burada yalnız Historian'a eklenmiş Tag'ler bulunur.</div><div id="signal-list" style="display:grid;gap:7px"></div></div>
+<div class="drawer-actions"><button class="btn" data-i18n="selectAll" id="select-all">Tümünü seç</button><button class="btn primary" data-i18n="addSelected" id="add-selected">Seçilenleri ekle</button></div>
+</div>
+<div class="overlay hidden" id="compare-overlay"><div class="overlay-card"><div class="overlay-header"><strong data-i18n="overlayTitle">Sinyal karşılaştırma</strong><span class="pill" data-i18n="normalized">Normalize yüzde · farklı birimler yan yana</span><div class="grow"></div><button class="small-action" id="overlay-close">✕</button></div><div class="legend" id="compare-legend"></div><svg aria-label="Karşılaştırma grafiği" id="compare-svg"></svg></div></div>
+<div class="toast hidden" id="toast"></div>
+<div class="help-panel hidden" id="help-panel"></div>
+</div>
+</main></div>
+<script src="/trend-hf3plus.js?v=20261004-no-empty-slots"></script></body></html>

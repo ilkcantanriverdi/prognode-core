@@ -1,0 +1,13 @@
+PROGNODE RC6.4.7 HF3 — BACKUP CENTER
+Source integration: HF2 QR + HF3+ Trend Studio + Backup Center
+Static checks run in authoring environment:
+- JS syntax: app.js / trend-hf3plus.js / qr-local.js PASS
+- Backup C# source: delimiter/lexical checks PASS (NOT compilation)
+- Original QR service, QR renderer, Historian repository, ServerAccessService: byte-for-byte preserved
+- Solution includes Prognode.Backup, Restore CLI and BackupContract projects
+- Package ZIP CRC integrity confirmed by packaging QA
+
+NOT YET VALIDATED: .NET 10 Windows build, SQLite C# contract tests, live backup while Historian writes,
+Windows service restoration, actual mobile HTTPS QR pairing, large archival data, end-user acceptance.
+Do not deploy to a production plant before testing on an isolated cloned dataset.
+See BACKUP_CENTER_README_TR.md and TEST_PROGNODE_BACKUP_HF3.ps1.

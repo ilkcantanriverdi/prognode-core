@@ -1,0 +1,85 @@
+/* HF6.1 – real PROGNODE Core brand treatment. Keep the official PNG; no fake glow. */
+.customer-v2 .sidebar{background:#0c1724!important;background-image:none!important;box-shadow:none!important;filter:none!important}
+.customer-v2 .sidebar::before,.customer-v2 .sidebar::after{content:none!important;display:none!important}
+.customer-v2 .brand,.customer-v2 .brand:hover{
+  height:94px!important;min-height:94px!important;flex:0 0 94px!important;
+  background:transparent!important;background-image:none!important;
+  border-bottom:1px solid #22394a!important;border-radius:0!important;
+  box-shadow:none!important;filter:none!important;backdrop-filter:none!important;
+  margin:0!important;padding:15px 8px!important;gap:12px!important;transition:background-color .15s ease;
+}
+.customer-v2 .brand-logo-wrap{width:47px!important;height:47px!important;flex:0 0 47px!important;
+  border:none!important;border-radius:0!important;background:transparent!important;
+  background-image:none!important;box-shadow:none!important;filter:none!important;padding:0!important}
+.customer-v2 .brand-logo{width:45px!important;height:45px!important;max-height:45px!important;display:block;object-fit:contain}
+.customer-v2 .brand-copy{display:flex;flex-direction:column;justify-content:center;gap:6px!important;min-width:0}
+.customer-v2 .brand-copy strong{font-size:16px!important;letter-spacing:.07em!important;font-weight:790;line-height:1.15!important}
+.customer-v2 .brand-copy>span{font-size:10px!important;letter-spacing:.025em!important;color:#8fa9b9!important}
+.customer-v2 .brand .external-arrow,.customer-v2 .brand-copy small{display:none!important}
+.customer-v2 .brand-website:focus-visible{outline:2px solid #31cbda!important;outline-offset:-3px}
+.customer-v2 .brand-website:hover .brand-copy strong{color:#d8f7fc!important}
+html[data-theme="light"] .customer-v2 .sidebar{background:#f9fbfd!important}
+html[data-theme="light"] .customer-v2 .brand,html[data-theme="light"] .customer-v2 .brand:hover{background:transparent!important;border-bottom-color:#d7e5ed!important}
+html[data-theme="light"] .customer-v2 .brand-copy strong{color:#17364a!important}
+html[data-theme="light"] .customer-v2 .brand-copy>span{color:#5d798a!important}
+@media(max-width:850px){.customer-v2 .brand,.customer-v2 .brand:hover{min-height:84px!important;height:84px!important;flex-basis:84px!important}}
+
+/* HF6.2: side-brand separator aligned exactly with 74px customer toolbar.
+   Extend the hairline through sidebar's 12px horizontal padding. */
+@media(min-width:851px){
+ .customer-v2 .brand,.customer-v2 .brand:hover{height:74px!important;min-height:74px!important;flex-basis:74px!important;position:relative;border-bottom:0!important;padding-top:9px!important;padding-bottom:9px!important;}
+ .customer-v2 .brand::after{content:""!important;position:absolute;display:block!important;left:-12px;right:-12px;bottom:0;height:1px;background:#1b3040;}
+ .customer-v2 .sidebar-collapsed .brand,.customer-v2 .sidebar-collapsed .brand:hover{height:74px!important;min-height:74px!important;flex-basis:74px!important;}
+}
+@media(max-width:850px){.customer-v2 .brand,.customer-v2 .brand:hover{height:63px!important;min-height:63px!important;flex-basis:63px!important;padding-top:5px!important;padding-bottom:5px!important;}}
+html[data-theme="light"] .customer-v2 .brand::after{background:#dce6ed!important;}
+
+/* Customer delivery: operational diagnostics instead of a roadmap placeholder. */
+.diagnostics-page{display:grid;gap:20px;padding:24px;min-width:0}
+.diagnostics-page .page-actions{margin:0;align-items:center}
+.diagnostics-page .page-actions p{max-width:650px;color:var(--muted);margin:7px 0 0}
+.diagnostics-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.diagnostics-card,.diagnostics-device-panel{background:var(--panel);border:1px solid var(--line);border-radius:13px}
+.diagnostics-card{display:grid;gap:8px;padding:18px;min-width:0}
+.diagnostics-card>span{color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em}
+.diagnostics-card>strong{font-size:22px;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.diagnostics-card>small{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.diagnostics-card .status-good{color:var(--green)}
+.diagnostics-card .status-bad{color:var(--danger)}
+.diagnostics-device-panel{padding:18px;min-width:0}
+.diagnostics-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.diagnostics-panel-head h3{margin:0;font-size:16px}
+.diagnostics-panel-head span{font-size:11px;color:var(--muted)}
+.diagnostics-device-panel .table-wrap{overflow-x:auto}
+.diagnostics-device-panel table{width:100%;min-width:690px;border-collapse:collapse}
+.diagnostics-device-panel th,.diagnostics-device-panel td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--line);font-size:12px}
+.diagnostics-device-panel th{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+.diagnostics-device-panel tbody tr:last-child td{border-bottom:0}
+.historian-trend-button{border:1px solid #3e7182;background:rgba(62,215,232,.1);color:var(--cyan);border-radius:7px;padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer}
+.historian-trend-button:hover{filter:brightness(1.12)}
+@media(max-width:1100px){.diagnostics-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.diagnostics-page{padding:16px}.diagnostics-cards{grid-template-columns:1fr}.diagnostics-page .page-actions{display:flex;flex-wrap:wrap}}
+.diagnostics-read-error{max-width:360px;white-space:normal;overflow-wrap:anywhere;color:var(--danger,#e7a7a7);font-size:11px;line-height:1.4}
+
+/* Delivery polish: preserve established page composition and improve shared controls. */
+body.customer-v2 .page:not(#page-overview):not(#page-trends) .panel{border-color:var(--line);box-shadow:0 8px 26px rgba(0,0,0,.08)}
+body.customer-v2 .page:not(#page-overview):not(#page-trends) .page-actions{gap:18px}
+body.customer-v2 .page:not(#page-overview):not(#page-trends) .page-actions h2{line-height:1.15}
+body.customer-v2 .page:not(#page-overview):not(#page-trends) .page-actions p{max-width:760px}
+body.customer-v2 .page-data-tools .data-tool-card{min-height:112px;border-radius:12px;transition:border-color .16s ease,background-color .16s ease,transform .16s ease}
+body.customer-v2 .page-data-tools .data-tool-card:hover{transform:translateY(-2px);border-color:var(--cyan)}
+body.customer-v2 .page:not(#page-overview):not(#page-trends) .table-wrap table tbody tr:hover{background:color-mix(in srgb,var(--cyan) 5%,transparent)}
+body.customer-v2 .page:not(#page-overview):not(#page-trends) .table-wrap table tbody tr:focus-within{background:color-mix(in srgb,var(--cyan) 8%,transparent)}
+body.customer-v2 .field input:focus-visible,body.customer-v2 .field select:focus-visible,body.customer-v2 .table-toolbar input:focus-visible,body.customer-v2 .table-toolbar select:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-color:var(--cyan)}
+body.customer-v2 .modal{border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.38)}
+body.customer-v2 .modal-actions button,body.customer-v2 .actions-cell button{min-height:34px}
+@media(prefers-reduced-motion:reduce){body.customer-v2 .page-data-tools .data-tool-card{transition:none}body.customer-v2 .page-data-tools .data-tool-card:hover{transform:none}}
+.data-reset-box{margin-top:24px;padding:20px;border:1px solid color-mix(in srgb,var(--danger) 45%,var(--line));border-radius:14px;background:color-mix(in srgb,var(--danger) 4%,var(--panel))}
+.data-reset-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.data-reset-heading-actions{display:flex;gap:8px;flex-wrap:wrap}.data-reset-heading h3{margin:5px 0 7px;font-size:17px}.data-reset-heading p,.data-reset-cascade{max-width:760px;color:var(--muted);font-size:12px;line-height:1.6;margin:0 0 14px}
+.data-reset-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}
+.data-reset-options label,.data-reset-final{display:flex;align-items:center;gap:9px;min-height:40px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel2);font-size:12px;cursor:pointer}
+.data-reset-options input,.data-reset-final input{accent-color:var(--danger);width:16px;height:16px;flex:none}
+.danger-button{border:1px solid color-mix(in srgb,var(--danger) 70%,var(--line));border-radius:8px;padding:9px 14px;color:#fff;background:color-mix(in srgb,var(--danger) 75%,#531b28);font-weight:750;cursor:pointer}
+.danger-button:disabled{opacity:.45;cursor:not-allowed}.data-reset-review{margin-top:14px;padding:15px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}.data-reset-review[hidden]{display:none!important}.data-reset-review>strong{display:block;margin-bottom:8px}.data-reset-review>p{color:var(--muted);font-size:12px;line-height:1.5;overflow-wrap:anywhere}.data-reset-review .field{max-width:500px;margin:8px 0}.data-reset-review .secondary{margin-left:7px}.data-reset-status{min-height:18px;font-size:12px;color:var(--good)}.data-reset-status.error{color:var(--danger)}
+@media(max-width:650px){.data-reset-options{grid-template-columns:1fr}.data-reset-heading{flex-wrap:wrap}}
+.bulk-selection-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;margin:8px 0;border:1px solid var(--line);border-radius:10px;background:var(--panel2);font-size:12px;color:var(--muted)}.bulk-selection-toolbar label{display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--text)}.bulk-selection-toolbar input{accent-color:var(--cyan);width:16px;height:16px}.bulk-selection-count{font-variant-numeric:tabular-nums}.bulk-selection-toolbar button{margin-left:auto}

@@ -1,0 +1,31 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const vm=require('node:vm');
+const source=fs.readFileSync(path.join(__dirname,'../src/Prognode.Host/wwwroot/app.js'),'utf8');
+const host=fs.readFileSync(path.join(__dirname,'../src/Prognode.Host/Program.cs'),'utf8');
+const begin=source.indexOf('function applyAccessMode()'),end=source.indexOf('function syncTrendRangePills(',begin);
+assert(begin>=0&&end>begin);
+let signedIn=false;
+const controls=new Map();
+const element=key=>{if(!controls.has(key))controls.set(key,{disabled:false,title:'',classList:{toggle(){}}});return controls.get(key)};
+const document={querySelectorAll:selector=>{
+  if(selector.startsWith('#'))return [element(selector)];
+  if(selector.includes('data-edit-tag'))return [element('edit-tag')];
+  if(selector.includes('data-delete-tag'))return [element('delete-tag')];
+  return [];
+}};
+const context={document,hasConfigurationAccess:()=>signedIn,canMutateConfiguration:()=>signedIn,
+ isLicenseOverCapacity:()=>false,updateCommissioningAssistant:()=>{},updateOverviewCommandStrip:()=>{}};
+vm.createContext(context);vm.runInContext(source.slice(begin,end),context);
+context.applyAccessMode();
+for(const key of ['#tagsAddTag','#emptyAddTag','#saveTag','edit-tag','delete-tag'])assert(element(key).disabled,`${key} must be locked while signed out`);
+signedIn=true;context.applyAccessMode();
+for(const key of ['#tagsAddTag','#emptyAddTag','#saveTag','edit-tag','delete-tag'])assert(!element(key).disabled,`${key} must unlock after sign-in`);
+assert(source.includes('saveButton.disabled = !!message || !canMutateConfiguration()'),'Tag validation may not unlock Save while signed out');
+assert(source.includes('saveButton.disabled = !good || !canMutateConfiguration()'),'MQTT/OPC validation may not unlock Save while signed out');
+assert(source.includes('saveButton.disabled=!good||!canMutateConfiguration()'),'S7 validation may not unlock Save while signed out');
+assert(source.includes('if (!requireConfigurationAccess()) return;\n        const tag ='),'Tag delete handler must enforce login');
+assert(source.includes('applyAccessMode();\n}\n\nfunction populateTagDeviceSelect'),'Tag table rerender must reapply login gate');
+assert(host.includes('if (!sessions.Validate(sessionToken) && !occurrenceAckRoute)'),'server must reject unauthenticated mutations');
+console.log('PASS: signed-out Tag creation, editing, deletion and Save stay locked in UI and API');

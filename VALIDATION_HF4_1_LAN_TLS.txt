@@ -1,0 +1,11 @@
+PROGNODE HF4.1 P0 PATCH — STATIC VALIDATION ONLY
+Source baseline: PROGNODE_RC6_4_7_HF4_LAN_WIZARD_FULL.zip
+P0 source: PROGNODE_HF4_LAN_WIZARD_P0_INCELEME.md (27.09.2026)
+HF4.1 changes: actual Core process SID; CNG/CSP private-key Read ACE through
+local UAC helper; SHA256 pin retained; in-Core private key challenge sign,
+pinned TLS HTTP 200 identity + serverId; QR/phone test gated on verified TLS;
+phone probe restricted to selected NIC and approved source; Schannel smoke.
+NOT DONE in this environment: Windows/.NET10 compile, PowerShell runtime/UAC,
+real service restart, private-key permission regression, live firewall,
+Samsung Chrome/Flutter QR pairing, mobile ACK, GPO and VLAN acceptance.
+NOT production signed: source PS1 must receive Authenticode + protected install ACL.

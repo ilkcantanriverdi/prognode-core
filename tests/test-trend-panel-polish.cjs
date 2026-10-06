@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.join(__dirname,'../src/Prognode.Host/wwwroot');
+const js=fs.readFileSync(path.join(root,'trend-hf3plus.js'),'utf8');
+const html=fs.readFileSync(path.join(root,'trend-hf3plus.html'),'utf8');
+const css=fs.readFileSync(path.join(root,'trend-hf61.css'),'utf8');
+assert(html.startsWith('<!doctype html><html lang="en"'));
+assert(js.includes("setLang('en')"));
+assert(js.includes("if(S.lang!=='en')setLang('en')"));
+assert(css.includes('.app.core-embedded.hf61-studio .hf61-range-pills{display:none}'));
+assert(js.includes("el.querySelector('[data-action=\"maximize\"]').textContent=S.maximized===c.id?'Restore':'Expand'"));
+assert(js.includes("el.querySelector('[data-action=\"settings\"]').textContent='Settings'"));
+assert(js.includes("close.textContent='Close'"));
+assert(js.includes("panel.style.position='fixed'"));
+assert(css.includes('.app.core-embedded.hf61-studio .settings-head button{width:auto'));
+console.log('PASS: English-only Trend panel, one range control, visible actions and unclipped Close');

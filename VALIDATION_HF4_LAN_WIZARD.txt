@@ -1,0 +1,11 @@
+[PASS] UI contains no duplicate HTML element IDs.
+[PASS] Browser app.js passes Node JavaScript syntax check.
+[PASS] Wizard routes, local admin checks, Agent-only localhost claim and HTTPS-only phone GET route are wired.
+[PASS] Elevated helper uses one named, adapter/IP/remote/profile-scoped TCP 5443 rule; legacy HTTPS installer opens no blanket rule.
+[PASS] Explicit Windows Agent tray + UAC wiring and helper content copying are present.
+[PASS] Original HF3+ Trend Studio, offline QR renderer and backup archive engine match the HF3 release byte-for-byte.
+[PASS] HF4 launcher, Turkish installation guide and Windows security smoke test are included.
+[NOT RUN] Windows .NET 10 compile, Firewall/UAC and physical Samsung/QR/ACK acceptance require a Windows host.
+
+NOT VERIFIED: Windows .NET 10 compilation, PowerShell parser, firewall/UAC, real Samsung LAN HTTPS and PIN/QR/v2 ACK.
+Before production: Authenticode-sign the helper and install under administrator-protected ACLs.

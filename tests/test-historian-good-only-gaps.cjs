@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const vm=require('node:vm');
+const root=path.join(__dirname,'../src/Prognode.Host/wwwroot');
+const source=fs.readFileSync(path.join(root,'trend-hf3plus.js'),'utf8');
+const sampler=fs.readFileSync(path.join(__dirname,'../src/Prognode.Host/Services/HistorianSamplingHostedService.cs'),'utf8');
+assert.match(sampler,/snapshot is not \{ Quality: TagQuality\.Good, Value: not null \}/);
+assert(!sampler.includes('new HistorianSample('),'bad/stale placeholders must not be persisted');
+const seg=source.slice(source.indexOf('function seriesSegments('),source.indexOf('function decimateSegment('));
+const win=source.slice(source.indexOf('function qualityWindows('),source.indexOf('const pendingDraws='));
+const ctx={};vm.createContext(ctx);vm.runInContext(seg+win,ctx);
+const good=t=>({t,v:t,quality:'GOOD'});
+const points=[good(0),good(10000),good(30000),good(40000)];
+assert.deepEqual(Array.from(ctx.seriesSegments(points,10000),x=>x.length),[2,2]);
+assert.equal(ctx.qualityWindows(points,10000).filter(x=>x.type==='NO DATA').length,1);
+assert.equal(ctx.seriesSegments(points,10000,true).length,1,'summarized plots must not infer false gaps');
+console.log('PASS: only Good Tag snapshots recorded; missing intervals break raw trend lines');

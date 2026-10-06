@@ -1,0 +1,37 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const vm=require('node:vm');
+const root=path.join(__dirname,'../src/Prognode.Host/wwwroot');
+const source=fs.readFileSync(path.join(root,'trend-hf3plus.js'),'utf8');
+const html=fs.readFileSync(path.join(root,'trend-hf3plus.html'),'utf8');
+const backup=fs.readFileSync(path.join(__dirname,'../src/Prognode.Host/Services/ProjectBackupService.cs'),'utf8');
+assert(source.includes('const MAX_CHARTS=15'));
+assert(source.includes('.slice(0,MAX_CHARTS)'),'saved layout restores up to 15 charts');
+assert(source.includes('const space=MAX_CHARTS-S.charts.length'),'new charts respect the 15-chart limit');
+assert(backup.includes('charts.GetArrayLength()>15'),'Core persists all 15 chart panels');
+assert(source.includes("limit:'En fazla 15 grafik açılabilir'")&&source.includes("limit:'Up to 15 charts can be opened'"));
+for(const layout of ['auto','rows','columns','three','four','five'])assert(html.includes(`value="${layout}"`),`missing ${layout} layout`);
+assert(html.includes('id="trend-open-filter"'),'missing open trend filter');
+
+const begin=source.indexOf('function effectiveColumns()');
+const end=source.indexOf('function resizeLayout()',begin);
+assert(begin>=0&&end>begin);
+const signalDefs=Array.from({length:15},(_,i)=>({id:`t${i+1}`,device:i<8?'Line A':'Line B',tag:`Signal ${i+1}`,unit:i%2?'bar':'°C'}));
+const S={charts:signalDefs.map((d,i)=>({id:d.id,slot:i})),layout:'auto',chartFilter:'',lang:'en'};
+let width=1600;
+const context={S,signalDefs,MAX_CHARTS:15,byId:()=>({getBoundingClientRect:()=>({width}),parentElement:{clientWidth:width}})};
+vm.createContext(context);vm.runInContext(source.slice(begin,end),context);
+assert.equal(context.filteredCharts().length,15);
+assert.equal(context.slotItems().length,15,'all 15 chart slots render');
+assert.equal(new Set(S.charts.map(c=>c.slot)).size,15,'all 15 slots stay unique');
+S.chartFilter='line a';assert.equal(context.filteredCharts().length,8,'open trends filter by device');
+assert.equal(context.slotItems().length,8,'filtered view contains matching charts without removing them');
+assert.equal(S.charts.length,15,'filter does not delete charts');
+S.chartFilter='';
+for(const [layout,columns] of [['rows',1],['columns',2],['three',3],['four',4],['five',5]]){S.layout=layout;assert.equal(context.effectiveColumns(),columns,layout)}
+width=620;S.layout='five';assert.equal(context.effectiveColumns(),1,'mobile forces one readable column');
+S.charts=[{id:'t1',slot:0}];S.layout='auto';assert.equal(context.slotItems().length,2,'one remaining chart has one add slot');
+assert(source.includes("const compactAfterRemoval=!S.maximized&&n<=1"),'one-chart layout must use compact rows');
+assert(source.includes("grid.style.gridAutoRows=compactAfterRemoval?'max-content'"),'add slot must not expand to a full-screen row');
+console.log('PASS: 15 open trends, non-destructive trend filter and 1–5 column layouts');

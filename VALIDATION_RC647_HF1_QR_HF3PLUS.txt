@@ -1,0 +1,7 @@
+RC6.4.7 HF1 QR + HF3+ INTEGRATION
+PASS: Core native iframe serves approved HF3+ compiled HTML/JS/CSS
+PASS: Real Historian API endpoints connected; no preloaded demo data
+PASS: QR API and renderer source byte-for-byte unchanged
+PASS: JS syntax and mock Core API browser acceptance tests
+PASS: Core version, startup verification and cache-busted references match
+NOT RUN: dotnet build, Windows Service installer, PLC live tests, real phone pairing

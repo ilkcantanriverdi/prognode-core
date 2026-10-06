@@ -1,0 +1,19 @@
+{
+  "base": "PROGNODE RC6.4.7 HF5.1 Sidebar Correction",
+  "release": "RC6.4.7 HF6 source/acceptance candidate",
+  "modifiedAreas": [
+    "Core HTML/CSS/JS shell",
+    "Trend UI/CSS/JS visibility",
+    "health/agent and backup version metadata",
+    "startup expected health version",
+    "acceptance documentation"
+  ],
+  "unchangedSafetyContracts": [
+    "HTTPS certificate & QR pinning",
+    "LAN helper & firewall rules",
+    "mobile occurrence-specific ACK",
+    "Core DB schema",
+    "signed license validation",
+    "backup crypto and restore"
+  ]
+}

@@ -1,0 +1,5 @@
+PASS: JS syntax (node --check)
+PASS: S7 device UI/API route consistency
+PASS: project DI and .sln reference
+PASS: old pairing/QR/trend-studio source unchanged from HF6.5 where present
+NOT RUN: .NET compile / physical PLC / alarm/historian / Windows QR regression

@@ -1,0 +1,12 @@
+{
+  "baseline": "RC6.4.7 HF5.1 source",
+  "verifiedUnmodified": {
+    "src/Prognode.Host/Program.cs": "ed837511e2cf14304ab8f13b5a9649a98641a8f4fbf523ff92ace2d7a9a81679",
+    "src/Prognode.Core/Connectivity/QrPairingService.cs": "2ced9a8200f642c4eaf862428ab630e7ead35280c07f949b6c9a0a01a2132af4",
+    "src/Prognode.Backup/BackupArchive.cs": "00848e6e4bdb53fc9a088c2314a1d316b62d3164f92a6ebac2168c8621ea3eff",
+    "src/Prognode.Web/LanAccessWizardService.cs": "97163f2c3d881d411c1f6c09b66393a8304b1d6595ff55cbfca4f9ed2d5a1fb1",
+    "src/Prognode.Host/wwwroot/qr-local.js": "f4dd535237b97f06d1fd38628833feb7fc35686f7fd022864807ae0ed4f9dd27",
+    "src/Prognode.Licensing/LicenseService.cs": "c9fe66d0e01b0dab2b75b93c677c8ec8524e5588087852518334ced279261267",
+    "LAN_ACCESS_ELEVATED.ps1": "2d47de664fca8e2373e26673b3abad700ecf5c98b11971e6e3050385614967d6"
+  }
+}

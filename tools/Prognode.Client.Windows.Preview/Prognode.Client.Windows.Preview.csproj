@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <WindowsPackageType>None</WindowsPackageType>
+    <AssemblyName>PROGNODE.Client.Preview</AssemblyName>
+    <AssemblyTitle>PROGNODE Client Preview</AssemblyTitle>
+    <Product>PROGNODE</Product>
+    <Description>PROGNODE LAN discovery and pairing preview client</Description>
+    <Company>PROGNODE</Company>
+  </PropertyGroup>
+</Project>

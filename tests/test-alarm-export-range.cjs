@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.join(__dirname,'../src/Prognode.Host/wwwroot');
+const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const app=fs.readFileSync(path.join(root,'app.js'),'utf8');
+const css=fs.readFileSync(path.join(root,'customer-v2.css'),'utf8');
+const endpoints=fs.readFileSync(path.join(__dirname,'../src/Prognode.Web/EndpointExtensions.cs'),'utf8');
+assert(html.includes('id="alarmExportFrom" type="date"'));
+assert(html.includes('id="alarmExportTo" type="date"'));
+assert(app.includes('query.set("fromUtc", from)'));
+assert(app.includes('query.set("toUtc", to)'));
+assert(endpoints.includes('DateOnly? fromUtc'));
+assert(endpoints.includes('DateOnly? toUtc'));
+assert.equal((endpoints.match(/DateOnly.FromDateTime\(alarm.ActiveAt.UtcDateTime\)/g)||[]).length,4,'CSV and XLSX must filter both bounds');
+assert(css.includes('.customer-v2 .sidebar .nav-count{display:none!important}'));
+assert(css.includes('.customer-v2 #page-overview.customer-has-devices #customerLegacyOverview{display:block}'));
+console.log('PASS: alarm history CSV/XLSX UTC date range, sidebar badges hidden, Overview restored');

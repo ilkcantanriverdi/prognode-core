@@ -1,0 +1,31 @@
+/* Applied to REAL Core Historian Trend Studio only; no demo chart or synthetic samples. */
+:root {--bg:#08121d;--nav:#0c1724;--panel:#101e2b;--panel2:#142535;--bar:#0c1a28;--card:#122536;--border:#284254;--grid:#283f4e;--muted:#92abba;--text:#edf6fb;--cyan:#25c8d9;--chip:#1c384a}
+html[data-theme="light"]{--bg:#f5f8fa;--nav:#fff;--panel:#fff;--panel2:#edf5f8;--bar:#f8fcfd;--card:#fff;--border:#c9dce5;--grid:#dce9ed;--text:#173348;--muted:#5b7688;--cyan:#0089a1;--chip:#e7f3f7}
+html,body{min-height:0}
+.app.core-embedded{grid-template-columns:minmax(0,1fr);min-height:0}
+.app.core-embedded>.main{background:var(--bg)}
+.app.core-embedded .toolbar{height:auto;min-height:64px;padding:10px 17px;gap:10px;background:var(--bg);border-color:var(--border);flex-wrap:wrap;align-content:center}
+.app.core-embedded .toolbar-title{font-size:13px;min-width:150px;font-weight:720}
+.app.core-embedded .toolbar .preview-label{letter-spacing:.08em;font-size:10px;border:1px solid #235260;background:#133544;color:#89e2ed;padding:8px 10px;border-radius:8px}
+.app.core-embedded .toolbar .btn{border-radius:8px;min-height:32px}
+.app.core-embedded .toolbar .btn.primary{color:#062733;font-weight:780}
+.app.core-embedded .toolbar .timebar{gap:5px}
+.app.core-embedded .toolbar .timebar .btn{font-size:11px;padding:7px 9px}
+.app.core-embedded .board-top{height:auto;min-height:45px;padding:8px 15px;background:var(--bar)}
+.app.core-embedded .grid{gap:13px;padding:14px;grid-auto-rows:minmax(0,1fr)}
+.app.core-embedded .grid>.chart{border-radius:13px;border-color:var(--border);background:var(--panel);box-shadow:0 6px 18px #0001}
+.app.core-embedded .chart-head{min-height:49px;padding:8px 10px 8px 14px;gap:8px}
+.app.core-embedded .chart-title{font-size:12px;font-weight:740}
+.app.core-embedded .chart-head .value{font-size:16px}
+.app.core-embedded .chart-head .chart-range{border-radius:7px}
+.app.core-embedded .chart-head .small-action{min-height:28px}
+.app.core-embedded .chart-foot{height:32px;font-size:10px;padding:0 12px}
+.app.core-embedded .drawer{width:min(360px,95%);background:var(--bar)}
+.app.core-embedded .drawer-head{min-height:61px;padding:17px}
+.app.core-embedded .drawer-head strong{font-size:16px}
+.app.core-embedded .drawer-body{padding:15px}
+.app.core-embedded .sig{min-height:53px;padding:10px}
+.app.core-embedded .empty{background:var(--panel);min-height:230px;margin:14px;padding:35px}
+@media(max-width:1220px){.app.core-embedded .toolbar{min-height:98px}.app.core-embedded .toolbar .right{margin-left:0}.app.core-embedded .grid{padding:10px;gap:9px}.app.core-embedded .chart-title{font-size:11px}}
+@media(max-width:720px){.app.core-embedded .toolbar{min-height:116px;gap:6px;padding:8px}.app.core-embedded .board-top{flex-wrap:wrap;gap:6px}.app.core-embedded .toolbar .timebar{overflow-x:auto;max-width:100%;padding-bottom:3px}.app.core-embedded .chart-head{flex-wrap:wrap;height:auto;min-height:64px}.app.core-embedded .grid{grid-template-columns:1fr!important;overflow-y:auto;grid-auto-rows:minmax(280px,1fr)}.app.core-embedded .grid>.chart{min-height:270px}.app.core-embedded .toolbar .preview-label{display:none}}
+@media(prefers-reduced-motion:reduce){.app.core-embedded *{transition:none!important;animation:none!important}}

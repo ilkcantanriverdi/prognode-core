@@ -1,0 +1,19 @@
+PROGNODE V0.7.2 RC6.3.1-HF2
+
+Purpose
+- Fix the remaining import -> Sign in UI deadlock.
+
+Key correction
+- The Sign in button is no longer disabled by a duplicated frontend license check.
+- /api/access/login is the authoritative security gate.
+- Access popup treats any of these as an installed verified-license hint:
+  * /api/license licenseInstalled=true
+  * /api/access/status status=SIGN_IN_REQUIRED
+  * a successful import in the current browser session
+- Successful import account hint is kept in sessionStorage across F5 and removed on sign-in/sign-out.
+- Import panel hides after successful import / installed-license detection.
+
+Verification
+- app.js syntax checked with node --check.
+- TEST_PROGNODE_RC6_3_1_HF2_IMPORT_SIGNIN.ps1 verifies the running Core version, import response,
+  signed-out license summary, and SIGN_IN_REQUIRED access state.

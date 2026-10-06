@@ -1,0 +1,17 @@
+{
+  "base": "HF6 full",
+  "release": "HF6.1 UI correction",
+  "changed_from_hf6": [
+    "src/Prognode.Host/wwwroot/trend-hf3plus.html",
+    "src/Prognode.Host/wwwroot/index.html",
+    "src/Prognode.Host/wwwroot/trend-hf3plus.js"
+  ],
+  "new_files": [
+    "src/Prognode.Host/wwwroot/customer-hf61.css",
+    "src/Prognode.Host/wwwroot/trend-hf61.css",
+    "README_HF6_1_UI_CORRECTION_TR.md"
+  ],
+  "unchanged_baseline_files": 371,
+  "windows_build": "not run in Linux environment",
+  "browser_tests": "passed on mock API; not real PLC acceptance"
+}

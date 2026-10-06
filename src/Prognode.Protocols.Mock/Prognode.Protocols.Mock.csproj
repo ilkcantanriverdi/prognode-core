@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Prognode.Contracts\Prognode.Contracts.csproj" />
+    <ProjectReference Include="..\Prognode.Protocols.Abstractions\Prognode.Protocols.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

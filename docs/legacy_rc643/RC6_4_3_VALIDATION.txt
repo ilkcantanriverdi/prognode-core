@@ -1,0 +1,16 @@
+PROGNODE V0.7.2 RC6.4.3 — FEEDBACK PREVIEW
+
+PASS: JS syntax checks for app.js and trend-studio.js (node --check).
+PASS: tests/test-trend-logic.cjs and tests/test-trend-ui.cjs.
+PASS: tests/test-trend-v643-browser.py with Chromium and an explicitly SIMULATED offline interactive demo:
+  - Disabled Tag with no Historian enrollment, correct open chart count
+  - A/B controls pause and compare two graph timestamps
+  - Flags and independent alarm detail remain selectable
+  - Separate charts by default and explicit Compare mode
+  - 5m/15m/1h/8h/24h/7d live and paused window selection
+  - Light mode background and dark mode default; zero browser JS exceptions
+PASS: ZIP integrity and C#/csproj static inspection (not compilation).
+
+NOT RUN: dotnet build and C# compiler, Windows service/Agent launch, physical PLC or Developer Test Bench integration, long-running historian soak.
+Windows validation: START_PROGNODE_RC6_4_3_PREVIEW.cmd and TEST_PROGNODE_RC6_4_3_TREND.ps1.
+No customer process data is included; offline HTML demo uses simulated data only.

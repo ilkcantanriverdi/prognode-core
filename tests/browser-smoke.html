@@ -1,0 +1,874 @@
+<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><style>
+body{background:#081623;color:#d8eff8;font:14px Segoe UI,Arial;margin:18px;}*{box-sizing:border-box}.page{display:block!important}.hidden{display:none!important}
+/* PROGNODE RC6.4 Trend Studio preview — isolated from the rest of Core UI. */
+#page-trends.studio-page { --studio:#0b1e2e; --stroke:rgba(109,157,180,.16); --muted-studio:#86a1b4; color:var(--text,#eaf3f9); }
+#page-trends .studio-intro { display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin:0 0 19px;padding:10px 2px 6px; }
+#page-trends .studio-intro h2 { margin:7px 0 8px;font-size:clamp(32px,3vw,45px);letter-spacing:-.052em;font-weight:760;line-height:1.05; }
+#page-trends .studio-intro h2 span { color:#35d6e7; }
+#page-trends .studio-intro p {margin:0;color:var(--muted-studio);font-size:12.5px;line-height:1.6;}
+#page-trends .studio-kicker,#page-trends .studio-mini-kicker{color:#5ec5d7;font-size:10px;font-weight:760;letter-spacing:.17em}
+#page-trends .studio-badge{border-radius:5px;margin-left:8px;padding:4px 8px;background:rgba(25,201,227,.1);border:1px solid rgba(25,201,227,.27);color:#87eefa;font-size:9px;letter-spacing:.04em}
+#page-trends .studio-top-actions{display:flex;align-items:center;gap:14px}
+#page-trends .studio-connection{display:flex;gap:7px;align-items:center;color:#9ab9c9;font-size:10px;font-weight:700;letter-spacing:.1em;white-space:nowrap}
+#page-trends .studio-connection i,#page-trends .studio-footnote i,#page-trends .studio-mode-live i{height:7px;width:7px;border-radius:50%;display:inline-block;background:#4ce1a7;box-shadow:0 0 12px rgba(76,225,167,.53)}
+#page-trends .studio-btn {min-height:38px;padding:0 15px;border-radius:9px;cursor:pointer;border:1px solid var(--stroke);font-size:12px;font-weight:730}
+#page-trends .studio-primary {background:linear-gradient(120deg,#18bdd2,#3be0e8);color:#062331;border-color:transparent;box-shadow:0 7px 24px rgba(18,200,218,.12)}
+#page-trends .studio-shell{display:grid;grid-template-columns:minmax(218px,254px) minmax(0,1fr);gap:12px;align-items:stretch}
+#page-trends .studio-sidebar,#page-trends .studio-main{border:1px solid var(--stroke);border-radius:15px;background:linear-gradient(150deg,rgba(15,38,55,.96),rgba(8,25,40,.96));box-shadow:0 14px 40px rgba(0,5,12,.16);min-width:0}
+#page-trends .studio-sidebar{padding:17px 13px;display:flex;flex-direction:column;max-height:1070px;overflow:hidden;}
+#page-trends .studio-side-title{display:flex;justify-content:space-between;align-items:center;font-size:9px;letter-spacing:.14em;color:#65bdd0;font-weight:800;margin:3px 5px 23px}
+#page-trends .studio-side-title b{border-radius:7px;padding:3px 7px;font-size:10px;color:#c1e9f2;background:rgba(32,151,170,.12)}
+#page-trends .studio-section-head{display:flex;flex-direction:column;gap:3px;margin:0 5px 11px}
+#page-trends .studio-section-head strong{font-size:14px;color:#ecf5f8;font-weight:735}
+#page-trends .studio-section-head>span{font-size:9px;letter-spacing:.09em;color:#6b90a5}
+#page-trends .studio-saved-list{display:flex;flex-direction:column;gap:6px;margin:0 0 4px;max-height:230px;overflow:auto;min-height:36px}
+#page-trends .studio-saved-list .trend-item{background:transparent;border:1px solid transparent;padding:10px 8px;border-radius:9px;cursor:pointer;min-height:52px}
+#page-trends .studio-saved-list .trend-item:hover{background:rgba(50,148,172,.07);border-color:var(--stroke)}
+#page-trends .studio-saved-list .trend-item.active{background:linear-gradient(100deg,rgba(29,180,204,.17),rgba(20,155,190,.02));border-color:rgba(37,210,224,.33);box-shadow:inset 3px 0 #34ddec}
+#page-trends .studio-saved-list .trend-item-copy strong{font-size:11px;color:#d6eef6}
+#page-trends .studio-saved-list .trend-item-copy span{font-size:10px;color:#85aabb}
+#page-trends .studio-saved-list .trend-mini-button{font-size:14px;min-width:21px;height:25px;opacity:.8}
+#page-trends .studio-side-divider{height:1px;background:var(--stroke);margin:18px 4px 21px}
+#page-trends .studio-search-wrap{display:flex;align-items:center;gap:8px;border:1px solid rgba(87,144,169,.25);background:rgba(2,13,26,.4);border-radius:9px;padding:0 11px;margin:3px 4px 12px;min-height:39px}
+#page-trends .studio-search-wrap span{font-size:24px;color:#659cae}
+#page-trends .studio-search-wrap input{min-width:0;width:100%;font-size:11px;color:#dff2f7;background:transparent;border:0;outline:0}
+#page-trends .studio-search-wrap input::placeholder{color:#7293a6}
+#page-trends .studio-tag-pool{overflow:auto;flex:1;min-height:150px;max-height:485px;padding:0 3px}
+#page-trends .studio-tag-pool .studio-tag-row{width:100%;display:flex;align-items:center;text-align:left;gap:9px;background:transparent;border:1px solid transparent;color:#a2bdcd;border-radius:9px;padding:10px 7px;cursor:pointer;transition:background .14s}
+#page-trends .studio-tag-pool .studio-tag-row:hover{background:rgba(42,128,160,.09)}
+#page-trends .studio-tag-pool .studio-tag-row.selected{background:rgba(24,158,185,.1);border-color:rgba(25,184,205,.23);color:#e3faff}
+#page-trends .studio-tag-indicator{height:17px;width:17px;flex:0 0 17px;border:1px solid rgba(115,167,189,.45);border-radius:5px;display:grid;place-items:center;color:#021824;font-size:12px;font-weight:bold}
+#page-trends .studio-tag-row.selected .studio-tag-indicator{background:#37d5df;border-color:#37d5df}
+#page-trends .studio-tag-meta{min-width:0;flex:1}
+#page-trends .studio-tag-meta strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11.5px;font-weight:670}
+#page-trends .studio-tag-meta small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:9.5px;color:#6e97ac;margin-top:4px}
+#page-trends .studio-tag-row em{font-style:normal;font-size:9px;opacity:.7}
+#page-trends .studio-sidebar-bottom{border-top:1px solid var(--stroke);padding:17px 5px 4px;margin-top:auto;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+#page-trends .studio-footnote{display:flex;align-items:center;gap:7px;color:#7b9bad;font-size:9px}
+#page-trends .studio-footnote i{width:5px;height:5px}
+#page-trends .studio-link-btn{border:0;background:none;color:#43cee4;cursor:pointer;font-size:10px;padding:0}
+#page-trends .studio-main{padding:0;overflow:hidden}
+#page-trends .studio-main-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:24px 25px 19px}
+#page-trends .studio-main-head h3{font-size:23px;font-weight:730;letter-spacing:-.037em;margin:7px 0 6px;color:#e9f4fa}
+#page-trends .studio-time-caption{color:#7f9fb2;font-size:10.5px}
+#page-trends .studio-head-controls{display:flex;align-items:center;gap:9px}
+#page-trends .studio-mode-live{height:35px;border:1px solid rgba(80,154,178,.33);background:#0e2939;color:#8ba7ba;font-size:10px;font-weight:800;letter-spacing:.09em;display:flex;align-items:center;gap:8px;padding:0 13px;border-radius:9px;cursor:pointer}
+#page-trends .studio-mode-live.active{color:#83f3c1;background:rgba(28,170,119,.11);border-color:rgba(55,211,158,.37)}
+#page-trends .studio-mode-live:not(.active) i{background:#6a8494;box-shadow:none}
+#page-trends .studio-icon-button,#page-trends .studio-tool-button{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border:1px solid rgba(105,156,181,.2);background:rgba(18,42,59,.55);border-radius:8px;color:#bfd9e7;cursor:pointer;font-size:17px;}
+#page-trends .studio-icon-button:hover,#page-trends .studio-tool-button:hover,#page-trends .studio-tool-button.active{border-color:#29d6e8;color:#70ebf6;background:rgba(22,168,198,.1)}
+#page-trends .studio-tool-button{font-size:11px;font-weight:800}
+#page-trends .studio-toolbar{display:flex;align-items:center;gap:5px;min-height:61px;padding:12px 24px;border-block:1px solid var(--stroke);background:rgba(2,16,27,.21);flex-wrap:wrap}
+#page-trends .studio-range-pills{display:flex;gap:3px;border-radius:9px;background:rgba(2,15,26,.38);padding:3px;border:1px solid rgba(90,148,174,.15)}
+#page-trends .studio-range-pills .range-pill{font-size:10px;padding:8px 10px;min-height:29px;border-radius:6px;background:transparent;color:#8eaabe;cursor:pointer;border:0}
+#page-trends .studio-range-pills .range-pill.active{background:rgba(45,174,202,.2);color:#baf4fc;font-weight:800;box-shadow:inset 0 0 0 1px rgba(45,174,202,.17)}
+#page-trends .studio-toolbar-divider{height:24px;width:1px;background:var(--stroke);margin-inline:7px}
+#page-trends .studio-toolbar-grow{flex:1}
+#page-trends .studio-export-button{height:34px;padding:0 12px;border-radius:8px;background:rgba(16,44,59,.65);border:1px solid rgba(91,149,177,.26);color:#b5d3e2;font-size:10px;font-weight:780;cursor:pointer;white-space:nowrap}
+#page-trends .studio-export-button:hover{border-color:#3bd4e5;color:#e4fbfe}
+#page-trends .trend-custom-range{padding:12px 24px;display:flex;gap:12px;align-items:flex-end;background:rgba(5,17,28,.5);border-bottom:1px solid var(--stroke)}
+#page-trends .trend-custom-range.hidden{display:none}
+#page-trends .trend-custom-range label{display:flex;flex-direction:column;gap:4px;color:#a5c4d1;font-size:10px}
+#page-trends .trend-custom-range input{color-scheme:dark;background:#0b2334;border:1px solid #29516b;padding:7px;color:#d1e7ef;border-radius:7px;font-size:12px}
+#page-trends .studio-signal-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:8px;padding:15px 24px;min-height:94px}
+#page-trends .studio-signal-card{position:relative;display:flex;flex-direction:column;gap:7px;padding:11px 12px 9px;border-radius:10px;border:1px solid rgba(99,157,181,.17);background:rgba(17,45,61,.49);min-width:0;}
+#page-trends .studio-signal-card.hidden-series{opacity:.43}
+#page-trends .studio-signal-card .studio-card-row{display:flex;gap:8px;align-items:center;justify-content:space-between;min-width:0}
+#page-trends .studio-signal-card .studio-signal-label{display:flex;align-items:center;gap:7px;flex:1;min-width:0;font-size:10.5px;font-weight:660;cursor:pointer;color:#dbeef7}
+#page-trends .studio-signal-card .studio-signal-label>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#page-trends .studio-signal-card .studio-legend-color{width:7px;height:15px;border-radius:3px;flex:0 0 7px}
+#page-trends .studio-signal-card strong{font-size:23px;letter-spacing:-.04em;font-variant-numeric:tabular-nums;font-weight:700;color:#f0f8fb;line-height:1.12}
+#page-trends .studio-signal-card strong small{font-size:11px;color:#a0bbca;letter-spacing:0;font-weight:500}
+#page-trends .studio-signal-card .studio-card-foot{font-size:9px;color:#7194a9;display:flex;align-items:center;justify-content:space-between;gap:8px}
+#page-trends .studio-signal-card select{width:49px;background:#122d3f;border:1px solid #2e4b60;color:#b4ccdc;border-radius:5px;font-size:9px;padding:3px;cursor:pointer}
+#page-trends .studio-visual{background:rgba(3,15,26,.22);border-block:1px solid var(--stroke)}
+#page-trends .studio-chart-meta{display:flex;justify-content:space-between;align-items:center;padding:14px 26px 1px;font-size:9px;letter-spacing:.13em;font-weight:770;color:#658fa4;}
+#page-trends .studio-graph-dot{width:6px;height:6px;border-radius:2px;background:#36cbdc;display:inline-block;margin-right:7px}
+#page-trends .studio-chart-shell{height:446px;position:relative;margin:0 8px;min-width:0;cursor:crosshair;touch-action:pan-y}
+#page-trends .studio-chart-shell canvas{width:100%;height:446px;display:block}
+#page-trends .studio-chart-shell .chart-empty{position:absolute;inset:90px 25px 90px;display:grid;place-items:center;color:#90b5c5;font-size:12px;pointer-events:none}
+#page-trends .studio-chart-shell .chart-empty.hidden{display:none}
+#page-trends .trend-tooltip{background:rgba(7,26,40,.98);border:1px solid rgba(57,200,222,.33);border-radius:10px;padding:12px 14px;box-shadow:0 14px 34px rgba(0,6,15,.48);font-size:11px;min-width:215px;pointer-events:none;z-index:8}
+#page-trends .studio-drag-box{position:absolute;pointer-events:none;top:35px;bottom:44px;border:1px solid rgba(92,223,243,.85);background:rgba(36,176,211,.13);z-index:6}
+#page-trends .studio-drag-box.hidden{display:none}
+#page-trends .studio-navigator-block{border-top:1px solid rgba(100,158,184,.13);margin:0 24px 14px;padding-top:12px}
+#page-trends .studio-navigator-header{display:flex;justify-content:space-between;gap:7px;font-size:9px;color:#7197aa;letter-spacing:.12em;font-weight:760;margin-bottom:8px}
+#page-trends .studio-navigator-header span:last-child{font-weight:500;letter-spacing:0;color:#6c8ca0}
+#page-trends #studioNavigator{display:block;width:100%;height:58px;border-radius:7px;background:rgba(7,29,43,.54);cursor:ew-resize}
+#page-trends .studio-bottom-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(240px,.8fr);gap:12px;padding:15px;background:rgba(5,19,32,.16)}
+#page-trends .studio-summary,#page-trends .studio-events{border:1px solid var(--stroke);border-radius:10px;padding:17px;min-width:0;background:rgba(15,39,55,.4)}
+#page-trends .studio-card-top{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:14px}
+#page-trends .studio-card-top strong{font-size:12px;color:#dff1f8}
+#page-trends .studio-card-top>span{color:#7094a9;font-size:9px;letter-spacing:.1em}
+#page-trends .studio-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:7px}
+#page-trends .studio-stat-line{padding:11px;border:1px solid rgba(96,149,179,.14);background:rgba(7,27,42,.45);border-radius:7px;min-width:0}
+#page-trends .studio-stat-line>div:first-child{display:flex;align-items:center;gap:7px;font-size:11px;color:#c3dae7;margin-bottom:9px}
+#page-trends .studio-stat-line .studio-quad{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+#page-trends .studio-quad span{display:block;color:#6f9aad;font-size:8px;letter-spacing:.06em;margin-bottom:3px}
+#page-trends .studio-quad b{font-size:11px;font-weight:750;color:#d6edf5;font-variant-numeric:tabular-nums;white-space:nowrap}
+#page-trends .studio-event-switches{display:flex;gap:13px;font-size:10px;color:#9cbaca;margin:-4px 0 13px}
+#page-trends .studio-event-switches label{display:flex;gap:6px;align-items:center;cursor:pointer}
+#page-trends .studio-event-switches input{accent-color:#21c3d6}
+#page-trends .studio-event-list{display:flex;flex-direction:column;gap:6px;max-height:145px;overflow:auto;font-size:10px;color:#83a4b5}
+#page-trends .studio-event{display:flex;gap:9px;align-items:flex-start;border-left:2px solid #fc7788;padding:6px 8px;background:rgba(10,32,47,.58);border-radius:3px;line-height:1.4}
+#page-trends .studio-event.batch{border-color:#34d3c3}
+#page-trends .studio-event strong{color:#c8e1ea;font-weight:700}
+#page-trends .studio-event small{color:#678ba0;font-size:9px;white-space:nowrap}
+#page-trends .studio-cursor-results{font-size:10px;line-height:1.65;margin-top:12px;padding-top:12px;border-top:1px solid var(--stroke);color:#99b9ca}
+#page-trends .studio-muted{font-size:11px;color:#7295aa;padding:10px 5px;line-height:1.6}
+#page-trends button:focus-visible,#page-trends input:focus-visible,#page-trends select:focus-visible{outline:2px solid #4bdeeb;outline-offset:2px}
+@media (max-width:1280px){#page-trends .studio-shell{grid-template-columns:220px minmax(0,1fr)}#page-trends .studio-main-head{padding:19px 17px}#page-trends .studio-toolbar{padding:12px 16px}#page-trends .studio-signal-strip{padding:13px 16px}}
+@media (max-width:1030px){#page-trends .studio-shell{grid-template-columns:1fr}#page-trends .studio-sidebar{max-height:none}#page-trends .studio-tag-pool{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));max-height:210px}#page-trends .studio-bottom-grid{grid-template-columns:1fr}}
+@media (max-width:680px){#page-trends .studio-intro{flex-direction:column;align-items:flex-start}#page-trends .studio-main-head{padding:16px}#page-trends .studio-main-head h3{font-size:20px}#page-trends .studio-toolbar{padding:10px;gap:4px}#page-trends .studio-toolbar-grow{flex-basis:100%}#page-trends .studio-range-pills{overflow:auto;width:100%}#page-trends .studio-signal-strip{grid-template-columns:repeat(2,minmax(0,1fr));padding:10px}#page-trends .studio-signal-card strong{font-size:17px}#page-trends .studio-chart-shell,#page-trends .studio-chart-shell canvas{height:345px}#page-trends .studio-navigator-header span:last-child{display:none}#page-trends .studio-stats-grid{grid-template-columns:1fr}#page-trends .trend-custom-range{flex-wrap:wrap;padding:12px}}
+
+/* RC6.4.1: live sample freshness, independently switchable overlays and scrolling. */
+#page-trends #studioSampleHealth{letter-spacing:0;font-weight:650;margin-left:12px;font-size:10px;color:#9dc7d3;}
+#page-trends #studioSampleHealth[data-health="stale"]{color:#ffb07d;background:rgba(235,140,57,.13);padding:4px 7px;border-radius:6px;}
+#page-trends #studioSampleHealth[data-health="good"]{color:#7edbb9;}
+#page-trends #studioSampleHealth[data-health="empty"]{color:#edac8c;}
+#page-trends .studio-mode-live{min-width:129px;justify-content:center;font-size:11px;}
+#page-trends .studio-mode-live:not(.active){color:#f7c7a5;border-color:rgba(242,169,124,.4);}
+#page-trends .studio-event-switches{flex-wrap:wrap;row-gap:9px;font-size:11px;}
+#page-trends #trendApplyRange:disabled{opacity:.45;cursor:not-allowed;}
+#page-trends #trendCanvas{overscroll-behavior:auto;}
+
+/* RC6.4.2 — Alarm-aware scale and interactive process analysis */
+#page-trends .studio-alarm-legend{display:flex;gap:15px;align-items:center;flex-wrap:wrap;padding:12px 24px 0;font-size:10px;color:#9fbccc;font-weight:750}
+#page-trends .studio-alarm-legend span{display:inline-flex;align-items:center;gap:6px}
+#page-trends .studio-alarm-legend i{width:18px;height:4px;border-radius:3px;display:inline-block}
+#page-trends .legend-normal{background:#38d5e5}#page-trends .legend-high{background:#ff6c82}#page-trends .legend-low{background:#f6af5c}
+#page-trends .studio-alarm-legend small{margin-left:auto;color:#79a3b6;font-weight:500}
+#page-trends .studio-alarm-state{display:flex;align-items:center;gap:9px;border-top:1px solid rgba(128,174,194,.13);padding-top:7px;font-size:9px;min-width:0;color:#8ba9bd}
+#page-trends .studio-alarm-state b{color:#7bdeba;font-size:10px}#page-trends .studio-alarm-state[data-zone="HIGH"] b{color:#ff758c}#page-trends .studio-alarm-state[data-zone="LOW"] b{color:#ffc07a}
+#page-trends .studio-alarm-state span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#page-trends .studio-compare-panel{margin:12px 24px 0;padding:13px;border:1px solid rgba(83,195,225,.36);border-radius:9px;background:linear-gradient(105deg,rgba(19,79,101,.24),rgba(12,38,56,.55));color:#d4eff9;font-size:11px}
+#page-trends .studio-compare-panel.hidden{display:none}
+#page-trends .studio-compare-title{display:flex;align-items:center;justify-content:space-between;gap:9px;color:#bcecf9;margin-bottom:9px}
+#page-trends #studioResetCursors{background:none;border:1px solid rgba(131,185,209,.28);border-radius:6px;color:#8ac9d9;padding:5px 9px;font-size:10px;cursor:pointer}
+#page-trends .studio-ab-times{display:flex;gap:15px;flex-wrap:wrap;margin:9px 0 5px;font-size:11px}
+#page-trends .cursor-a{color:#f8c773}#page-trends .cursor-b{color:#ba9cfe}#page-trends .studio-delta-time{color:#fff;font-weight:800;margin:9px 0;font-size:13px}
+#page-trends .studio-ab-table{display:flex;flex-direction:column;gap:3px;overflow-x:auto}
+#page-trends .studio-ab-header,#page-trends .studio-ab-row{display:grid;grid-template-columns:minmax(80px,1.5fr) repeat(3,minmax(75px,1fr));gap:7px;align-items:center;padding:6px 4px;min-width:365px}
+#page-trends .studio-ab-header{font-size:9px;color:#78a1b5;letter-spacing:.07em;border-bottom:1px solid rgba(124,171,191,.21)}
+#page-trends .studio-ab-row{color:#cbe7f0;font-size:10.5px;border-bottom:1px solid rgba(126,171,194,.08)}
+#page-trends .studio-ab-row strong{color:#f8da93}#page-trends .studio-ab-row span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#page-trends .studio-event{width:100%;text-align:left;cursor:default;box-sizing:border-box}
+#page-trends button.studio-event{cursor:pointer;border:0;border-left:2px solid #fc7788;color:inherit;font:inherit;display:flex;align-items:center}
+#page-trends button.studio-event:hover,#page-trends button.studio-event.is-selected{border-left-color:#ffe6a1;background:rgba(235,158,104,.14)}
+#page-trends .studio-event-copy{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+#page-trends .studio-event-copy strong{white-space:normal}#page-trends .studio-event-copy small{white-space:normal}
+#page-trends .studio-event-chevron{font-size:20px;color:#9dbec9}
+#page-trends .studio-event-detail{border:1px solid rgba(255,166,125,.35);border-radius:9px;padding:11px;background:rgba(90,44,46,.16);margin-top:11px;font-size:10px}
+#page-trends .studio-event-detail.hidden{display:none}
+#page-trends .studio-detail-head{display:flex;justify-content:space-between;align-items:center;gap:9px;color:#ffe0c5;margin-bottom:11px}
+#page-trends #studioCloseEvent{border:0;background:transparent;color:#e1bcc5;font-size:18px;cursor:pointer}
+#page-trends .studio-detail-grid{display:grid;grid-template-columns:80px minmax(0,1fr);gap:7px 10px;color:#8daabf}
+#page-trends .studio-detail-grid b{color:#d8edf5;overflow-wrap:anywhere}
+@media (max-width:680px){#page-trends .studio-alarm-legend{padding:10px;gap:9px}#page-trends .studio-alarm-legend small{margin-left:0}#page-trends .studio-compare-panel{margin:10px 9px 0;padding:10px}#page-trends .studio-ab-times{gap:8px}}
+
+</style></head><body><section class="page studio-page" id="page-trends">
+          <div class="studio-intro">
+            <div class="studio-intro-copy">
+              <span class="studio-kicker">PROGNODE / PROCESS INTELLIGENCE <span class="studio-badge">RC6.4.2 PREVIEW</span></span>
+              <h2>Trend <span>Studio.</span></h2>
+              <p>Explore every signal. Understand every event. All your process data stays on this Core.</p>
+            </div>
+            <div class="studio-top-actions">
+              <div class="studio-connection"><i></i><span id="studioDataStatus">LOCAL HISTORIAN</span></div>
+              <button class="studio-btn studio-primary" id="trendsAddTrend">＋ &nbsp; Save view</button>
+            </div>
+          </div>
+
+          <div class="studio-shell">
+            <aside class="studio-sidebar">
+              <div class="studio-side-title"><span>01 / WORKSPACE</span><b id="trendCount">0</b></div>
+              <div class="studio-section-head"><strong>Saved views</strong><span>PERSONAL WORKSPACE</span></div>
+              <div id="trendList" class="trend-list studio-saved-list"></div>
+              <div class="studio-side-divider"></div>
+              <div class="studio-section-head"><strong>Signal explorer</strong><span>UP TO 8 SIGNALS</span></div>
+              <label class="studio-search-wrap"><span>⌕</span><input id="studioTagSearch" type="search" autocomplete="off" placeholder="Search tags, devices..." /></label>
+              <div class="studio-tag-pool" id="studioTagPool"><div class="studio-muted">Loading signals…</div></div>
+              <div class="studio-sidebar-bottom">
+                <span class="studio-footnote"><i></i> On-site data · No cloud historian</span>
+                <button id="studioClearTags" class="studio-link-btn">Clear selection</button>
+              </div>
+            </aside>
+
+            <div class="studio-main">
+              <div class="studio-main-head">
+                <div><div class="studio-mini-kicker">ANALYSIS WORKSPACE</div><h3 id="trendChartTitle">New analysis</h3>
+                  <div id="studioTimeText" class="studio-time-caption">Choose signals to explore your process</div></div>
+                <div class="studio-head-controls"><button id="studioLive" class="studio-mode-live active"><i></i> LIVE</button><button id="studioRefresh" class="studio-icon-button" title="Refresh data" aria-label="Refresh data">↻</button></div>
+              </div>
+
+              <div class="studio-toolbar">
+                <div class="trend-range-pills studio-range-pills" id="trendRangePills">
+                  <button class="range-pill" data-range-value="5">5m</button>
+                  <button class="range-pill" data-range-value="15">15m</button>
+                  <button class="range-pill active" data-range-value="60">1h</button>
+                  <button class="range-pill" data-range-value="480">8h</button>
+                  <button class="range-pill" data-range-value="1440">24h</button>
+                  <button class="range-pill" data-range-value="10080">7d</button>
+                  <button class="range-pill" data-range-value="custom">Custom</button>
+                </div>
+                <select id="trendRange" class="compact-select trend-range-select-sr" aria-label="Time range">
+                  <option value="5">5 min</option><option value="15">15 min</option><option value="60" selected>1 hour</option>
+                  <option value="480">8 hours</option><option value="1440">24 hours</option><option value="10080">7 days</option><option value="custom">Custom</option>
+                </select>
+                <div class="studio-toolbar-divider"></div>
+                <button id="studioZoomOut" class="studio-icon-button" title="Zoom out" aria-label="Zoom out">−</button>
+                <button id="trendAutoFit" class="studio-icon-button" title="Return to live 1h window" aria-label="Fit time range">⤢</button>
+                <button id="studioCursorA" class="studio-tool-button" title="Click A, then click on the chart to place the first cursor" aria-pressed="false">A</button>
+                <button id="studioCursorB" class="studio-tool-button" title="Click B, then click on the chart to place the second cursor" aria-pressed="false">B</button>
+                <span class="studio-toolbar-grow"></span>
+                <button id="trendExportCsv" class="studio-export-button">↓ CSV</button>
+                <button id="trendExportPng" class="studio-export-button">↓ PNG</button>
+              </div>
+              <div class="trend-custom-range hidden" id="trendCustomRange">
+                <label>From <input type="datetime-local" id="trendFrom" /></label>
+                <label>To <input type="datetime-local" id="trendTo" /></label>
+                <button class="studio-btn studio-primary" id="trendApplyRange">Apply range</button>
+              </div>
+              <div class="studio-alarm-legend"><span><i class="legend-normal"></i> NORMAL</span><span><i class="legend-high"></i> HIGH</span><span><i class="legend-low"></i> LOW</span><small>Y axis automatically includes configured alarm setpoints</small></div>
+              <div id="trendLegend" class="studio-signal-strip"></div>
+              <div class="studio-visual">
+                <div id="studioCompareBar" class="studio-compare-panel studio-compare-top hidden" aria-live="polite"></div>
+                <div class="studio-chart-meta"><span><i class="studio-graph-dot"></i> HISTORIAN / LIVE SERIES <span id="studioSampleHealth" role="status" aria-live="polite" data-health="empty">Waiting for samples</span></span><span id="studioPointCount">0 samples</span></div>
+                <div class="chart-shell studio-chart-shell" id="studioChartShell">
+                  <canvas id="trendCanvas" aria-label="Interactive process trend graph"></canvas>
+                  <div class="chart-empty" id="trendChartEmpty">Select signals from the explorer to begin.</div>
+                  <div class="trend-tooltip hidden" id="trendTooltip"></div>
+                  <div id="studioDragBox" class="studio-drag-box hidden"></div>
+                </div>
+                <div class="studio-navigator-block"><div class="studio-navigator-header"><span>TIME NAVIGATOR</span><span>Drag to zoom · Mouse wheel scrolls page · Double-click to reset</span></div><canvas id="studioNavigator" height="58"></canvas></div>
+              </div>
+              <div class="studio-bottom-grid">
+                <section class="studio-summary"><div class="studio-card-top"><strong>Signal statistics</strong><span>SELECTED RANGE</span></div><div id="trendStats" class="trend-stats studio-stats-grid"></div></section>
+                <section class="studio-events"><div class="studio-card-top"><strong>Process context</strong><span>ALARM + BATCH</span></div>
+                  <div class="studio-event-switches"><label><input type="checkbox" id="studioAlarmToggle" checked /> Alarm events</label><label><input type="checkbox" id="studioFlagToggle" checked /> Flags on chart</label><label><input type="checkbox" id="studioThresholdToggle" checked /> Alarm thresholds</label><label><input type="checkbox" id="studioBatchToggle" checked /> Batch / Lot</label></div>
+                  <div id="studioEventList" class="studio-event-list">No process events in this time window.</div>
+                  <div id="studioEventDetail" class="studio-event-detail hidden" aria-live="polite"></div>
+                  <div id="studioCursorResult" class="studio-cursor-results">Move the cursor over the chart. Use A and B to compare timestamps.</div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+<script>
+const now=Date.now(),start=now-60*60000,at=t=>new Date(start+t*60000).toISOString();
+let state={page:'trends',language:'tr',theme:'dark',tags:[{id:'temperature',name:'Sıcaklık',address:'40001',dataType:'Float32',unit:'°C',decimalPlaces:1}],devices:[],trends:[],selectedTrendId:null,hiddenTrendTags:new Set(),trendPayload:null,alarmDefinitions:[],historianConfigurations:[]};
+const p=[];for(let t=0;t<=60;t++){p.push({timestamp:at(t),value:13,quality:'GOOD'});}
+const alarm={alarmKey:'a-1',tagId:'temperature',text:'Sıcaklık LL',sourceName:'Sıcaklık',priority:'High',activeAt:at(35),state:'CLEARED',clearedAt:at(38),acknowledgedAt:at(37)};
+const definitions=[{id:'h',tagId:'temperature',threshold:30,condition:'GreaterThanOrEqual',enabled:true,text:'Sıcaklık HH'},
+{id:'l',tagId:'temperature',threshold:10,condition:'LessThanOrEqual',enabled:true,text:'Sıcaklık LL'}];
+const api=async u=>{
+ if(u.startsWith('/api/alarms/history'))return [alarm];
+ if(u.startsWith('/api/batches'))return [];
+ if(u.startsWith('/api/alarms/definitions'))return definitions;
+ if(u.startsWith('/api/trend-studio/series'))return {from:at(0),to:at(60),series:[{tagId:'temperature',points:p,sampleCount:p.length,minimum:13,maximum:13,average:13}]};
+ throw Error('unknown API '+u);
+};
+function tagAddressText(t){return t.address||''}
+function showToast(t){console.log(t)}
+function renderTrendList(){}
+function openAddTrendModal(){}
+function populateTrendTagChecklist(){}
+function dateToLocalInput(date){return date.toISOString().slice(0,16)}
+function currentTrendRange(){return {from:new Date(document.getElementById('trendFrom').value),to:new Date(document.getElementById('trendTo').value)}}
+function syncTrendRangePills(){}
+function requestAnimationFrame(f){return setTimeout(f,0)}
+let drawTrendChart=()=>{},refreshTrendPoints=()=>{};
+</script>
+<script>/* PROGNODE Trend Studio RC6.4 preview. Zero external chart dependencies.
+   All data comes from the normal Core API; no process data is simulated/injected. */
+(function () {
+  'use strict';
+  const ui = {
+    selected: [], viewId: null, axes: {}, live: true, activeCursor: null,
+    cursors: {A:null,B:null}, hover: null, drag: null, range: null,
+    events: {alarms:[], batches:[], definitions:[]}, navigatorPayload: null, selectedEventKey:null, flagHits:[],
+    loading: false, nextAllowed:0, requestId:0, initialized:false, liveWindowMinutes:60, lastRefreshAt:null,
+    color:'#38d5e5', poolKey:null, cardKey:null, navKey:null, drawQueued:false, palette:['#38d5e5','#86e6ad','#ffc977','#fa839c','#ac9cf5','#68a6ee','#f489cb','#ec9d58']
+  };
+  window.PrognodeStudio = ui;
+  const el = id => document.getElementById(id);
+  const safe = value => String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const tr = (a,b) => (typeof state !== 'undefined' && state.language === 'tr') ? a : b;
+  const fmtTime = ms => new Date(ms).toLocaleString(state.language === 'tr'?'tr-TR':'en-US',{month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const ms = p => Date.parse(p?.timestamp || '') || 0;
+  const selectedTrend = () => state.trends.find(x=>x.id===state.selectedTrendId);
+  const selectedTag = id => state.tags.find(t=>t.id===id);
+  const color = id => { const trn=selectedTrend(); const i=trn?.tagIds.indexOf(id)??-1; return i>=0?trn.colors?.[i]||ui.palette[i%8]:ui.palette[Math.max(0,ui.selected.indexOf(id))%8];};
+  const good = p => p && String(p.quality||'').toLowerCase()==='good' && p.value!==null && p.value!==undefined && Number.isFinite(Number(p.value));
+  const valueText = (id,v,withUnit=true) => {
+    const tag=selectedTag(id); if(v==null || !Number.isFinite(Number(v))) return '—';
+    if(String(tag?.dataType||'').toLowerCase()==='bool') return Number(v)?'ON':'OFF';
+    const digits=Math.max(0,Math.min(4,Number(tag?.decimalPlaces ?? 2)));
+    const n=Number(v).toLocaleString(state.language==='tr'?'tr-TR':'en-US',{maximumFractionDigits:digits,minimumFractionDigits:Math.min(1,digits)});
+    return n + (withUnit && tag?.unit?' '+tag.unit:'');
+  };
+  const numericConditions = new Set(['GreaterThan','GreaterThanOrEqual','LessThan','LessThanOrEqual']);
+  const highConditions = new Set(['GreaterThan','GreaterThanOrEqual']);
+  const lowConditions = new Set(['LessThan','LessThanOrEqual']);
+  function numericLimits(tagId, definitions=ui.events.definitions) {
+    return (definitions||[]).filter(d=>d.tagId===tagId && d.enabled!==false && numericConditions.has(d.condition) && d.threshold!==null && d.threshold!==undefined && Number.isFinite(Number(d.threshold)))
+      .map(d=>({...d, threshold:Number(d.threshold), zone:highConditions.has(d.condition)?'HIGH':'LOW'}));
+  }
+  // One consistent classification drives chart segments, legends and A/B values.
+  // This visual boundary is the configured setpoint, not the debounced alarm runtime state.
+  function valueZone(value, limits) {
+    if(!Number.isFinite(Number(value)))return 'UNKNOWN';
+    if(limits.some(d=>d.zone==='HIGH' && (d.condition==='GreaterThan' ? +value>d.threshold : +value>=d.threshold)))return 'HIGH';
+    if(limits.some(d=>d.zone==='LOW' && (d.condition==='LessThan' ? +value<d.threshold : +value<=d.threshold)))return 'LOW';
+    return 'NORMAL';
+  }
+  function zoneColor(zone,base) {return zone==='HIGH'?'#ff6c82':zone==='LOW'?'#f6af5c':base;}
+  function eventKey(e){return String(e.alarmKey||e.definitionId||'alarm')+'|'+String(e.activeAt||'');}
+  const title = () => selectedTrend()?.name || tr('Yeni analiz','New analysis');
+
+  function setSelectedFromSaved() {
+    if(state.selectedTrendId && ui.viewId!==state.selectedTrendId) {
+      const view=selectedTrend(); if(view) { ui.viewId=view.id;ui.selected=[...view.tagIds];ui.axes={};ui.cursors={A:null,B:null};ui.navigatorPayload=null; }
+    }
+  }
+  function renderTagPool() {
+    const pool=el('studioTagPool');if(!pool)return;
+    const search=(el('studioTagSearch')?.value||'').toLowerCase().trim();
+    const key=search+'|'+ui.selected.join(',')+'|'+state.tags.length;
+    if(ui.poolKey===key)return;ui.poolKey=key;
+    const all=state.tags.filter(t=>[t.name,t.address,t.unit,t.dataType,tagAddressText(t)].some(x=>String(x||'').toLowerCase().includes(search)));
+    const shown=all.slice(0,160);
+    pool.innerHTML=all.length?shown.map(tag=>{
+      const checked=ui.selected.includes(tag.id), device=state.devices.find(d=>d.id===tag.deviceId);
+      return `<button type="button" class="studio-tag-row ${checked?'selected':''}" data-studio-tag="${safe(tag.id)}" title="${safe(tag.name)}">
+        <span class="studio-tag-indicator">${checked?'✓':''}</span><span class="studio-tag-meta"><strong>${safe(tag.name)}</strong><small>${safe(device?.name||'Signal')} · ${safe(tag.dataType||'')}${tag.unit?' · '+safe(tag.unit):''}</small></span><em>${safe(tagAddressText(tag))}</em></button>`;
+    }).join('')+(all.length>160?`<div class="studio-muted">${all.length-160} more signals. Refine your search…</div>`:''):`<div class="studio-muted">${tr('Eşleşen Tag yok.','No matching signals.')}</div>`;
+    pool.querySelectorAll('[data-studio-tag]').forEach(node=>node.addEventListener('click', async ()=>{
+      const id=node.dataset.studioTag;
+      if(ui.selected.includes(id)) ui.selected=ui.selected.filter(x=>x!==id);
+      else if(ui.selected.length>=8){showToast(tr('Bir görünümde en fazla 8 Tag.','Maximum 8 signals per view.'));return;}
+      else ui.selected.push(id);
+      state.selectedTrendId=null;ui.viewId=null;state.trendPayload=null;ui.navigatorPayload=null;ui.cursors={A:null,B:null};
+      renderTrendList();renderTagPool();await refreshStudio(true);
+    }));
+  }
+
+  function renderCards(payload) {
+    const cards=el('trendLegend'),stats=el('trendStats');if(!cards||!stats)return;
+    const renderKey=ui.requestId+'|'+ui.selected.join(',')+'|'+JSON.stringify(ui.axes)+'|'+[...state.hiddenTrendTags].join(',');
+    if(ui.cardKey===renderKey)return;ui.cardKey=renderKey;
+    if(!ui.selected.length){cards.innerHTML='<div class="studio-muted">'+tr('Soldan Tag seçin.','Choose signals on the left.')+'</div>';stats.innerHTML='<div class="studio-muted">No signals selected.</div>';return;}
+    cards.innerHTML=ui.selected.map(id=>{
+      const tag=selectedTag(id), s=payload?.series.find(x=>x.tagId===id);
+      const last=[...(s?.points||[])].reverse().find(good);const hidden=state.hiddenTrendTags.has(id);
+      const limits=numericLimits(id),zone=last?valueZone(last.value,limits):'UNKNOWN';
+      const limitText=limits.map(d=>d.zone+' '+d.threshold).join(' · ');
+      return `<div class="studio-signal-card ${hidden?'hidden-series':''}"><div class="studio-card-row"><div class="studio-signal-label" data-studio-hide="${safe(id)}" title="Toggle signal"><span class="studio-legend-color" style="background:${safe(color(id))}"></span><span>${safe(tag?.name||id)}</span></div><select data-studio-axis="${safe(id)}" title="Y axis"><option value="left" ${ui.axes[id]!=='right'?'selected':''}>L axis</option><option value="right" ${ui.axes[id]==='right'?'selected':''}>R axis</option></select></div><strong style="color:${safe(zoneColor(zone,color(id)))}">${safe(valueText(id,last?.value))}</strong><div class="studio-card-foot"><span>${safe(tag?.dataType||'SIGNAL')}</span><span>${s?.sampleCount??0} pts</span></div>${limits.length?`<div class="studio-alarm-state" data-zone="${zone}"><b>${zone}</b><span title="Configured alarm setpoints">${safe(limitText)}</span></div>`:''}</div>`;
+    }).join('');
+    cards.querySelectorAll('[data-studio-hide]').forEach(node=>node.addEventListener('click',()=>{
+      const id=node.dataset.studioHide;if(state.hiddenTrendTags.has(id)) state.hiddenTrendTags.delete(id);else state.hiddenTrendTags.add(id);drawStudio();
+    }));
+    cards.querySelectorAll('[data-studio-axis]').forEach(node=>node.addEventListener('change',()=>{ui.axes[node.dataset.studioAxis]=node.value;drawStudio();}));
+    stats.innerHTML=ui.selected.map(id=>{
+      const t=selectedTag(id),s=payload?.series.find(x=>x.tagId===id);
+      return `<div class="studio-stat-line"><div><span class="studio-legend-color" style="width:7px;height:12px;border-radius:3px;background:${safe(color(id))}"></span><b>${safe(t?.name||id)}</b></div><div class="studio-quad"><div><span>MIN</span><b>${safe(valueText(id,s?.minimum,false))}</b></div><div><span>MAX</span><b>${safe(valueText(id,s?.maximum,false))}</b></div><div><span>AVG</span><b>${safe(valueText(id,s?.average,false))}</b></div><div><span>POINTS</span><b>${s?.sampleCount??0}</b></div></div></div>`;
+    }).join('');
+  }
+
+  async function loadContext(start,end,requestId) {
+    // Read-only existing Core endpoints; failures never block a trend plot.
+    const res=await Promise.allSettled([
+      api('/api/alarms/history?limit=500'), api('/api/batches?limit=100'), api('/api/alarms/definitions')
+    ]);
+    if(requestId!==ui.requestId)return;
+    const [alarms,batches,definitions]=res.map(x=>x.status==='fulfilled'&&Array.isArray(x.value)?x.value:[]);
+    ui.events.alarms=alarms.filter(a=>{const startMs=Date.parse(a.activeAt||'');const endMs=Date.parse(a.clearedAt||'')||Date.now();return Number.isFinite(startMs)&&startMs<=end&&endMs>=start;});
+    ui.events.batches=batches.filter(b=>{const startMs=Date.parse(b.startedAt||'');const endMs=Date.parse(b.endedAt||'')||Date.now();return Number.isFinite(startMs)&&startMs<=end&&endMs>=start;});
+    ui.events.definitions=definitions.length?definitions:(state.alarmDefinitions||[]);
+    if(ui.selectedEventKey&&!ui.events.alarms.some(a=>eventKey(a)===ui.selectedEventKey))ui.selectedEventKey=null;
+    ui.cardKey=null;renderContext();drawStudio();
+  }
+  function selectAlarmEvent(key) {
+    ui.selectedEventKey=key;
+    renderContext();drawStudio();
+    el('studioEventDetail')?.scrollIntoView?.({block:'nearest',behavior:'smooth'});
+  }
+  function renderContext() {
+    const box=el('studioEventList'),detail=el('studioEventDetail');if(!box||!detail)return;
+    const alarms=el('studioAlarmToggle')?.checked!==false?ui.events.alarms:[];
+    const batches=el('studioBatchToggle')?.checked!==false?ui.events.batches:[];
+    const entries=[...alarms.map(a=>({type:'alarm',name:a.text||a.sourceName||'Alarm',time:Date.parse(a.activeAt||''),detail:a.state||'ACTIVE',event:a,key:eventKey(a)})),
+      ...batches.map(b=>({type:'batch',name:b.batchNo||'Batch',time:Date.parse(b.startedAt||''),detail:b.state||'RUNNING'}))]
+      .sort((a,b)=>b.time-a.time).slice(0,50);
+    box.innerHTML=entries.length?entries.map(x=>x.type==='alarm'
+      ?`<button type="button" class="studio-event ${ui.selectedEventKey===x.key?'is-selected':''}" data-studio-event="${safe(x.key)}" title="${safe(tr('Alarm ayrıntısını göster','Show alarm details'))}"><span>⚑</span><span class="studio-event-copy"><strong>${safe(x.name)}</strong><small>${Number.isFinite(x.time)?safe(fmtTime(x.time)):''} · ${safe(x.detail)}</small></span><span class="studio-event-chevron">›</span></button>`
+      :`<div class="studio-event batch"><span>◈</span><span class="studio-event-copy"><strong>${safe(x.name)}</strong><small>${Number.isFinite(x.time)?safe(fmtTime(x.time)):''} · ${safe(x.detail)}</small></span></div>`).join('')
+      :`<div class="studio-muted">${tr('Bu aralıkta olay yok.','No events in this range.')}</div>`;
+    box.querySelectorAll('[data-studio-event]').forEach(node=>node.addEventListener('click',()=>selectAlarmEvent(node.dataset.studioEvent)));
+    const selected=alarms.find(a=>eventKey(a)===ui.selectedEventKey);
+    if(!selected){detail.classList.add('hidden');detail.innerHTML='';return;}
+    detail.classList.remove('hidden');
+    detail.innerHTML=`<div class="studio-detail-head"><strong>⚑ ${safe(selected.text||'Alarm')}</strong><button type="button" id="studioCloseEvent" aria-label="Close event detail">×</button></div>
+      <div class="studio-detail-grid"><span>${tr('Kaynak','Source')}</span><b>${safe(selected.sourceName||selected.tagId||'System')}</b>
+      <span>${tr('Öncelik','Priority')}</span><b>${safe(selected.priority||'—')}</b>
+      <span>ACTIVE</span><b>${safe(fmtTime(Date.parse(selected.activeAt)))}</b>
+      <span>ACK</span><b>${selected.acknowledgedAt?safe(fmtTime(Date.parse(selected.acknowledgedAt))):'—'}</b>
+      <span>CLEARED</span><b>${selected.clearedAt?safe(fmtTime(Date.parse(selected.clearedAt))):'—'}</b>
+      <span>${tr('Durum','State')}</span><b>${safe(selected.state||'—')}</b></div>`;
+    el('studioCloseEvent')?.addEventListener('click',()=>{ui.selectedEventKey=null;renderContext();drawStudio();});
+  }
+
+  async function refreshStudio(force=false) {
+    if(!el('page-trends'))return;
+    setSelectedFromSaved();renderTagPool();
+    if(!ui.selected.length){state.trendPayload=null;drawStudio();return;}
+    const now=Date.now();
+    if((ui.loading && !force) || (!force && now<ui.nextAllowed))return;
+    if(!ui.live && !force)return;
+    let range;
+    try{
+      // LIVE is always a moving window ending NOW; dates apply only when paused.
+      if(ui.live){const end=Date.now();range={from:new Date(end-ui.liveWindowMinutes*60000),to:new Date(end)};}
+      else range=currentTrendRange();
+    }catch(err){showToast(err.message);return;}
+    const requestId=++ui.requestId;ui.loading=true;el('studioDataStatus').textContent='READING CORE…';
+    try{
+      const selected=[...ui.selected];
+      const query='?from='+encodeURIComponent(range.from.toISOString())+'&to='+encodeURIComponent(range.to.toISOString())+'&maxPoints=1800';
+      const url=(state.selectedTrendId && selectedTrend() && JSON.stringify(selectedTrend().tagIds)===JSON.stringify(selected))
+        ?`/api/trends/${state.selectedTrendId}/points${query}`
+        :`/api/trend-studio/series?tagIds=${encodeURIComponent(selected.join(','))}&${query.slice(1)}`;
+      const payload=await api(url);
+      if(requestId!==ui.requestId)return;
+      state.trendPayload=payload;ui.range={from:Date.parse(payload.from),to:Date.parse(payload.to)};
+      if(!ui.navigatorPayload || (ui.live && el('trendRange').value!=='custom'))ui.navigatorPayload=payload;
+      ui.nextAllowed=Date.now()+3700;ui.loading=false;ui.lastRefreshAt=Date.now();
+      el('studioDataStatus').textContent='CORE CONNECTED';drawStudio();
+      void loadContext(ui.range.from,ui.range.to,requestId);
+    }catch(error){
+      if(requestId!==ui.requestId)return;
+      ui.loading=false;el('studioDataStatus').textContent='CORE QUERY FAILED';
+      el('studioTimeText').textContent=error.message||'Could not query historian';
+      showToast(error.message||'Trend data unavailable');
+      drawStudio();
+    }
+  }
+
+  function updateSampleHealth(series,windowEnd) {
+    const badge=el('studioSampleHealth');if(!badge)return;
+    const samples=series.flatMap(s=>(s.points||[]).filter(good).map(p=>ms(p))).filter(t=>Number.isFinite(t)&&t>0);
+    if(!samples.length){badge.textContent=tr('Kayıt bulunamadı','No recorded samples');badge.dataset.health='empty';return;}
+    const latest=Math.max(...samples),age=Math.max(0,Date.now()-latest);
+    // Warning, not a claim about why samples stopped. Core may have slow historian intervals.
+    const expected=series.map(s=>state.historianConfigurations?.find?.(c=>c.configuration?.tagId===s.tagId)?.configuration?.sampleIntervalSeconds).filter(x=>Number.isFinite(Number(x))&&Number(x)>0);
+    const threshold=expected.length?Math.max(45000,Math.max(...expected)*3000):6*60000;
+    const stale=ui.live && age>threshold;
+    const secs=Math.round(age/1000),lag=secs<60?secs+'s':Math.round(secs/60)+'m';
+    badge.textContent=(stale?tr('Yeni kayıt yok · ','No new samples · '):tr('Son kayıt · ','Latest sample · '))+fmtTime(latest)+(ui.live?' · '+lag+' ago':'');
+    badge.dataset.health=stale?'stale':'good';
+    badge.title=stale?tr('Grafik durmadı; Core Historian son örneği belirtilen zamanda kaydetmiş. Tag kalitesini ve Historian kayıt ayarını kontrol edin.','Chart is still running, but Core Historian has no newer samples. Check tag quality and recording settings.'):'';
+  }
+
+  function updateModeControls(){
+    const custom=el('trendCustomRange');
+    if(custom){custom.classList.toggle('hidden',ui.live);custom.querySelectorAll('input,button').forEach(n=>n.disabled=ui.live);}
+    const apply=el('trendApplyRange');if(apply)apply.disabled=ui.live;
+    const navigator=el('studioNavigator');if(navigator){navigator.style.cursor=ui.live?'default':'ew-resize';navigator.title=ui.live?tr('Geçmiş aralık seçmek için LIVE düğmesine basıp durdurun.','Pause LIVE to browse historical ranges.'):'';}
+  }
+
+  function buildAxes(payload,w,h) {
+    const margin={left:73,right:ui.selected.some(id=>ui.axes[id]==='right')?75:20,top:29,bottom:42};
+    const plot={x:margin.left,y:margin.top,w:Math.max(80,w-margin.left-margin.right),h:h-margin.top-margin.bottom};
+    const bounds={left:[],right:[]};
+    payload.series.forEach(s=>{
+      if(state.hiddenTrendTags.has(s.tagId))return;
+      const values=bounds[ui.axes[s.tagId]==='right'?'right':'left'];
+      (s.points||[]).filter(good).forEach(p=>{const v=Number(p.value);if(Number.isFinite(v))values.push(v);});
+      // Include every configured threshold even when it lies outside the sampled range,
+      // and even when threshold *lines* are hidden. This is an alarm-aware Y auto-scale.
+      numericLimits(s.tagId).forEach(d=>values.push(d.threshold));
+    });
+    const axis={};for(const side of ['left','right']){
+      const values=bounds[side];let min=values.length?Math.min(...values):0,max=values.length?Math.max(...values):1;
+      if(min===max){const span=Math.max(Math.abs(min)*.1,1);min-=span;max+=span;}
+      const pad=(max-min)*.1;
+      axis[side]={min:min-pad,max:max+pad};
+    }
+    const from=Date.parse(payload.from),to=Date.parse(payload.to),span=Math.max(1,to-from);
+    return {plot,axis,from,to,x:ts=>plot.x+(ts-from)/span*plot.w,y:(v,side='left')=>plot.y+(axis[side].max-v)/(axis[side].max-axis[side].min)*plot.h};
+  }
+  function canvasSetup(canvas,height) {
+    if(!canvas)return null;
+    const width=Math.max(300,Math.floor(canvas.getBoundingClientRect().width||canvas.parentElement?.clientWidth||800));
+    const dpr=Math.min(2,window.devicePixelRatio||1);
+    canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);canvas.style.height=height+'px';
+    const ctx=canvas.getContext('2d');if(!ctx)return null;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);
+    return {ctx,width,height};
+  }
+  function line(ctx,x1,y1,x2,y2){ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
+  function drawThresholdSegments(ctx,x1,v1,x2,v2,toY,limits,base) {
+    if(x2<x1){[x1,x2]=[x2,x1];[v1,v2]=[v2,v1];}
+    const fractions=[0,1];
+    if(v1!==v2)for(const d of limits){const t=(d.threshold-v1)/(v2-v1);if(t>0&&t<1)fractions.push(t);}
+    fractions.sort((a,b)=>a-b);
+    const cuts=fractions.filter((v,i)=>i===0||v-fractions[i-1]>1e-9);
+    for(let i=1;i<cuts.length;i++){
+      const a=cuts[i-1],b=cuts[i],mid=(a+b)/2;
+      ctx.strokeStyle=zoneColor(valueZone(v1+(v2-v1)*mid,limits),base);
+      line(ctx,x1+(x2-x1)*a,toY(v1+(v2-v1)*a),x1+(x2-x1)*b,toY(v1+(v2-v1)*b));
+    }
+  }
+  function drawSignal(ctx,points,mapper,limits,base,isDigital) {
+    let last=null,gapFrom=null;
+    ctx.lineWidth=2.4;ctx.lineJoin='round';ctx.lineCap='round';
+    for(const pt of points||[]){const x=mapper.x(ms(pt));if(!good(pt)){
+      if(gapFrom===null)gapFrom=x;last=null;continue;
+    }
+      const v=Number(pt.value),y=mapper.y(v);
+      if(gapFrom!==null){ctx.save();ctx.fillStyle='rgba(241,106,134,.07)';ctx.fillRect(Math.min(gapFrom,x),mapper.top,Math.max(3,Math.abs(x-gapFrom)),mapper.height);ctx.restore();gapFrom=null;}
+      if(last){
+        if(isDigital){ctx.strokeStyle=base;line(ctx,last.x,last.y,x,last.y);line(ctx,x,last.y,x,y);}
+        else drawThresholdSegments(ctx,last.x,last.v,x,v,mapper.y,limits,base);
+      }else{ctx.fillStyle=zoneColor(valueZone(v,limits),base);ctx.fillRect(x-1.2,y-1.2,2.4,2.4);}
+      last={x,y,v};
+    }
+  }
+  function axisLabel(n){const a=Math.abs(n);return a>=100000?Math.round(n).toLocaleString():a>=100?Number(n).toFixed(0):a>=10?Number(n).toFixed(1):Number(n).toFixed(2);}
+  function drawStudio() {
+    const canvas=el('trendCanvas'),pack=canvasSetup(canvas,window.innerWidth<680?345:446);if(!pack)return;
+    const {ctx,width,height}=pack;
+    const payload=state.trendPayload;
+    el('trendChartTitle').textContent=title();renderCards(payload);
+    const visible=payload?.series?.filter(s=>ui.selected.includes(s.tagId)&&!state.hiddenTrendTags.has(s.tagId))||[];
+    const hasPoints=visible.some(s=>s.points?.length);
+    el('trendChartEmpty').classList.toggle('hidden',!!hasPoints);
+    if(!payload||!hasPoints){ui.flagHits=[];const badge=el('studioSampleHealth');if(badge){badge.textContent='No recorded samples in range';badge.dataset.health='empty';}state.trendChartModel=null;el('studioPointCount').textContent='0 samples';el('studioTimeText').textContent=tr('Tag seçin veya kayıtlı görünüm açın.','Select signals or open a saved view.');updateCursorResult();drawNavigator();return;}
+    const m=buildAxes(payload,width,height),p=m.plot;
+    state.trendChartModel={left:p.x,top:p.y,plotW:p.w,plotH:p.h,fromMs:m.from,toMs:m.to,min:m.axis.left.min,max:m.axis.left.max};
+    el('studioTimeText').textContent=fmtTime(m.from)+'  →  '+fmtTime(m.to)+'  ·  '+(ui.live?'● LIVE · rolling window':'Ⅱ PAUSED · fixed range');
+    el('studioPointCount').textContent=visible.reduce((n,s)=>n+(s.points?.length||0),0).toLocaleString()+' rendered points';
+    updateSampleHealth(visible,m.to);
+    ctx.fillStyle=state.theme==='light'?'#517182':'#728fa2';ctx.font='11px Segoe UI, sans-serif';
+    ctx.save();ctx.strokeStyle=state.theme==='light'?'rgba(58,103,131,.13)':'rgba(100,151,179,.13)';ctx.lineWidth=1;
+    for(let i=0;i<=5;i++){
+      const y=p.y+(p.h*i/5);line(ctx,p.x,y,p.x+p.w,y);
+      const vl=m.axis.left.max-(m.axis.left.max-m.axis.left.min)*i/5;
+      ctx.fillStyle=state.theme==='light'?'#52758b':'#7196a9';ctx.textAlign='right';ctx.fillText(axisLabel(vl),p.x-13,y+4);
+      if(ui.selected.some(id=>ui.axes[id]==='right')){const vr=m.axis.right.max-(m.axis.right.max-m.axis.right.min)*i/5;ctx.textAlign='left';ctx.fillText(axisLabel(vr),p.x+p.w+12,y+4);}
+    }
+    for(let i=0;i<=5;i++){
+      const x=p.x+p.w*i/5;line(ctx,x,p.y,x,p.y+p.h);
+      ctx.textAlign='center';const stamp=m.from+(m.to-m.from)*i/5;ctx.fillText(new Date(stamp).toLocaleString(state.language==='tr'?'tr-TR':'en-US',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),x,height-12);
+    }
+    ctx.restore();
+    ctx.save();ctx.beginPath();ctx.rect(p.x,p.y,p.w,p.h);ctx.clip();
+    // Lot windows are shaded behind signals and can overlap adjacent batches.
+    if(el('studioBatchToggle')?.checked){ui.events.batches.forEach(b=>{
+      const from=Date.parse(b.startedAt),to=Date.parse(b.endedAt)||Date.now();if(to<m.from||from>m.to)return;
+      const x1=m.x(Math.max(from,m.from)),x2=m.x(Math.min(to,m.to));
+      ctx.fillStyle=state.theme==='light'?'rgba(37,178,154,.065)':'rgba(49,225,184,.055)';ctx.fillRect(x1,p.y,Math.max(2,x2-x1),p.h);
+      ctx.fillStyle='rgba(63,215,177,.62)';ctx.font='10px Segoe UI';ctx.textAlign='left';ctx.fillText((b.batchNo||'LOT').slice(0,22),Math.max(p.x+3,x1+6),p.y+17);
+    });}
+    // Numeric threshold overlays can be hidden independently of alarm flags.
+    if(el('studioThresholdToggle')?.checked)for(const id of ui.selected){if(state.hiddenTrendTags.has(id))continue;
+      for(const d of numericLimits(id)){
+        const side=ui.axes[id]==='right'?'right':'left',y=m.y(d.threshold,side);if(y<p.y||y>p.y+p.h)continue;
+        ctx.strokeStyle=d.zone==='HIGH'?'rgba(255,108,130,.8)':'rgba(246,175,92,.8)';ctx.setLineDash([6,5]);ctx.lineWidth=1.2;line(ctx,p.x,y,p.x+p.w,y);ctx.setLineDash([]);
+        ctx.font='bold 10px Segoe UI';ctx.fillStyle=d.zone==='HIGH'?'#ff9aab':'#f6bf80';ctx.textAlign='right';
+        ctx.fillText((d.zone+' '+d.threshold+' · '+(d.text||'')).slice(0,42),p.x+p.w-8,Math.max(p.y+12,y-6));
+      }
+    }
+    // GOOD samples only: threshold crossing is split precisely where it happens;
+    // BAD/STALE points break the line and are never connected artificially.
+    for(const s of visible){
+      const side=ui.axes[s.tagId]==='right'?'right':'left',digital=String(selectedTag(s.tagId)?.dataType||'').toLowerCase()==='bool';
+      drawSignal(ctx,s.points,{x:m.x,y:v=>m.y(v,side),top:p.y,height:p.h},numericLimits(s.tagId),color(s.tagId),digital);
+    }
+    ui.flagHits=[];
+    if(el('studioAlarmToggle')?.checked && el('studioFlagToggle')?.checked){
+      const grouped=new Map();
+      for(const a of ui.events.alarms){const t=Date.parse(a.activeAt);if(!Number.isFinite(t)||t<m.from||t>m.to)continue;
+        const bucket=Math.round(m.x(t)/12);if(!grouped.has(bucket))grouped.set(bucket,[]);grouped.get(bucket).push(a);
+      }
+      for(const events of grouped.values()){
+        const a=events[0],time=Date.parse(a.activeAt),x=m.x(time),selected=events.some(e=>eventKey(e)===ui.selectedEventKey);
+        ctx.save();ctx.strokeStyle=selected?'#ffe6a1':'rgba(255,105,127,.55)';ctx.setLineDash([3,5]);line(ctx,x,p.y+24,x,p.y+p.h);ctx.setLineDash([]);
+        ctx.fillStyle=selected?'#ffe6a1':'#ff879b';ctx.beginPath();ctx.moveTo(x-7,p.y+7);ctx.lineTo(x+7,p.y+7);ctx.lineTo(x,p.y+20);ctx.closePath();ctx.fill();
+        if(events.length>1){ctx.fillStyle='#0b2333';ctx.font='bold 10px Segoe UI';ctx.textAlign='center';ctx.fillText(events.length,x,p.y+5);}
+        if(selected){ctx.strokeStyle='#ffe6a1';ctx.lineWidth=1.5;ctx.strokeRect(x-10,p.y+2,20,22);}
+        ui.flagHits.push({x,y:p.y+12,events});ctx.restore();
+      }
+    }
+    for(const [key,timestamp] of Object.entries(ui.cursors)){
+      if(!Number.isFinite(timestamp)||timestamp<m.from||timestamp>m.to)continue;const x=m.x(timestamp);
+      ctx.strokeStyle=key==='A'?'#f8c773':'#ba9cfe';ctx.lineWidth=1.6;ctx.setLineDash([6,3]);line(ctx,x,p.y,x,p.y+p.h);ctx.setLineDash([]);
+      ctx.fillStyle=key==='A'?'#f8c773':'#ba9cfe';ctx.fillRect(x-11,p.y,22,17);ctx.fillStyle='#0b2333';ctx.font='bold 11px Segoe UI';ctx.textAlign='center';ctx.fillText(key,x,p.y+12);
+    }
+    if(ui.hover && ui.hover.time>=m.from && ui.hover.time<=m.to){
+      const x=m.x(ui.hover.time);ctx.strokeStyle='rgba(212,244,253,.69)';ctx.lineWidth=1;ctx.setLineDash([3,4]);line(ctx,x,p.y,x,p.y+p.h);ctx.setLineDash([]);
+      for(const s of visible){const pt=nearestPoint(s.points,ui.hover.time);if(!good(pt))continue;
+        const side=ui.axes[s.tagId]==='right'?'right':'left',py=m.y(+pt.value,side),px=m.x(ms(pt));if(Math.abs(px-x)>p.w*.12)continue;
+        ctx.beginPath();ctx.fillStyle=color(s.tagId);ctx.strokeStyle='#071b2a';ctx.lineWidth=2;ctx.arc(px,py,4,0,Math.PI*2);ctx.fill();ctx.stroke();
+      }
+    }
+    ctx.restore();updateTooltip(m);updateCursorResult();drawNavigator();
+  }
+
+  function nearestPoint(points,at){if(!points?.length)return null;let l=0,r=points.length-1;
+    while(l<r){const mid=Math.floor((l+r)/2);if(ms(points[mid])<at)l=mid+1;else r=mid;}
+    return l>0&&Math.abs(ms(points[l-1])-at)<Math.abs(ms(points[l])-at)?points[l-1]:points[l];
+  }
+  function updateTooltip(m) {
+    const tip=el('trendTooltip');if(!tip)return;
+    if(!ui.hover){tip.classList.add('hidden');return;}
+    const rows=(state.trendPayload?.series||[]).filter(s=>ui.selected.includes(s.tagId)&&!state.hiddenTrendTags.has(s.tagId)).map(s=>{
+      const pt=nearestPoint(s.points,ui.hover.time),tag=selectedTag(s.tagId);
+      return `<div style="display:flex;gap:9px;align-items:center;justify-content:space-between;margin:8px 0"><span style="display:flex;align-items:center;gap:7px;color:#accddb"><i style="display:inline-block;width:7px;height:7px;background:${safe(color(s.tagId))};border-radius:50%"></i>${safe(tag?.name||s.tagId)}</span><b style="color:${good(pt)?'#eaf7fb':'#ff9b9c'}">${safe(good(pt)?valueText(s.tagId,pt.value):String(pt?.quality||'NO DATA').toUpperCase())}</b></div>`;
+    }).join('');
+    tip.innerHTML=`<div style="color:#79e0ed;font-weight:750">${safe(fmtTime(ui.hover.time))}</div>${rows}`;
+    tip.style.left=Math.min(ui.hover.x+14,Math.max(8,m.plot.x+m.plot.w-245))+'px';tip.style.top=Math.min(ui.hover.y+16,m.plot.y+m.plot.h-165)+'px';tip.classList.remove('hidden');
+  }
+  function updateCursorResult() {
+    const box=el('studioCursorResult'),bar=el('studioCompareBar');if(!box||!bar)return;
+    const A=ui.cursors.A,B=ui.cursors.B;
+    const heading=`<div class="studio-compare-title"><b>${tr('A / B Karşılaştırma','A / B comparison')}</b><button class="studioResetCursors" type="button">${tr('İmleçleri temizle','Clear cursors')} ×</button></div>`;
+    if(A==null&&B==null){
+      const hint=ui.activeCursor?tr(ui.activeCursor+' seçili: yerleştirmek için grafiğe tıkla.',ui.activeCursor+' selected: click the chart to place it.')
+        :tr('Önce A’ya tıkla ve grafiğe yerleştir. Ardından B’yi yerleştir; zaman ve değer farkları burada görünür.','Click A and place it on the chart, then place B. Time and value differences appear here.');
+      box.textContent=hint;bar.classList.toggle('hidden',!ui.activeCursor);if(ui.activeCursor)bar.innerHTML=heading+'<p>'+safe(hint)+'</p>';
+      bar.querySelector('.studioResetCursors')?.addEventListener('click',clearCursors);return;
+    }
+    let html=heading+`<div class="studio-ab-times"><span><b class="cursor-a">A</b> ${A==null?'—':safe(fmtTime(A))}</span><span><b class="cursor-b">B</b> ${B==null?'—':safe(fmtTime(B))}</span></div>`;
+    if(A!=null&&B!=null){const dt=B-A,absolute=Math.abs(dt),sign=dt<0?'-':'',h=Math.floor(absolute/3600000),mi=Math.floor(absolute%3600000/60000),sec=Math.floor(absolute%60000/1000);
+      html+=`<div class="studio-delta-time">Δt ${sign}${h?h+'h ':''}${mi}m ${sec}s</div>`;
+      html+='<div class="studio-ab-table"><div class="studio-ab-header"><span>TAG</span><span>A</span><span>B</span><span>Δ B−A</span></div>';
+      for(const s of state.trendPayload?.series||[]){if(!ui.selected.includes(s.tagId)||state.hiddenTrendTags.has(s.tagId))continue;
+        const a=nearestPoint(s.points,A),b=nearestPoint(s.points,B),valid=good(a)&&good(b);
+        const delta=valid?Number(b.value)-Number(a.value):null;
+        html+=`<div class="studio-ab-row"><span>${safe(selectedTag(s.tagId)?.name||s.tagId)}</span><span>${safe(good(a)?valueText(s.tagId,a.value):'—')}</span><span>${safe(good(b)?valueText(s.tagId,b.value):'—')}</span><strong>${safe(delta==null?'—':(delta>=0?'+':'')+valueText(s.tagId,delta))}</strong></div>`;
+      }
+      html+='</div>';
+    }else html+=`<p>${tr('Diğer imleci de seçip grafiğe tıkla.','Choose the other cursor and click the chart.')}</p>`;
+    box.innerHTML=html;bar.innerHTML=html;bar.classList.remove('hidden');
+    [box,bar].forEach(area=>area.querySelector('.studioResetCursors')?.addEventListener('click',clearCursors));
+  }
+  function clearCursors(){ui.cursors={A:null,B:null};ui.activeCursor=null;syncUi();drawStudio();}
+
+  function drawNavigator() {
+    const navKey=ui.requestId+'|'+ui.range?.from+'|'+ui.range?.to+'|'+ui.selected.join(',');
+    if(ui.navKey===navKey)return;ui.navKey=navKey;
+    const nav=el('studioNavigator'),set=canvasSetup(nav,58);if(!set)return;const {ctx,width,height}=set;
+    const payload=ui.navigatorPayload||state.trendPayload;if(!payload?.series?.length)return;
+    const a=Date.parse(payload.from),b=Date.parse(payload.to),span=Math.max(1,b-a),pad=6;
+    const s=payload.series.find(x=>x.points?.some(good));if(!s)return;const vals=s.points.filter(good).map(x=>+x.value);if(!vals.length)return;
+    const min=Math.min(...vals),max=Math.max(...vals),denom=Math.max(1e-9,max-min);
+    ctx.save();ctx.strokeStyle='rgba(51,210,228,.7)';ctx.lineWidth=1.35;ctx.beginPath();let began=false;
+    for(const p of s.points){if(!good(p)){began=false;continue;}
+      const x=pad+(ms(p)-a)/span*(width-2*pad),y=8+(max-Number(p.value))/denom*(height-17);
+      if(!began){ctx.moveTo(x,y);began=true;}else ctx.lineTo(x,y);
+    }ctx.stroke();
+    const range=ui.range;if(range){const x1=pad+Math.max(0,(range.from-a)/span)*(width-2*pad),x2=pad+Math.min(1,(range.to-a)/span)*(width-2*pad);
+      ctx.fillStyle='rgba(66,196,218,.1)';ctx.fillRect(x1,0,Math.max(3,x2-x1),height);ctx.strokeStyle='rgba(105,239,252,.65)';ctx.strokeRect(x1+.5,.5,Math.max(2,x2-x1-1),height-1);
+      ctx.fillStyle='rgba(1,11,24,.38)';ctx.fillRect(0,0,Math.max(0,x1),height);ctx.fillRect(x2,0,Math.max(0,width-x2),height);
+    }ctx.restore();
+  }
+
+  function chartPosition(event){const canvas=el('trendCanvas'),model=state.trendChartModel;if(!canvas||!model)return null;
+    const rect=canvas.getBoundingClientRect(),x=(event.clientX-rect.left)*(canvas.clientWidth/Math.max(1,rect.width)),y=(event.clientY-rect.top)*(canvas.clientHeight/Math.max(1,rect.height));
+    if(x<model.left||x>model.left+model.plotW||y<model.top||y>model.top+model.plotH)return null;
+    const time=model.fromMs+(x-model.left)/model.plotW*(model.toMs-model.fromMs);return {x,y,time};
+  }
+  function setExplicitRange(from,to) {
+    if(!Number.isFinite(from)||!Number.isFinite(to)||to-from<1500)return;
+    el('trendRange').value='custom';el('trendRange').dataset.userChanged='1';el('trendFrom').value=dateToLocalInput(new Date(from));el('trendTo').value=dateToLocalInput(new Date(to));
+    if(ui.live){ui.liveWindowMinutes=Math.max(.05,(to-from)/60000);const chosen=String(ui.liveWindowMinutes);el('trendRange').value=['5','15','60','480','1440','10080'].includes(chosen)?chosen:'60';syncUi();syncTrendRangePills();void refreshStudio(true);return;}
+    ui.live=false;syncUi();updateModeControls();syncTrendRangePills();void refreshStudio(true);
+  }
+  function syncUi(){const button=el('studioLive');button?.classList.toggle('active',ui.live);
+    if(button){button.innerHTML='<i></i> '+(ui.live?'LIVE · PAUSE':'Ⅱ PAUSED · RESUME');button.setAttribute('aria-pressed',String(ui.live));}
+    updateModeControls();
+    for(const k of ['A','B']){const button=el('studioCursor'+k);button?.classList.toggle('active',ui.activeCursor===k);button?.setAttribute('aria-pressed',String(ui.activeCursor===k));}
+    updateCursorResult();
+  }
+
+  async function exportCsv(event) {
+    event?.preventDefault();event?.stopImmediatePropagation();
+    const payload=state.trendPayload;if(!payload){showToast('Select signals first.');return;}
+    // Saved views use the Core RAW CSV export (not decimated chart samples).
+    if(state.selectedTrendId && selectedTrend() && ui.selected.join()===selectedTrend().tagIds.join()){
+      const start=new Date(payload.from).toISOString(),end=new Date(payload.to).toISOString();
+      const url=`/api/historian/export.csv?trendId=${encodeURIComponent(state.selectedTrendId)}&from=${encodeURIComponent(start)}&to=${encodeURIComponent(end)}`;
+      try{const response=await fetch(url);if(!response.ok)throw Error('CSV export '+response.status);
+        const blob=await response.blob();saveBlob(blob,'PROGNODE_TrendStudio_RAW.csv');return;
+      }catch(e){showToast(e.message);return;}
+    }
+    // Ad-hoc views have no saved trend ID: export only displayed/downsampled points.
+    const rows=['Timestamp UTC;Tag;Value;Quality;Export detail'];
+    for(const s of payload.series||[]){const tag=selectedTag(s.tagId);for(const p of s.points||[]){const q=x=>'"'+String(x??'').replaceAll('"','""')+'"';rows.push([q(p.timestamp),q(tag?.name||s.tagId),p.value??'',q(p.quality),q('displayed points (downsampled)')].join(';'));}}
+    saveBlob(new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8'}),'PROGNODE_TrendStudio_VISIBLE.csv');
+    showToast(tr('Kaydedilmemiş görünüm: grafikteki örnekler dışa aktarıldı.','Ad-hoc view: exported plotted samples, not full raw historian.'));
+  }
+  function saveBlob(blob,filename){const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+  function exportPng(event){event?.preventDefault();event?.stopImmediatePropagation();
+    const canvas=el('trendCanvas');if(!state.trendPayload){showToast('No chart data.');return;}
+    canvas.toBlob(blob=>{if(blob)saveBlob(blob,'PROGNODE_TrendStudio_'+new Date().toISOString().slice(0,10)+'.png');},'image/png');
+  }
+
+  function install() {
+    if(ui.initialized||!el('page-trends'))return;ui.initialized=true;
+    // Legacy shell retains its routes, saved-view editor and access control. We replace
+    // only the chart/query renderer and attach Studio-specific interactions.
+    drawTrendChart=()=>{if(ui.drawQueued)return;ui.drawQueued=true;requestAnimationFrame(()=>{ui.drawQueued=false;drawStudio();});};
+    refreshTrendPoints=()=>refreshStudio(false);
+    // The old interval captures refreshTrendPoints at startup, so it now invokes Studio.
+    el('studioTagSearch')?.addEventListener('input',renderTagPool);
+    el('trendsAddTrend')?.addEventListener('click',event=>{
+      event.preventDefault();event.stopImmediatePropagation();
+      openAddTrendModal();
+      if(!el('trendModal')?.classList.contains('hidden') && ui.selected.length)
+        populateTrendTagChecklist(ui.selected,ui.selected.map(id=>color(id)));
+    },true);
+    el('studioClearTags')?.addEventListener('click',async()=>{
+      state.selectedTrendId=null;ui.viewId=null;ui.selected=[];state.hiddenTrendTags.clear();state.trendPayload=null;ui.navigatorPayload=null;ui.events={alarms:[],batches:[],definitions:[]};ui.selectedEventKey=null;ui.flagHits=[];renderTrendList();renderTagPool();drawStudio();
+    });
+    el('studioLive')?.addEventListener('click',()=>{
+      ui.live=!ui.live;
+      if(!ui.live){
+        // Freeze the exact visible window; only now enable From / To editing.
+        const frozen=ui.range||{from:Date.now()-ui.liveWindowMinutes*60000,to:Date.now()};
+        el('trendRange').value='custom';el('trendRange').dataset.userChanged='1';
+        el('trendFrom').value=dateToLocalInput(new Date(frozen.from));
+        el('trendTo').value=dateToLocalInput(new Date(frozen.to));
+      }else{
+        el('trendRange').value=String([5,15,60,480,1440,10080].includes(ui.liveWindowMinutes)?ui.liveWindowMinutes:60);
+        if(![5,15,60,480,1440,10080].includes(ui.liveWindowMinutes))ui.liveWindowMinutes=60;
+        ui.hover=null;ui.navigatorPayload=null;
+      }
+      syncUi();syncTrendRangePills();if(ui.live)void refreshStudio(true);else drawStudio();
+    });
+    el('studioRefresh')?.addEventListener('click',()=>refreshStudio(true));
+    el('studioZoomOut')?.addEventListener('click',()=>{const range=ui.range;if(!range)return;const mid=(range.from+range.to)/2,span=(range.to-range.from)*2;setExplicitRange(mid-span/2,mid+span/2);});
+    el('trendAutoFit')?.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();
+      const base=ui.navigatorPayload;if(base && ui.range && (ui.range.from>Date.parse(base.from)||ui.range.to<Date.parse(base.to))){setExplicitRange(Date.parse(base.from),Date.parse(base.to));return;}
+      el('trendRange').value='60';ui.live=true;ui.liveWindowMinutes=60;syncUi();syncTrendRangePills();void refreshStudio(true);
+    },true);
+    for(const key of ['A','B'])el('studioCursor'+key)?.addEventListener('click',()=>{
+      ui.activeCursor=ui.activeCursor===key?null:key;
+      // Freeze the current LIVE frame for a reliable A/B time comparison.
+      if(ui.activeCursor&&ui.live){ui.live=false;const frozen=ui.range||{from:Date.now()-ui.liveWindowMinutes*60000,to:Date.now()};
+        el('trendRange').value='custom';el('trendRange').dataset.userChanged='1';
+        el('trendFrom').value=dateToLocalInput(new Date(frozen.from));el('trendTo').value=dateToLocalInput(new Date(frozen.to));}
+      syncUi();drawStudio();
+    });
+    el('trendExportCsv')?.addEventListener('click',exportCsv,true);
+    el('trendExportPng')?.addEventListener('click',exportPng,true);
+    for(const id of ['studioAlarmToggle','studioBatchToggle','studioFlagToggle','studioThresholdToggle'])el(id)?.addEventListener('change',()=>{renderContext();drawStudio();});
+    el('trendRangePills')?.addEventListener('click',e=>{
+      const b=e.target.closest('[data-range-value]');if(!b)return;
+      const chosen=b.dataset.rangeValue;
+      if(chosen==='custom' && ui.live){
+        // Custom dates are a PAUSED-only action. Do not silently stop a running trend.
+        e.preventDefault();e.stopImmediatePropagation();
+        showToast(tr('Önce LIVE düğmesiyle trendi durdurun.','Pause LIVE before selecting custom dates.'));return;
+      }
+      if(ui.live){
+        ui.liveWindowMinutes=Number(chosen);ui.navigatorPayload=null;
+        // Keep LIVE running when its rolling duration changes.
+      }
+      if(!ui.live && chosen!=='custom'){
+        // Paused presets adjust the fixed window without starting LIVE or moving to now.
+        e.preventDefault();e.stopImmediatePropagation();
+        const end=ui.range?.to??Date.now();setExplicitRange(end-Number(chosen)*60000,end);
+        ui.cursors={A:null,B:null};return;
+      }
+      ui.cursors={A:null,B:null};syncUi();
+      // Existing range-pill handler updates the select and fetches current samples.
+    },true);
+    el('trendApplyRange')?.addEventListener('click',()=>{if(ui.live)return;syncUi();queueMicrotask(()=>refreshStudio(true));},true);
+    const chart=el('trendCanvas');
+    chart?.addEventListener('pointerdown',e=>{
+      const pos=chartPosition(e);if(!pos)return;
+      // A chart flag is a real interactive event: clicking opens details, never removes it.
+      if(el('studioAlarmToggle')?.checked&&el('studioFlagToggle')?.checked){
+        const hit=ui.flagHits.find(h=>Math.abs(pos.x-h.x)<=13&&Math.abs(pos.y-h.y)<=15);
+        if(hit){selectAlarmEvent(eventKey(hit.events[0]));return;}
+      }
+      if(ui.activeCursor){ui.cursors[ui.activeCursor]=pos.time;ui.activeCursor=null;syncUi();drawStudio();return;}
+      ui.drag={start:pos.x,end:pos.x,startTime:pos.time};chart.setPointerCapture?.(e.pointerId);
+    });
+    chart?.addEventListener('pointermove',e=>{
+      const pos=chartPosition(e);
+      ui.hover=pos;
+      const flagHover=pos&&ui.flagHits.some(h=>Math.abs(pos.x-h.x)<=13&&Math.abs(pos.y-h.y)<=15);
+      chart.style.cursor=flagHover?'pointer':(ui.activeCursor?'crosshair':'crosshair');
+      if(ui.drag){ui.drag.end=pos?.x??ui.drag.end;const d=el('studioDragBox');if(d){const x1=Math.min(ui.drag.start,ui.drag.end),x2=Math.max(ui.drag.start,ui.drag.end);d.style.left=x1+'px';d.style.width=Math.max(1,x2-x1)+'px';d.classList.toggle('hidden',Math.abs(x2-x1)<4);}}
+      if(state.trendPayload)drawTrendChart();
+    });
+    chart?.addEventListener('pointerup',e=>{
+      if(!ui.drag)return;const end=chartPosition(e),start=ui.drag.startTime;
+      el('studioDragBox')?.classList.add('hidden');const dx=Math.abs((end?.x??ui.drag.end)-ui.drag.start);ui.drag=null;
+      if(dx>16 && end)setExplicitRange(Math.min(start,end.time),Math.max(start,end.time));
+    });
+    chart?.addEventListener('pointercancel',()=>{ui.drag=null;el('studioDragBox')?.classList.add('hidden');});
+    chart?.addEventListener('pointerleave',()=>{if(!ui.drag){ui.hover=null;drawStudio();}});
+    // Intentionally no wheel listener: mouse wheel must scroll the page, never zoom the chart.
+    chart?.addEventListener('dblclick',e=>{e.preventDefault();const base=ui.navigatorPayload;
+      if(base)setExplicitRange(Date.parse(base.from),Date.parse(base.to));else if(ui.live){ui.liveWindowMinutes=60;el('trendRange').value='60';syncUi();void refreshStudio(true);}
+    });
+    el('studioNavigator')?.addEventListener('click',e=>{
+      if(ui.live){showToast(tr('Önce trendi durdurun.','Pause LIVE to navigate historical time.'));return;}
+      const base=ui.navigatorPayload||state.trendPayload;if(!base)return;
+      const canvas=e.currentTarget,rect=canvas.getBoundingClientRect(),ratio=Math.max(0,Math.min(1,(e.clientX-rect.left)/Math.max(1,rect.width)));
+      const start=Date.parse(base.from),end=Date.parse(base.to),span=ui.range?ui.range.to-ui.range.from:(end-start)*.33;
+      const at=start+(end-start)*ratio;setExplicitRange(Math.max(start,at-span/2),Math.min(end,at+span/2));
+    });
+    const priorRender=renderTrendList;
+    renderTrendList=function(){priorRender();setSelectedFromSaved();renderTagPool();};
+    window.addEventListener('resize',()=>drawStudio());
+    const monitor=new MutationObserver(()=>{if(state.page==='trends'&&state.selectedTrendId) setSelectedFromSaved();});
+    monitor.observe(el('trendList'),{childList:true});
+    renderTagPool();syncUi();drawStudio();
+  }
+  install();
+  window.addEventListener('pageshow',()=>{if(!ui.initialized)install();});
+  // Expose pure helpers for local smoke tests without PLC data.
+  ui._test={nearestPoint,good,numericLimits,valueZone,zoneColor,drawThresholdSegments,buildAxes,eventKey};
+})();
+</script>
+<pre id="smokeOutput" style="position:fixed;z-index:1000;right:10px;top:10px;background:#124;padding:10px"></pre>
+<script>
+async function test(){
+ const studio=window.PrognodeStudio;
+ studio.selected=['temperature'];document.getElementById('studioRefresh').click();
+ await new Promise(r=>setTimeout(r,140));
+ const errs=[];
+ const assert=(a,msg)=>{if(!a)errs.push(msg)};
+ assert(studio.flagHits.length===1,'flag rendered');
+ assert(studio.events.definitions.length===2,'definitions loaded');
+ const ctx=studio._test.buildAxes(state.trendPayload,1100,446);
+ assert(ctx.axis.left.min===8 && ctx.axis.left.max===32,'alarm-aware autoscale');
+ document.getElementById('studioCursorA').click();
+ assert(studio.live===false,'A selection pauses live');
+ const canvas=document.getElementById('trendCanvas'),rect=canvas.getBoundingClientRect();
+ const point=(x,y)=>canvas.dispatchEvent(new PointerEvent('pointerdown',{clientX:rect.left+x,clientY:rect.top+y,bubbles:true}));
+ point(ctx.plot.x+ctx.plot.w*.2,ctx.plot.y+ctx.plot.h*.5);
+ assert(studio.cursors.A!=null,'A placed');
+ document.getElementById('studioCursorB').click();
+ point(ctx.plot.x+ctx.plot.w*.8,ctx.plot.y+ctx.plot.h*.5);
+ assert(studio.cursors.B!=null,'B placed');
+ assert(document.getElementById('studioCompareBar').textContent.includes('Δt'),'visible A/B delta');
+ const flag=studio.flagHits[0];
+ point(flag.x,flag.y);
+ assert(studio.selectedEventKey===studio._test.eventKey(alarm),'flag click selects event');
+ assert(!document.getElementById('studioEventDetail').classList.contains('hidden'),'event detail opened');
+ assert(studio.flagHits.length===1,'flag remains visible after click');
+ document.getElementById('studioFlagToggle').click();
+ assert(studio.flagHits.length===0,'flag hidden by toggle');
+ assert(!document.getElementById('studioEventDetail').classList.contains('hidden'),'event detail persists after hiding flags');
+ document.getElementById('smokeOutput').textContent=errs.length?'FAIL: '+errs.join(', '):'PASS: browser chart + cursor comparison + flags + event details + autoscale';
+ document.body.dataset.smoke=errs.length?'FAIL':'PASS';
+}
+setTimeout(()=>test().catch(e=>{document.getElementById('smokeOutput').textContent='ERROR '+e.stack;document.body.dataset.smoke='FAIL'}),250);
+</script></body></html>

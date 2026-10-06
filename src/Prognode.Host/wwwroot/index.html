@@ -1,0 +1,1743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PROGNODE</title>
+  <link rel="icon" type="image/png" href="/assets/prognode-favicon.png" />
+  <link rel="shortcut icon" href="/assets/prognode.ico" />
+  <link rel="stylesheet" href="/styles.css?v=0.7.2-rc6.4.7-hf5-ui-stabilization" />
+  <link rel="stylesheet" href="/trend-studio.css?v=0.7.2-rc6.4.7-hf5-ui-stabilization" />
+  <link rel="stylesheet" href="/hf5-ui.css?v=0.7.2-rc6.4.7-hf5-ui-stabilization" />
+  <link rel="stylesheet" href="/hf5-1-customer-polish.css?v=0.7.2-rc6.4.7-hf5.1-sidebar" />
+<style>
+/* RC6.4.5 HF2: Trend Studio is native to the Core shell, not a second application. */
+body:has(#page-trends.active){overflow:hidden}
+body:has(#page-trends.active) .app-shell{height:100dvh;min-height:0}
+body:has(#page-trends.active) .main{display:flex;flex-direction:column;height:100dvh;min-height:0;overflow:hidden}
+body:has(#page-trends.active) .topbar{flex:0 0 auto}
+body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0!important;margin:0;min-height:0;flex:1 1 auto;overflow:hidden}
+#page-trends.active{position:relative;display:block;height:100%;min-height:0;padding:0!important;margin:0!important}
+.fullscreen-trend-mount{display:none;position:absolute;inset:0;z-index:1;background:var(--bg)}
+#page-trends.active .fullscreen-trend-mount{display:block}
+.fullscreen-trend-mount iframe{display:block;width:100%;height:100%;border:0;background:var(--bg)}
+#legacyTrendContainer{display:none!important}
+/* The existing B1 mark and existing navigation are retained across every page. */
+.app-shell.sidebar-collapsed{grid-template-columns:68px minmax(0,1fr)!important}
+.sidebar-collapsed .sidebar{padding-left:7px!important;padding-right:7px!important}
+.sidebar-collapsed .brand{justify-content:center;padding-left:0;padding-right:0;gap:0}
+.sidebar-collapsed .brand-copy,.sidebar-collapsed .nav-section,.sidebar-collapsed .nav-item span:not(.nav-icon),.sidebar-collapsed .sidebar-footer div:last-child{display:none!important}
+.sidebar-collapsed .brand-logo{height:42px!important;width:42px!important;flex:0 0 42px!important;object-fit:contain}
+.sidebar-collapsed .nav-item{justify-content:center;padding:0!important;width:100%}
+.sidebar-collapsed .nav-item .nav-icon{font-size:20px!important;margin:0}
+.sidebar-collapsed .sidebar-footer{justify-content:center}
+</style>
+  <link rel="stylesheet" href="/customer-v2.css?v=20261004-auto-sidebar-modes3" />
+  <link rel="stylesheet" href="/customer-hf61.css?v=20261004-bulk-management" />
+<link rel="stylesheet" href="/mobile-device-access.css?v=hf64" />
+<link rel="stylesheet" href="/manual-pairing.css?v=hf65" />
+</head>
+<body class="customer-v2">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand brand-website" id="brandWebsite" href="https://prognode.io/" target="_blank" rel="noopener noreferrer" aria-label="Visit PROGNODE website" title="Visit PROGNODE website">
+        <span class="brand-logo-wrap"><img class="brand-logo" id="brandLogo" src="/assets/prognode.png" alt="PROGNODE" /></span>
+        <span class="brand-copy"><strong>PROGNODE</strong><span data-i18n="industrialMonitoring">Industrial Monitoring</span></span>
+      </a>
+
+      <div class="sidebar-current" aria-live="polite">
+        <span class="sidebar-current-kicker" data-i18n="localSystem">LOCAL SYSTEM</span>
+        <strong id="pageTitle">Overview</strong>
+        <small id="pageSubtitle" data-i18n="plantPerformance">Plant performance at a glance</small>
+      </div>
+      <nav class="nav">
+        <div class="nav-section" data-i18n="operations">OPERATIONS</div>
+        <button class="nav-item active" data-page="overview">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span>
+          <span data-i18n="overview">Overview</span>
+        </button>
+        <button class="nav-item" data-page="devices">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="4" y="3" width="16" height="7" rx="1"/><rect x="4" y="14" width="16" height="7" rx="1"/><path d="M8 6h.01M8 17h.01"/></svg></span>
+          <span data-i18n="devices">Devices</span>
+          <span class="nav-count" id="navDeviceCount">0</span>
+        </button>
+        <button class="nav-item" data-page="tags">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M3 12h5l3-6 3 12 3-6h4"/></svg></span>
+          <span data-i18n="tags">Tags</span>
+          <span class="nav-count" id="navTagCount">0</span>
+        </button>
+        <button class="nav-item" data-page="alarms">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="m12 3 10 18H2L12 3Z"/><path d="M12 9v5M12 17h.01"/></svg></span>
+          <span data-i18n="alarms">Alarms</span>
+          <span class="nav-count" id="navAlarmCount" title="Configured alarm definitions">0</span>
+        </button>
+        <button class="nav-item" data-page="trends">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M3 20h18M3 20V4M6 15l5-5 4 3 5-7"/></svg></span>
+          <span data-i18n="trends">Trends</span>
+          <span class="nav-count" id="navTrendCount" title="Historian signals available in Trend Studio">0</span>
+        </button>
+        <button class="nav-item" data-page="historian">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 4 16 4 16 0V5M4 12c0 4 16 4 16 0"/></svg></span>
+          <span data-i18n="historian">Historian</span>
+          <span class="nav-count" id="navHistorianCount" title="Recorded tags">0</span>
+        </button>
+<div class="nav-section nav-section-system" data-i18n="system">SYSTEM</div>
+<button class="nav-item" data-page="notifications">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></span>
+          <span data-i18n="notifications">Notifications</span>
+          <span class="nav-count hidden" id="navNotificationCount">0</span>
+        </button>
+<button class="nav-item" data-page="license">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M12 2 20 5v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5Z"/><path d="m8 12 3 3 5-6"/></svg></span>
+          <span data-i18n="license">License</span>
+        </button>
+<button class="nav-item" data-page="settings">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.3-6.3-1.4 1.4M7.1 16.9l-1.4 1.4m12.6 0-1.4-1.4M7.1 7.1 5.7 5.7"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg></span>
+          <span data-i18n="settings">Settings</span>
+        </button>
+      </nav>
+
+      <div class="access-banner hidden" id="readOnlyBanner">
+        <div><strong data-i18n="viewOnly">VIEW ONLY</strong><span data-i18n="viewOnlyHelp">Live monitoring remains available. Import a valid license and sign in to change configuration.</span></div>
+        <button class="secondary" id="bannerOpenLicense" data-i18n="openLicensePage">Open License</button>
+      </div>
+
+      <div class="sidebar-utility" aria-label="PROGNODE controls">
+        <div class="sidebar-status-line"><div class="system-pill" id="systemHealthPill">
+            <span class="health-dot ok" id="systemHealthDot"></span>
+            <span id="systemHealthLabel">System stable</span>
+          </div><button class="alarm-bell hidden" id="alarmBell" title="Active alarms" aria-label="Active alarms">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+            </svg>
+            <span class="alarm-bell-count" id="alarmBellCount">0</span>
+          </button></div>
+        <div class="server-clock" id="serverClock" title="PROGNODE Core PC time">
+            <span class="server-clock-time" id="serverClockTime">--:--:--</span>
+            <span class="server-clock-date" id="serverClockDate">--.--.----</span>
+          </div>
+        <div class="sidebar-preferences"><button class="theme-toggle" id="themeToggle" title="Dark / Light">
+            <span id="themeIcon">☾</span>
+          </button><div class="language-switch" title="Language / Dil">
+            <button id="langEN">EN</button>
+            <button id="langTR">TR</button>
+          </div></div>
+        <button class="account-pill" id="accountButton" title="Local account">
+            <span class="account-avatar" id="accountAvatar">P</span>
+            <span class="account-copy">
+              <strong id="accountName">Sign in</strong>
+            </span>
+          </button>
+      </div>
+      <div class="sidebar-footer">
+        <div class="health-dot ok"></div>
+        <div>
+          <strong data-i18n="coreRunning">Core Running</strong>
+          <span id="sidebarVersion">v0.7.2-rc6.4.7-hf6.5-manual-pairing</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <button class="mobile-menu mobile-shell-menu" id="mobileMenu" type="button" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">☰</button>
+      <header class="customer-toolbar" aria-label="Workspace">
+        <div class="customer-crumb"><span>PROGNODE</span><span aria-hidden="true">/</span><strong id="customerPageName">Overview</strong></div>
+        <div class="customer-tools"><span class="customer-core-pill"><span class="health-dot ok" id="customerCoreDot"></span><span id="customerCoreText">Checking Core</span></span><span class="customer-local-badge" id="customerLocalLabel">LOCAL · ON-SITE</span><button type="button" class="customer-notification-button" id="customerNotification" title="Notifications" aria-label="Notifications"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></button></div>
+      </header>
+      <div class="content">
+        <section class="page active" id="page-overview">
+          <section class="customer-overview" aria-label="Site overview">
+            <div class="customer-heading"><div><div class="customer-eyebrow" data-customer-en="YOUR WORKSPACE" data-customer-tr="ÇALIŞMA ALANINIZ">YOUR WORKSPACE</div><h1 data-customer-en="Overview" data-customer-tr="Genel Bakış">Overview</h1><p data-customer-en="One clear view of your local industrial monitoring system." data-customer-tr="Yerel endüstriyel izleme sisteminiz tek ekranda.">One clear view of your local industrial monitoring system.</p></div><div class="customer-heading-actions"><span class="customer-signal"><span class="health-dot ok"></span><span id="customerLiveStatus">Local monitoring</span></span></div></div>
+            <div class="customer-intro customer-intro-empty" id="customerIntroEmpty">
+              <div class="customer-intro-copy"><span class="customer-intro-kicker">✦ <span data-customer-en="QUICK START" data-customer-tr="HIZLI BAŞLANGIÇ">QUICK START</span></span><h2 data-customer-en="Your monitoring journey starts here." data-customer-tr="İzleme yolculuğunuz burada başlıyor.">Your monitoring journey starts here.</h2><p data-customer-en="Connect your first PLC, select important signals and turn live plant data into actionable alarms, history and trends. Your data stays on this PC." data-customer-tr="İlk PLC'nizi bağlayın, önemli sinyalleri seçin. Tesis verilerini alarmlara, geçmiş kayıtlara ve trendlere dönüştürün. Veriler bu bilgisayarda kalır.">Connect your first PLC, select important signals and turn live plant data into actionable alarms, history and trends. Your data stays on this PC.</p><div class="customer-intro-actions"><button type="button" class="customer-primary" id="customerAddFirstDevice" data-customer-en="Connect a device →" data-customer-tr="Cihaz bağla →">Connect a device →</button><button type="button" id="customerGuidedSetup" class="customer-intro-link" data-customer-en="Guided setup · Around 15 minutes →" data-customer-tr="Yönlendirmeli kurulum · Yaklaşık 15 dakika →">Guided setup · Around 15 minutes →</button></div></div>
+              <div class="customer-steps"><div><span class="customer-step-index">01</span><span><strong data-customer-en="Activate your license" data-customer-tr="Lisansı etkinleştir">Activate your license</strong><small data-customer-en="Import your signed .pgnlicense" data-customer-tr="İmzalı .pgnlicense dosyanızı yükleyin">Import your signed .pgnlicense</small></span><b id="customerStepLicense">—</b></div><div><span class="customer-step-index">02</span><span><strong data-customer-en="Connect a device" data-customer-tr="Cihaz bağlayın">Connect a device</strong><small data-customer-en="PLC or supported industrial source" data-customer-tr="PLC veya desteklenen endüstriyel cihaz">PLC or supported industrial source</small></span><b id="customerStepDevice">—</b></div><div><span class="customer-step-index">03</span><span><strong data-customer-en="Select live signals" data-customer-tr="Canlı sinyal seçin">Select live signals</strong><small data-customer-en="Tags, alarm and recording rules" data-customer-tr="Tag, alarm ve kayıt kuralları">Tags, alarm and recording rules</small></span><b id="customerStepSignals">—</b></div></div>
+            </div>
+            <div class="customer-intro customer-intro-ready" id="customerIntroReady" hidden><div><span class="customer-intro-kicker">● <span data-customer-en="ON-SITE MONITORING" data-customer-tr="YEREL İZLEME">ON-SITE MONITORING</span></span><h2 data-customer-en="A clear picture of your critical processes." data-customer-tr="Kritik proseslerinizi tek ekranda görün.">A clear picture of your critical processes.</h2><p data-customer-en="Your local devices, live signals and alarms. No cloud connection required." data-customer-tr="Yerel cihazlarınız, canlı sinyalleriniz ve alarmlarınız. Bulut bağlantısı gerekmez.">Your local devices, live signals and alarms. No cloud connection required.</p></div><button id="customerOpenTrends" class="customer-primary" type="button" data-customer-en="Open Trend Studio →" data-customer-tr="Trend Studio'yu aç →">Open Trend Studio →</button></div>
+            <div class="customer-kpis"><button class="customer-kpi" data-customer-page="devices" type="button"><span class="customer-kpi-top"><span data-customer-en="CONNECTED DEVICES" data-customer-tr="BAĞLI CİHAZLAR">CONNECTED DEVICES</span><span class="customer-kpi-icon">▣</span></span><strong id="customerDeviceCount">0</strong><small data-customer-en="Your local device connections" data-customer-tr="Yerel cihaz bağlantılarınız">Your local device connections</small></button><button class="customer-kpi" data-customer-page="alarms" type="button"><span class="customer-kpi-top"><span data-customer-en="ACTIVE ALARMS" data-customer-tr="AKTİF ALARMLAR">ACTIVE ALARMS</span><span class="customer-kpi-icon">△</span></span><strong id="customerAlarmCount">0</strong><small data-customer-en="Conditions requiring attention" data-customer-tr="İlgilenilmesi gereken durumlar">Conditions requiring attention</small></button><button class="customer-kpi" data-customer-page="historian" type="button"><span class="customer-kpi-top"><span>HISTORIAN</span><span class="customer-kpi-icon">▤</span></span><strong id="customerRecordingCount">—</strong><small id="customerHistorianHelp" data-customer-en="Set up local signal recording" data-customer-tr="Yerel sinyal kaydını ayarlayın">Set up local signal recording</small></button></div>
+            <div class="customer-overview-bottom" id="customerEmptyBottom"><article class="customer-panel"><div class="customer-panel-head"><div><h3 data-customer-en="Plant activity" data-customer-tr="Tesis etkinliği">Plant activity</h3><p data-customer-en="Trends and events will appear here as signals arrive." data-customer-tr="Sinyaller geldikçe trendler ve olaylar burada görünecek.">Trends and events will appear here as signals arrive.</p></div><button type="button" data-customer-page="trends" class="customer-text-action" data-customer-en="Open Trend Studio →" data-customer-tr="Trend Studio →">Open Trend Studio →</button></div><div class="customer-empty-activity"><span class="customer-empty-icon">⌁</span><strong data-customer-en="No data to display yet" data-customer-tr="Henüz görüntülenecek veri yok">No data to display yet</strong><p data-customer-en="Your first live signals will appear after setup." data-customer-tr="İlk canlı sinyaller kurulumdan sonra görünecek.">Your first live signals will appear after setup.</p></div></article><article class="customer-panel customer-help"><h3 data-customer-en="Deployment checklist" data-customer-tr="Kurulum kontrol listesi">Deployment checklist</h3><p data-customer-en="Everything needed to bring this site online." data-customer-tr="Tesisi izlemeye başlamak için gerekli adımlar.">Everything needed to bring this site online.</p><div class="customer-help-card"><span class="customer-help-icon">♢</span><div><strong data-customer-en="Designed to work offline" data-customer-tr="Çevrimdışı çalışmak üzere tasarlandı">Designed to work offline</strong><p data-customer-en="Local monitoring, historian and LAN clients work without cloud connectivity." data-customer-tr="Yerel izleme, historian ve LAN istemcileri bulut olmadan çalışır.">Local monitoring, historian and LAN clients work without cloud connectivity.</p><button type="button" class="customer-text-action" data-customer-page="settings" data-customer-en="Explore system settings →" data-customer-tr="Sistem ayarları →">Explore system settings →</button></div></div><hr/><button type="button" class="customer-text-action" data-customer-page="license" data-customer-en="Go to license setup →" data-customer-tr="Lisans ayarlarına git →">Go to license setup →</button></article></div>
+          </section>
+          <div id="customerLegacyOverview">
+
+          <section class="overview-command-strip" id="overviewCommandStrip">
+            <div class="overview-posture">
+              <div class="overview-posture-heading">
+                <span class="overview-status-beacon" id="overviewStatusBeacon" aria-hidden="true"></span>
+                <span class="panel-kicker" data-i18n="operationalStatus">OPERATIONAL STATUS</span>
+              </div>
+              <strong id="overviewPosture">System stable</strong>
+              <small id="overviewPostureDetail">No active critical conditions</small>
+              <span class="overview-refresh"><span class="health-dot ok"></span><span id="overviewLastRefresh">Live local status</span></span>
+            </div>
+
+            <div class="overview-command-facts">
+              <div><span data-i18n="connectivity">Connectivity</span><strong id="overviewConnectivity">0/0 online</strong><small id="overviewConnectivityDetail">No devices configured</small></div>
+              <div><span data-i18n="alarmPosture">Alarm posture</span><strong id="overviewAlarmPosture">Clear</strong><small id="overviewAlarmDetail">No active alarms</small></div>
+              <div><span data-i18n="recordingState">Local recording</span><strong id="overviewRecordingPosture">Not configured</strong><small id="overviewRecordingDetail">Historian idle</small></div>
+              <div><span data-i18n="coreHealth">Core Health</span><strong id="overviewCorePosture">Healthy</strong><small id="overviewCoreDetail">PROGNODE Core</small></div>
+              <div><span data-i18n="license">License</span><strong id="overviewLicensePosture">—</strong><small id="overviewLicenseDetail">Local entitlement</small></div>
+            </div>
+
+          </section>
+
+          <div class="metric-grid overview-metric-grid">
+            <article class="metric-card overview-metric-card">
+              <div class="metric-card-heading"><span class="metric-icon"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2"></rect><path d="M9 8h6M9 12h6M10 16h4"></path></svg></span><span data-i18n="totalDevices">Total Devices</span></div>
+              <strong id="metricDevices">0</strong>
+              <small id="metricDevicesSub">No devices configured</small>
+              <span class="metric-card-chevron">›</span>
+            </article>
+            <article class="metric-card overview-metric-card">
+              <div class="metric-card-heading"><span class="metric-icon"><svg viewBox="0 0 24 24"><path d="M20 13 13 20 4 11V4h7l9 9Z"></path><circle cx="8.5" cy="8.5" r="1"></circle></svg></span><span data-i18n="liveTags">Live Tags</span></div>
+              <strong id="metricTags">0</strong>
+              <small id="metricTagsSub">No live Tags yet</small>
+              <span class="metric-card-chevron">›</span>
+            </article>
+            <article class="metric-card overview-metric-card alarm-metric">
+              <div class="metric-card-heading"><span class="metric-icon"><svg viewBox="0 0 24 24"><path d="M12 3 21 20H3L12 3Z"></path><path d="M12 9v4M12 17h.01"></path></svg></span><span data-i18n="activeAlarms">Active Alarms</span></div>
+              <strong id="metricActiveAlarms">0</strong>
+              <small id="metricAlarmSub">No active alarms</small>
+              <span class="metric-card-chevron">›</span>
+            </article>
+            <article class="metric-card overview-metric-card">
+              <div class="metric-card-heading"><span class="metric-icon"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="7" ry="3"></ellipse><path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"></path></svg></span><span data-i18n="recordingTags">Recording Tags</span></div>
+              <strong id="metricRecordingTags">0</strong>
+              <small id="metricRecordingSub">Historian not configured</small>
+              <span class="metric-card-chevron">›</span>
+            </article>
+            <article class="metric-card overview-metric-card">
+              <div class="metric-card-heading"><span class="metric-icon"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"></path><path d="m7 15 4-4 3 2 4-6"></path></svg></span><span data-i18n="historianPointsToday">Historian Points</span></div>
+              <strong id="metricHistorianPoints">0</strong>
+              <small id="metricHistorianSub">Persistent local samples</small>
+              <span class="metric-card-chevron">›</span>
+            </article>
+            <article class="metric-card overview-metric-card">
+              <div class="metric-card-heading"><span class="metric-icon"><svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3.4 8.2-8 10-4.6-1.8-8-5-8-10V6l8-3Z"></path><path d="m8.5 12 2.2 2.2L15.8 9"></path></svg></span><span data-i18n="coreHealth">Core Health</span></div>
+              <strong class="healthy-text" id="metricCoreHealth" data-i18n="healthy">Healthy</strong>
+              <small id="metricCoreVersion">PROGNODE</small>
+              <span class="metric-card-chevron">›</span>
+            </article>
+          </div>
+
+          <div id="overviewOperational">
+            <div class="overview-operations-row">
+              <article class="panel overview-device-health">
+                <div class="overview-panel-title"><div><span class="panel-title-icon">◉</span><span class="panel-kicker" data-i18n="deviceHealth">DEVICE HEALTH</span></div><strong id="overviewDeviceHealthHeading">0 Devices</strong></div>
+                <div class="device-health-content">
+                  <div class="device-health-donut" id="overviewDeviceDonut"><div><strong id="overviewDeviceTotal">0</strong><span data-i18n="devices">Devices</span></div></div>
+                  <div class="device-health-legend">
+                    <div><span class="legend-dot online"></span><span data-i18n="online">Online</span><strong id="overviewDeviceOnline">0</strong><em id="overviewDeviceOnlinePct">0%</em></div>
+                    <div><span class="legend-dot degraded"></span><span data-i18n="degraded">Degraded</span><strong id="overviewDeviceDegraded">0</strong><em id="overviewDeviceDegradedPct">0%</em></div>
+                    <div><span class="legend-dot offline"></span><span data-i18n="offline">Offline</span><strong id="overviewDeviceOffline">0</strong><em id="overviewDeviceOfflinePct">0%</em></div>
+                    <div><span class="legend-dot maintenance"></span><span data-i18n="maintenance">Maintenance</span><strong id="overviewDeviceMaintenance">0</strong><em id="overviewDeviceMaintenancePct">0%</em></div>
+                  </div>
+                </div>
+                <button class="overview-panel-button" id="overviewOpenDevices" data-i18n="viewAllDevices">View All Devices →</button>
+              </article>
+
+              <article class="panel overview-feed overview-alarms-panel">
+                <div class="overview-panel-title"><div><span class="panel-title-icon">◉</span><span class="panel-kicker" data-i18n="activeAlarms">ACTIVE ALARMS</span></div><strong class="alarm-count-heading" id="overviewAlarmHeading">0 Active</strong></div>
+                <div id="overviewAlarmList" class="overview-list"></div>
+                <button class="overview-panel-button" id="overviewOpenAlarms" data-i18n="viewAllAlarms">View All Alarms →</button>
+              </article>
+
+              <article class="panel overview-feed overview-notifications-panel">
+                <div class="overview-panel-title"><div><span class="panel-title-icon">◉</span><span class="panel-kicker" data-i18n="recentNotifications">RECENT NOTIFICATIONS</span></div><strong class="notification-count-heading" id="overviewNotificationHeading">0 Recent</strong></div>
+                <div id="overviewNotificationList" class="overview-list"></div>
+                <button class="overview-panel-button align-right" id="overviewOpenNotifications" data-i18n="viewAllNotifications">View All Notifications →</button>
+              </article>
+            </div>
+
+            <div class="overview-bottom-row">
+              <article class="panel historian-overview-panel">
+                <div class="overview-panel-title"><div><span class="panel-title-icon">◉</span><span class="panel-kicker" data-i18n="historianRecordingStatus">HISTORIAN / RECORDING STATUS</span></div><strong id="overviewHistorianHeading">Recording 0 tags</strong></div>
+                <div class="historian-overview-content">
+                  <div class="historian-overview-stats">
+                    <div><strong id="overviewHistorianPoints">0</strong><span data-i18n="historianPoints">Historian Points</span></div>
+                    <div><strong id="overviewHistorianDb">0 B</strong><span data-i18n="databaseSize">Database Size</span></div>
+                    <div><strong id="overviewRecordingTags">0</strong><span data-i18n="recordingTags">Recording Tags</span></div>
+                    <div><strong id="overviewHistorianQuality">Good</strong><span data-i18n="quality">Quality</span></div>
+                  </div>
+                  <div class="historian-mini-chart"><span data-i18n="pointsByTag">Points by recording tag</span><div id="overviewHistorianActivity" class="historian-bar-row"></div></div>
+                </div>
+              </article>
+
+              <article class="panel quick-actions-panel">
+                <div class="overview-panel-title"><div><span class="panel-title-icon">ϟ</span><span class="panel-kicker" data-i18n="quickActions">QUICK ACTIONS</span></div></div>
+                <div class="quick-action-grid quick-action-grid-pro">
+                  <button class="quick-action" id="opAddDevice"><span>＋</span><strong data-i18n="addDevice">Add Device</strong></button>
+                  <button class="quick-action" id="opAddTag"><span>◇</span><strong data-i18n="addTag">Add Tag</strong></button>
+                  <button class="quick-action" id="opAddAlarm"><span>△</span><strong data-i18n="addAlarm">Create Alarm</strong></button>
+                  <button class="quick-action" id="opHistorian"><span>◉</span><strong data-i18n="addToHistorian">Add to Historian</strong></button>
+                  <button class="quick-action" id="opTrend"><span>▥</span><strong data-i18n="createTrend">Create Trend</strong></button>
+                  <button class="quick-action" id="opImport"><span>⇧</span><strong data-i18n="importCsv">Import CSV</strong></button>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+        </section>
+
+        <section class="page" id="page-devices">
+          <div class="page-actions">
+            <div>
+              <span class="kicker" data-i18n="fieldConnectivity">FIELD CONNECTIVITY</span>
+              <h2 data-i18n="devices">Devices</h2>
+              <p data-i18n="devicesText">Add PLCs, meters, drives, RTUs and other industrial data sources.</p>
+            </div>
+            <button class="primary" id="devicesAddDevice" data-i18n="addDevicePlus">+ Add Device</button>
+          </div>
+
+          <div class="page-data-tools page-data-tools-3">
+            <button class="data-tool-card" id="devicesImport"><span class="data-tool-kicker" data-i18n="importLabel">IMPORT</span><strong data-i18n="devicesCsv">Devices CSV</strong><small data-i18n="devicesImportHelp">Bulk device commissioning with validation preview.</small><b data-i18n="chooseCsvArrow">Choose CSV →</b></button>
+            <button class="data-tool-card" id="devicesExport"><span class="data-tool-kicker" data-i18n="exportLabel">EXPORT</span><strong data-i18n="devicesCsv">Devices CSV</strong><small data-i18n="exportDevicesHelp">Download device and communication configuration.</small><b data-i18n="downloadArrow">Download ↓</b></button>
+            <button class="data-tool-card" data-template="devices"><span class="data-tool-kicker" data-i18n="templateLabel">TEMPLATE</span><strong>Devices.csv</strong><small data-i18n="devicesTemplateHelp">Excel-friendly clean commissioning template.</small><b data-i18n="templateArrow">Template ↓</b></button>
+          </div>
+
+          <article class="panel">
+            <div class="table-toolbar">
+              <div class="search-box">
+                <span>⌕</span>
+                <input id="deviceSearch" placeholder="Search devices..." />
+              </div>
+              <select class="table-filter" id="deviceProtocolFilter" aria-label="Filter devices by protocol">
+                <option value="">All protocols</option>
+                <option value="Modbus TCP">Modbus TCP</option>
+                <option value="Siemens S7 TCP">Siemens S7 TCP</option>
+                <option value="MQTT">MQTT</option>
+                <option value="OPC UA">OPC UA</option>
+              </select>
+              <select class="table-filter" id="deviceStatusFilter" aria-label="Filter devices by status"><option value="">All statuses</option></select>
+              <select class="table-filter" id="deviceSort" aria-label="Sort devices">
+                <option value="name-asc">Name A–Z</option><option value="name-desc">Name Z–A</option>
+                <option value="protocol">Protocol</option><option value="created-desc">Newest</option><option value="created-asc">Oldest</option>
+              </select>
+              <span class="table-meta" id="deviceTableMeta">0 devices</span>
+            </div>
+
+            <div class="empty-state" id="deviceEmpty">
+              <div class="empty-icon">◫</div>
+              <h3 data-i18n="noDevicesYet">No devices yet</h3>
+              <p data-i18n="noDevicesText">
+                Connect a PLC, meter, drive, RTU or another supported industrial device.
+              </p>
+              <button class="primary" id="emptyAddDevice" data-i18n="addDevicePlus">+ Add Device</button>
+            </div>
+
+            <div class="table-wrap hidden" id="deviceTableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th aria-label="Select"></th>
+                    <th data-i18n="device">Device</th>
+                    <th data-i18n="protocol">Protocol</th>
+                    <th data-i18n="status">Status</th>
+                    <th data-i18n="host">Host</th>
+                    <th data-i18n="poll">Poll</th>
+                    <th data-i18n="created">Created</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="deviceTableBody"></tbody>
+              </table>
+            </div>
+            <div class="table-pager hidden" id="devicePager">
+              <label><span id="deviceRowsLabel">Rows</span> <select id="devicePageSize" aria-label="Devices per page"><option>10</option><option selected>25</option><option>50</option><option>100</option></select></label>
+              <button id="devicePrevPage" type="button">‹</button><span id="devicePageInfo">1 / 1</span><button id="deviceNextPage" type="button">›</button>
+            </div>
+          </article>
+        </section>
+
+        <section class="page" id="page-tags">
+          <div class="page-actions">
+            <div>
+              <span class="kicker" data-i18n="tagRuntime">TAG RUNTIME</span>
+              <h2 data-i18n="tags">Tags</h2>
+              <p data-i18n="tagsText">Create live Modbus Tags and verify value, datatype, status and engineering display.</p>
+            </div>
+            <div class="tag-page-actions">
+              <div class="tag-capacity-inline" id="tagCapacityInline" title="License Tag capacity">
+                <span data-i18n="tagCapacity">TAG CAPACITY</span>
+                <strong id="tagCapacityUsed">—</strong>
+                <small id="tagCapacityRemaining">—</small>
+              </div>
+              <button class="primary" id="tagsAddTag" data-i18n="addTagPlus">+ Add Tag</button>
+            </div>
+          </div>
+
+          <div class="page-data-tools page-data-tools-3">
+            <button class="data-tool-card" id="tagsImport"><span class="data-tool-kicker" data-i18n="importLabel">IMPORT</span><strong data-i18n="tagsCsv">Tags CSV</strong><small data-i18n="tagsImportHelp">Addresses, datatypes, scaling and byte order.</small><b data-i18n="chooseCsvArrow">Choose CSV →</b></button>
+            <button class="data-tool-card" id="tagsExport"><span class="data-tool-kicker" data-i18n="exportLabel">EXPORT</span><strong data-i18n="tagsCsv">Tags CSV</strong><small data-i18n="tagsExportHelp">Download the current engineered Tag definition set.</small><b data-i18n="downloadArrow">Download ↓</b></button>
+            <button class="data-tool-card" data-template="tags"><span class="data-tool-kicker" data-i18n="templateLabel">TEMPLATE</span><strong>Tags.csv</strong><small data-i18n="tagsTemplateHelp">Excel-friendly bulk Tag engineering template.</small><b data-i18n="templateArrow">Template ↓</b></button>
+          </div>
+
+          <article class="panel">
+            <div class="table-toolbar">
+              <div class="search-box">
+                <span>⌕</span>
+                <input id="tagSearch" placeholder="Search tags..." />
+              </div>
+              <select class="table-filter" id="tagDeviceFilter" aria-label="Filter Tags by device"><option value="">All devices</option></select>
+              <select class="table-filter" id="tagTypeFilter" aria-label="Filter Tags by datatype">
+                <option value="">All datatypes</option><option value="Bool">BOOL</option><option value="Word">WORD</option>
+                <option value="UInt16">UINT16</option><option value="Int16">INT16</option><option value="UInt32">UINT32</option>
+                <option value="Int32">INT32</option><option value="Float32">FLOAT32</option>
+              </select>
+              <select class="table-filter" id="tagSort" aria-label="Sort Tags">
+                <option value="name-asc">Name A–Z</option><option value="name-desc">Name Z–A</option>
+                <option value="device">Device</option><option value="address">Address</option>
+              </select>
+              <span class="table-meta" id="tagTableMeta">0 tags</span>
+            </div>
+
+            <div class="empty-state" id="tagEmpty">
+              <div class="empty-icon">⌁</div>
+              <h3 data-i18n="noTagsYet">No tags yet</h3>
+              <p data-i18n="noTagsText">Add a Modbus Tag (for example 40001 or 30001) and PROGNODE will begin polling it immediately.</p>
+              <button class="primary" id="emptyAddTag" data-i18n="addTagPlus">+ Add Tag</button>
+            </div>
+
+            <div class="table-wrap hidden" id="tagTableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th aria-label="Select"></th>
+                    <th data-i18n="tag">Tag</th>
+                    <th data-i18n="device">Device</th>
+                    <th data-i18n="address">Address</th>
+                    <th data-i18n="datatype">Datatype</th>
+                    <th data-i18n="value">Value</th>
+                    <th data-i18n="dataStatus">Status</th>
+                    <th data-i18n="updated">Updated</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="tagTableBody"></tbody>
+              </table>
+            </div>
+            <div class="table-pager hidden" id="tagPager">
+              <label><span id="tagRowsLabel">Rows</span> <select id="tagPageSize" aria-label="Tags per page"><option>10</option><option selected>25</option><option>50</option><option>100</option></select></label>
+              <button id="tagPrevPage" type="button">‹</button><span id="tagPageInfo">1 / 1</span><button id="tagNextPage" type="button">›</button>
+            </div>
+          </article>
+        </section>
+
+        <section class="page" id="page-alarms">
+          <div class="page-actions">
+            <div>
+              <span class="kicker" data-i18n="alarmEngine">ALARM ENGINE</span>
+              <h2 data-i18n="alarms">Alarms</h2>
+              <p data-i18n="alarmsText">Create digital or numeric alarms, acknowledge active alarms and review persistent alarm history.</p>
+            </div>
+            <button class="primary" id="alarmsAddAlarm" data-i18n="addAlarmPlus">+ Add Alarm</button>
+          </div>
+
+          <div class="page-data-tools page-data-tools-4">
+            <button class="data-tool-card" id="alarmsImport"><span class="data-tool-kicker" data-i18n="importLabel">IMPORT</span><strong data-i18n="alarmDefinitions">Alarm Definitions</strong><small data-i18n="alarmsImportHelp">Bulk alarm rules, priorities, delays and notification flags.</small><b data-i18n="chooseCsvArrow">Choose CSV →</b></button>
+            <button class="data-tool-card" id="alarmsExport"><span class="data-tool-kicker" data-i18n="exportLabel">EXPORT</span><strong data-i18n="alarmDefinitions">Alarm Definitions</strong><small data-i18n="alarmsExportHelp">Download all configured alarm rules.</small><b data-i18n="downloadArrow">Download ↓</b></button>
+            <button class="data-tool-card" id="alarmHistoryExport"><span class="data-tool-kicker" data-i18n="historyLabel">HISTORY</span><strong data-i18n="alarmHistory">Alarm History</strong><small data-i18n="alarmHistoryExportHelp">Active / cleared occurrence history with durations.</small><b data-i18n="downloadArrow">Download ↓</b></button>
+            <button class="data-tool-card" data-template="alarms"><span class="data-tool-kicker" data-i18n="templateLabel">TEMPLATE</span><strong>AlarmDefinitions.csv</strong><small data-i18n="alarmsTemplateHelp">Excel-ready alarm commissioning template.</small><b data-i18n="templateArrow">Template ↓</b></button>
+          </div>
+
+          <div class="alarm-export-range" aria-label="Alarm history export date range">
+            <label><span data-customer-en="From (UTC)" data-customer-tr="Başlangıç (UTC)">From (UTC)</span><input id="alarmExportFrom" type="date"></label>
+            <label><span data-customer-en="To (UTC)" data-customer-tr="Bitiş (UTC)">To (UTC)</span><input id="alarmExportTo" type="date"></label>
+            <small data-customer-en="Leave dates empty to export all occurrences." data-customer-tr="Tüm kayıtları dışa aktarmak için tarihleri boş bırakın.">Leave dates empty to export all occurrences.</small>
+          </div>
+
+          <article class="panel alarm-active-panel">
+            <div class="panel-head alarm-group-trigger" data-alarm-group="active" role="button" tabindex="0" aria-expanded="true" aria-controls="alarmActiveGroupBody" aria-label="Toggle active alarms">
+              <div><span class="panel-kicker" data-i18n="activeAlarms">ACTIVE ALARMS</span><h3 id="activeAlarmCount">0</h3></div>
+              <div class="alarm-group-head-actions"><span class="active-badge" data-i18n="live">LIVE</span></div>
+            </div>
+            <div class="alarm-group-body" id="alarmActiveGroupBody">
+              <div class="alarm-table-toolbar"><input id="alarmActiveSearch" type="search" placeholder="Search active alarms..." /><select id="alarmActivePriority"><option value="">All priorities</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select><select id="alarmActiveState"><option value="">All states</option><option>Active</option><option>Acknowledged</option></select><span id="alarmActiveMeta">0 / 0</span></div>
+              <div class="empty-inline" id="alarmActiveEmpty" data-i18n="noActiveAlarms">No active alarms.</div>
+              <div class="table-wrap hidden" id="alarmActiveTableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="device">Device</th>
+                    <th data-i18n="tag">Tag</th>
+                    <th data-i18n="alarmText">Alarm Text</th>
+                    <th data-i18n="priority">Priority</th>
+                    <th data-i18n="state">State</th>
+                    <th data-i18n="activeSince">Active Since</th>
+                    <th data-i18n="acknowledgedAt">Acknowledged At</th>
+                    <th data-i18n="acknowledgedBy">Acknowledged By</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="alarmActiveTableBody"></tbody>
+              </table>
+              </div>
+              <div class="table-pager hidden" id="alarmActivePager"><label><span id="alarmActiveRowsLabel">Rows</span> <select id="alarmActivePageSize"><option>10</option><option selected>25</option><option>50</option><option>100</option></select></label><button id="alarmActivePrevPage" type="button">‹</button><span id="alarmActivePageInfo">1 / 1</span><button id="alarmActiveNextPage" type="button">›</button></div>
+            </div>
+          </article>
+
+          <article class="panel section-gap">
+            <div class="panel-head alarm-group-trigger" data-alarm-group="definition" role="button" tabindex="0" aria-expanded="true" aria-controls="alarmDefinitionGroupBody" aria-label="Toggle alarm definitions">
+              <div>
+                <span class="panel-kicker" data-i18n="alarmDefinitions">ALARM DEFINITIONS</span>
+                <h3 data-i18n="configuredAlarms">Configured alarms</h3>
+                <span class="alarm-definition-count" id="alarmDefinitionHeaderCount">0</span>
+              </div>
+            </div>
+            <div class="alarm-group-body" id="alarmDefinitionGroupBody">
+              <div class="alarm-table-toolbar"><input id="alarmDefinitionSearch" type="search" placeholder="Search alarm definitions..." /><select id="alarmDefinitionPriority"><option value="">All priorities</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select><span id="alarmDefinitionMeta">0 / 0</span></div>
+              <div class="empty-inline" id="alarmDefinitionEmpty" data-i18n="noAlarmDefinitions">No alarm definitions yet.</div>
+              <div class="table-wrap hidden" id="alarmDefinitionTableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th aria-label="Select"></th>
+                    <th data-i18n="device">Device</th>
+                    <th data-i18n="tag">Tag</th>
+                    <th data-i18n="condition">Condition</th>
+                    <th data-i18n="alarmText">Alarm Text</th>
+                    <th data-i18n="priority">Priority</th>
+                    <th data-i18n="notify">Notify</th>
+                    <th data-i18n="delay">Delay</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="alarmDefinitionTableBody"></tbody>
+              </table>
+              </div>
+              <div class="table-pager hidden" id="alarmDefinitionPager"><label><span id="alarmDefinitionRowsLabel">Rows</span> <select id="alarmDefinitionPageSize"><option>10</option><option selected>25</option><option>50</option><option>100</option></select></label><button id="alarmDefinitionPrevPage" type="button">‹</button><span id="alarmDefinitionPageInfo">1 / 1</span><button id="alarmDefinitionNextPage" type="button">›</button></div>
+            </div>
+          </article>
+
+          <article class="panel section-gap">
+            <div class="panel-head alarm-group-trigger" data-alarm-group="history" role="button" tabindex="0" aria-expanded="true" aria-controls="alarmHistoryGroupBody" aria-label="Toggle alarm history">
+              <div>
+                <span class="panel-kicker" data-i18n="alarmHistory">ALARM HISTORY</span>
+                <h3><span data-i18n="recentAlarmEvents">Alarm occurrences</span> <span id="alarmHistoryCount">0</span></h3>
+              </div>
+            </div>
+            <div class="alarm-group-body" id="alarmHistoryGroupBody">
+              <div class="alarm-table-toolbar"><input id="alarmHistorySearch" type="search" placeholder="Search alarm history..." /><select id="alarmHistoryPriority"><option value="">All priorities</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select><span id="alarmHistoryMeta">0 / 0</span></div>
+              <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th aria-label="Select"></th>
+                    <th data-i18n="alarmCame">Active At</th>
+                    <th data-i18n="alarmCleared">Cleared At</th>
+                    <th data-i18n="duration">Duration</th>
+                    <th data-i18n="acknowledgedAt">Acknowledged At</th>
+                    <th data-i18n="acknowledgedBy">Acknowledged By</th>
+                    <th data-i18n="device">Device</th>
+                    <th data-i18n="tag">Tag</th>
+                    <th data-i18n="alarmText">Alarm Text</th>
+                    <th data-i18n="priority">Priority</th>
+                  </tr>
+                </thead>
+                <tbody id="alarmHistoryTableBody"></tbody>
+              </table>
+              </div>
+              <div class="table-pager hidden" id="alarmHistoryPager"><label><span id="alarmHistoryRowsLabel">Rows</span> <select id="alarmHistoryPageSize"><option>10</option><option selected>25</option><option>50</option><option>100</option></select></label><button id="alarmHistoryPrevPage" type="button">‹</button><span id="alarmHistoryPageInfo">1 / 1</span><button id="alarmHistoryNextPage" type="button">›</button></div>
+            </div>
+          </article>
+        </section>
+
+        <section class="page studio-page" id="page-trends" style="padding:0;margin:0">
+          <div id="fullscreenTrendMount" class="fullscreen-trend-mount">
+<iframe id="fullscreenTrendFrame" title="PROGNODE Trend Studio" src="/trend-hf3plus.html?v=20261004-no-empty-slots" loading="lazy" allowfullscreen></iframe>
+          </div>
+        </section>
+        <div hidden aria-hidden="true" id="legacyTrendContainer"><section class="page studio-page" id="legacy-trend-ui">
+          <div class="studio-shell">
+            <aside class="studio-sidebar">
+              <div class="studio-section-head studio-primary-side-head"><strong data-studio-i18n="signalExplorer">Sinyaller</strong><span id="studioOpenCount">0 aktif grafik</span></div>
+              <label class="studio-search-wrap"><span>⌕</span><input id="studioTagSearch" type="search" autocomplete="off" placeholder="Tag veya cihaz ara..." data-studio-placeholder="searchPlaceholder" /></label>
+              <div class="studio-tag-pool" id="studioTagPool"><div class="studio-muted" data-studio-i18n="loading">Historian Tag'leri yükleniyor…</div></div>
+              <button type="button" class="studio-add-historian" id="studioGoHistorian" data-studio-i18n="addHistorian">+ Historian'a Tag ekle</button>
+              <div class="studio-side-divider"></div>
+              <label class="studio-compare-toggle" for="studioCompareCheck"><input id="studioCompareCheck" type="checkbox" /><span class="studio-compare-check-mark">✓</span><span><strong data-studio-i18n="compareSignals">Trendleri karşılaştır</strong><small data-studio-i18n="compareHelp">Ayrı grafikler korunur; seçilen sinyaller ek bir grafikte karşılaştırılır.</small></span></label>
+              <div class="studio-sidebar-bottom">
+                <details class="studio-optional-views" id="studioSavedDetails">
+                  <summary><span data-studio-i18n="savedViews">Kayıtlı görünümler</span><b id="trendCount">0</b></summary>
+                  <div id="trendList" class="trend-list studio-saved-list"></div>
+                  <button class="studio-link-btn" id="trendsAddTrend" data-studio-i18n="saveOptional">İsteğe bağlı: görünümü kaydet</button>
+                </details>
+                <div class="studio-side-links"><span class="studio-footnote"><i></i><span data-studio-i18n="localData">Veriler yalnızca bu Core'da</span></span><button id="studioClearTags" class="studio-link-btn" data-studio-i18n="clearSelection">Seçimi temizle</button></div>
+              </div>
+            </aside>
+
+            <div class="studio-main">
+              <div class="studio-status-strip">
+                <span id="trendChartTitle" class="hidden">Yeni analiz</span>
+                <div class="studio-compact-clock"><span class="studio-graph-dot"></span><span id="studioTimeText" data-studio-i18n="selectSignals">Grafik görüntülemek için sinyal seçin</span></div>
+                <div class="studio-head-controls"><span class="studio-connection"><i></i><span id="studioDataStatus" data-studio-i18n="historianLocal">YEREL HISTORIAN</span></span><button id="studioLive" class="studio-mode-live active"><i></i> CANLI · DURDUR</button><button id="studioRefresh" class="studio-icon-button" title="Verileri yenile" aria-label="Verileri yenile">↻</button></div>
+              </div>
+              <div class="studio-toolbar">
+                <div class="trend-range-pills studio-range-pills" id="trendRangePills">
+                  <button class="range-pill" data-range-value="5">5m</button>
+                  <button class="range-pill" data-range-value="15">15m</button>
+                  <button class="range-pill active" data-range-value="60">1h</button>
+                  <button class="range-pill" data-range-value="480">8h</button>
+                  <button class="range-pill" data-range-value="1440">24h</button>
+                  <button class="range-pill" data-range-value="10080">7d</button>
+                  <button class="range-pill" data-range-value="custom" data-studio-i18n="custom">Özel</button>
+                </div>
+                <select id="trendRange" class="compact-select trend-range-select-sr" aria-label="Time range">
+                  <option value="5">5 min</option><option value="15">15 min</option><option value="60" selected>1 hour</option><option value="480">8 hours</option><option value="1440">24 hours</option><option value="10080">7 days</option><option value="custom">Custom</option>
+                </select>
+                <button id="studioZoomOut" class="studio-icon-button" title="Zoom out" aria-label="Zoom out">−</button>
+                <button id="trendAutoFit" class="studio-icon-button" title="Fit time range" aria-label="Fit time range">⤢</button>
+                <button id="studioCursorA" class="studio-tool-button" title="Click A, then choose a point on the chart" aria-pressed="false">A</button>
+                <button id="studioCursorB" class="studio-tool-button" title="Click B, then choose a second point" aria-pressed="false">B</button>
+                <span class="studio-toolbar-grow"></span>
+                <button id="trendExportCsv" class="studio-export-button">↓ CSV</button>
+                <button id="trendExportArchive" class="studio-export-button" title="Büyük dönemleri Excel uyumlu CSV parçaları olarak indir">↓ CSV ZIP</button>
+                <button id="trendExportPng" class="studio-export-button">↓ PNG</button>
+              </div>
+              <div class="trend-custom-range hidden" id="trendCustomRange">
+                <label><span data-studio-i18n="from">Başlangıç</span><input type="datetime-local" id="trendFrom" /></label>
+                <label><span data-studio-i18n="to">Bitiş</span><input type="datetime-local" id="trendTo" /></label>
+                <button class="studio-btn studio-primary" id="trendApplyRange" data-studio-i18n="applyRange">Aralığı uygula</button>
+              </div>
+              <div class="studio-alarm-legend"><span><i class="legend-normal"></i> NORMAL</span><span><i class="legend-high"></i> HIGH</span><span><i class="legend-low"></i> LOW</span><small data-studio-i18n="alarmScale">Y ekseni tanımlı alarm eşiklerini de kapsar</small></div>
+              <div id="trendLegend" class="studio-signal-strip"></div>
+              <div class="studio-visual">
+                <div id="studioSplitCharts" class="studio-split-charts"></div><div id="studioCompareCaption" class="studio-compare-caption hidden" data-studio-i18n="compareTitle">SEÇİLİ SİNYALLERİN KARŞILAŞTIRMASI</div>
+                <div id="studioCompareBar" class="studio-compare-panel studio-compare-top hidden" aria-live="polite"></div>
+                <div class="studio-chart-meta"><span><i class="studio-graph-dot"></i> HISTORIAN / LIVE SERIES <span id="studioSampleHealth" role="status" aria-live="polite" data-health="empty">Waiting for samples</span></span><span id="studioPointCount">0 samples</span></div>
+                <div class="chart-shell studio-chart-shell" id="studioChartShell">
+                  <canvas id="trendCanvas" aria-label="Interactive process trend graph"></canvas>
+                  <div class="chart-empty" id="trendChartEmpty">Select signals from the explorer to begin.</div>
+                  <div class="trend-tooltip hidden" id="trendTooltip"></div>
+                  <div id="studioDragBox" class="studio-drag-box hidden"></div>
+                </div>
+                <div class="studio-navigator-block"><div class="studio-navigator-header"><span data-studio-i18n="navigator">ZAMAN GEZGİNİ</span><span data-studio-i18n="navigationHelp">Sürükle: yakınlaştır · Tekerlek: sayfayı kaydır · Çift tık: sıfırla</span></div><canvas id="studioNavigator" height="58"></canvas></div>
+              </div>
+              <div class="studio-bottom-grid">
+                <section class="studio-summary"><div class="studio-card-top"><strong data-studio-i18n="statistics">Sinyal istatistikleri</strong><span data-studio-i18n="selectedRange">SEÇİLEN ARALIK</span></div><div id="trendStats" class="trend-stats studio-stats-grid"></div></section>
+                <section class="studio-events"><div class="studio-card-top"><strong data-studio-i18n="processContext">Proses olayları</strong><span id="studioContextScope">SEÇİLEN SİNYAL ALARMLARI</span></div>
+                  <div class="studio-event-switches"><label><input type="checkbox" id="studioAlarmToggle" checked /><span data-studio-i18n="alarmEvents">Alarm olayları</span></label><label><input type="checkbox" id="studioFlagToggle" checked /><span data-studio-i18n="alarmFlags">Grafik bayrakları</span></label><label><input type="checkbox" id="studioThresholdToggle" checked /><span data-studio-i18n="alarmThresholds">Alarm eşikleri</span></label><label><input type="checkbox" id="studioBatchToggle" checked /><span data-studio-i18n="batch">Batch / Lot</span></label><label><input type="checkbox" id="studioSystemAlarmToggle"/><span data-studio-i18n="systemAlarms">Sistem alarmları</span></label></div>
+                  <div id="studioEventList" class="studio-event-list">No process events in this time window.</div>
+                  <div id="studioEventDetail" class="studio-event-detail hidden" aria-live="polite"></div>
+                  <div id="studioCursorResult" class="studio-cursor-results">Move the cursor over the chart. Use A and B to compare timestamps.</div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        </div>
+        <section class="page" id="page-historian">
+          <div class="page-actions">
+            <div>
+              <span class="kicker" data-i18n="localHistorian">LOCAL HISTORIAN</span>
+              <h2 data-i18n="historian">Historian</h2>
+              <p data-i18n="historianText">Add Tags here to start persistent local recording. Trend definitions no longer control recording.</p>
+            </div>
+            <button class="primary" id="historianAddTag" data-i18n="historianAddTag">+ Add Tag to Historian</button>
+          </div>
+
+          <div class="page-data-tools page-data-tools-3">
+            <button class="data-tool-card" id="historianImport"><span class="data-tool-kicker" data-i18n="importLabel">IMPORT</span><strong data-i18n="recordingConfig">Recording Config</strong><small data-i18n="historianImportHelp">Bulk Tag / sample interval / retention configuration.</small><b data-i18n="chooseCsvArrow">Choose CSV →</b></button>
+            <button class="data-tool-card" id="historianConfigExport"><span class="data-tool-kicker" data-i18n="exportLabel">EXPORT</span><strong data-i18n="recordingConfig">Recording Config</strong><small data-i18n="historianExportConfigHelp">Download current Historian recording configuration.</small><b data-i18n="downloadArrow">Download ↓</b></button>
+            <button class="data-tool-card" data-template="historian"><span class="data-tool-kicker" data-i18n="templateLabel">TEMPLATE</span><strong>Historian.csv</strong><small data-i18n="historianTemplateHelp">Device, Tag, sample interval and retention template.</small><b data-i18n="templateArrow">Template ↓</b></button>
+          </div>
+
+          <div class="metric-grid historian-metrics">
+            <article class="metric-card">
+              <div class="metric-top"><span data-i18n="totalSamples">Total Samples</span><span class="metric-icon">▤</span></div>
+              <strong id="historianTotalSamples">0</strong>
+              <small data-i18n="persistentLocalStorage">Persistent local storage</small>
+            </article>
+            <article class="metric-card">
+              <div class="metric-top"><span data-i18n="recordedTags">Recorded Tags</span><span class="metric-icon">⌁</span></div>
+              <strong id="historianRecordedTags">0</strong>
+              <small data-i18n="historianRecordedHelp">Tags explicitly added to Historian</small>
+            </article>
+            <article class="metric-card">
+              <div class="metric-top"><span data-i18n="databaseSize">Database Size</span><span class="metric-icon">◫</span></div>
+              <strong id="historianDbSize">0 MB</strong>
+              <small data-i18n="localStorage">Local storage</small>
+            </article>
+            <article class="metric-card">
+              <div class="metric-top"><span data-i18n="timeSpan">Time Span</span><span class="metric-icon">◷</span></div>
+              <strong id="historianTimeSpan">—</strong>
+              <small id="historianTimeSpanDetail">—</small>
+            </article>
+          </div>
+
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <span class="panel-kicker" data-i18n="historianTags">HISTORIAN TAGS</span>
+                <h3 data-i18n="historianConfiguration">Recording configuration</h3>
+              </div>
+            </div>
+
+            <div class="empty-inline hidden" id="historianEmpty" data-i18n="historianEmpty">No Tags are being recorded. Add a Tag to Historian to start.</div>
+
+            <div class="table-wrap" id="historianTableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th aria-label="Select"></th>
+                    <th data-i18n="device">Device</th>
+                    <th data-i18n="tag">Tag</th>
+                    <th data-i18n="sampleEvery">Sample</th>
+                    <th data-i18n="retention">Retention</th>
+                    <th data-i18n="recordingSince">Recording Since</th>
+                    <th data-i18n="lastSample">Last Sample</th>
+                    <th data-i18n="dataStatus">Status</th>
+                    <th data-i18n="points">Points</th>
+                    <th data-i18n="actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="historianConfigTableBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="page" id="page-diagnostics">
+          <div class="diagnostics-page">
+            <div class="page-actions"><div><span class="kicker">PROGNODE CORE</span><h2 data-i18n="diagnostics">Diagnostics</h2><p data-customer-en="Live status from this Core PC. A configured device is not assumed to be connected." data-customer-tr="Bu Core bilgisayarından canlı durum. Tanımlı cihaz, bağlı varsayılmaz.">Live status from this Core PC. A configured device is not assumed to be connected.</p></div><button type="button" class="secondary" id="diagnosticsRefresh" data-customer-en="Refresh status" data-customer-tr="Durumu yenile">Refresh status</button></div>
+            <div class="diagnostics-cards" aria-live="polite">
+              <article class="diagnostics-card"><span data-customer-en="Core service" data-customer-tr="Core servisi">Core service</span><strong id="diagnosticsCoreStatus">—</strong><small id="diagnosticsCoreVersion">—</small></article>
+              <article class="diagnostics-card"><span data-customer-en="Windows Agent" data-customer-tr="Windows Agent">Windows Agent</span><strong id="diagnosticsAgentStatus">—</strong><small id="diagnosticsAgentDetail">—</small></article>
+              <article class="diagnostics-card"><span data-customer-en="Tag quality" data-customer-tr="Tag kalitesi">Tag quality</span><strong id="diagnosticsTagQuality">—</strong><small id="diagnosticsTagDetail">—</small></article>
+              <article class="diagnostics-card"><span>Historian</span><strong id="diagnosticsHistorianSamples">—</strong><small id="diagnosticsHistorianSize">—</small></article>
+            </div>
+            <article class="diagnostics-device-panel"><div class="diagnostics-panel-head"><h3 data-customer-en="Device signal status" data-customer-tr="Cihaz sinyal durumu">Device signal status</h3><span id="diagnosticsUpdatedAt">—</span></div><div class="table-wrap"><table><thead><tr><th data-customer-en="Device" data-customer-tr="Cihaz">Device</th><th data-customer-en="Protocol" data-customer-tr="Protokol">Protocol</th><th data-customer-en="Configured status" data-customer-tr="Tanım durumu">Configured status</th><th data-customer-en="Good / other / waiting Tags" data-customer-tr="İyi / diğer / bekleyen Tag">Good / other / waiting Tags</th><th data-customer-en="Latest Tag update" data-customer-tr="Son Tag güncellemesi">Latest Tag update</th><th data-customer-en="Current read error" data-customer-tr="Güncel okuma hatası">Current read error</th></tr></thead><tbody id="diagnosticsDeviceRows"></tbody></table></div></article>
+          </div>
+        </section>
+
+        <section class="page" id="page-notifications">
+          <div id="notificationStorageHealth" role="alert" style="display:none;background:#9f2626;color:white;padding:12px;border-radius:8px;margin:12px;"></div>
+          <div class="page-actions">
+            <div>
+              <span class="kicker" data-i18n="windowsAgent">WINDOWS AGENT</span>
+              <h2 data-i18n="notifications">Notifications</h2>
+              <p data-i18n="notificationsText">Browser-independent alarm and system notifications with a local event center.</p>
+            </div>
+            <button class="primary" id="sendTestNotification" data-i18n="sendTestNotification">Send Windows Test Notification</button>
+          </div>
+
+          <div class="notification-metrics">
+            <article class="metric-card"><div class="metric-top"><span>Agent</span><span class="metric-icon">●</span></div><strong id="notificationAgentMetric">—</strong><small id="notificationAgentMetricSub">Checking Windows Agent</small></article>
+            <article class="metric-card"><div class="metric-top"><span data-i18n="recentEvents">Recent Events</span><span class="metric-icon">◉</span></div><strong id="notificationEventMetric">0</strong><small data-i18n="notificationCenterStored">Events available in PROGNODE</small></article>
+            <article class="metric-card"><div class="metric-top"><span data-i18n="critical">Critical</span><span class="metric-icon">△</span></div><strong id="notificationCriticalMetric">0</strong><small data-i18n="priorityEvents">Critical / high priority events</small></article>
+          </div>
+
+          <article class="panel notification-delivery-controls">
+            <div class="panel-head"><div><span class="panel-kicker">DELIVERY CONTROL</span><h3 id="notificationDeliveryTitle">Notification delivery</h3></div></div>
+            <p class="panel-copy" id="notificationDeliveryHelp">Pausing delivery keeps alarm and notification history. New alerts are not delivered while paused.</p>
+            <label class="notification-delivery-row"><span id="notificationGlobalLabel">Deliver notifications</span><input type="checkbox" id="notificationGlobalEnabled"></label>
+            <div id="notificationClientControls"></div>
+          </article>
+
+          <div class="two-column notification-layout">
+            <article class="panel">
+              <div class="panel-head">
+                <div><span class="panel-kicker" data-i18n="agentStatus">AGENT STATUS</span><h3>PROGNODE Agent</h3></div>
+                <span class="active-badge" id="notificationDeliveryBadge">LOCAL</span>
+              </div>
+              <p class="panel-copy" data-i18n="agentHelp">The Windows Agent stays in the tray and receives local events even when the browser is closed.</p>
+              <div class="status-stack">
+                <div class="status-row"><div><span class="status-dot ok"></span><span data-i18n="coreNotificationApi">Core Notification API</span></div><strong data-i18n="running">Running</strong></div>
+                <div class="status-row"><div><span class="status-dot pending" id="trayAgentDot"></span><span data-i18n="trayAgent">Windows Agent</span></div><strong id="trayAgentStatus" data-i18n="checking">Checking...</strong></div>
+                <div class="status-row"><div><span class="status-dot ok"></span><span>Brand</span></div><strong>PROGNODE</strong></div>
+                <div class="agent-detail" id="trayAgentDetail"></div>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="notification-toolbar">
+                <div>
+                  <span class="panel-kicker" data-i18n="notificationCenter">NOTIFICATION CENTER</span>
+                  <h3 data-i18n="recentEvents">Recent events</h3>
+                </div>
+                <select id="notificationFilter">
+                  <option value="all" data-i18n="all">All</option>
+                  <option value="alarm" data-i18n="alarms">Alarm</option>
+                  <option value="critical" data-i18n="criticalHigh">Critical / High</option>
+                  <option value="system" data-i18n="systemCommunication">System / Communication</option>
+                </select>
+              </div>
+              <div id="notificationEvents" class="event-list notification-event-list"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="page" id="page-license">
+          <div class="page-actions license-page-heading">
+            <div>
+              <span class="kicker" data-i18n="subscription">SUBSCRIPTION</span>
+              <h2 data-i18n="license">License</h2>
+              <p data-i18n="licenseCustomerHelp">Your PROGNODE license is verified locally. Process data remains on this Server.</p>
+            </div>
+            <a class="primary license-buy-link" id="licenseBuyRenew" href="https://prognode.io/" target="_blank" rel="noopener noreferrer" data-i18n="buyRenewLicense">Buy / Renew License ↗</a>
+          </div>
+
+          <div class="license-customer-grid">
+            <article class="panel license-signed-out-card hidden" id="licenseSignedOutCard">
+              <span class="panel-kicker">LICENSE ACCESS</span>
+              <h3 id="licenseSignedOutTitle">Sign in to view license details</h3>
+              <p class="panel-copy" id="licenseSignedOutText">License identity, expiry, capacity and entitlements are hidden while signed out.</p>
+              <button class="primary license-action-full" id="licenseSignInButton" data-i18n="signIn">Sign in</button>
+            </article>
+
+            <article class="panel license-main-card" id="licenseDetailsPanel">
+              <div class="license-header license-header-modern">
+                <div>
+                  <span class="panel-kicker" data-i18n="currentLicense">CURRENT LICENSE</span>
+                  <h3 id="licensePlan">—</h3>
+                </div>
+                <span class="active-badge" id="licenseStatus">—</span>
+              </div>
+
+              <div class="license-expiry-hero">
+                <div>
+                  <span data-i18n="validUntil">VALID UNTIL</span>
+                  <strong id="licenseExpiryDate">—</strong>
+                </div>
+                <div class="license-remaining-block">
+                  <span data-i18n="remaining">REMAINING</span>
+                  <strong id="licenseRemainingDays">—</strong>
+                </div>
+              </div>
+
+              <div class="license-identity-grid">
+                <div><span data-i18n="licensedTo">Licensed to</span><strong id="licenseAssignedUser">—</strong><small id="licenseAssignedEmail">—</small></div>
+                <div><span data-i18n="organization">Organization</span><strong id="licenseCustomer">—</strong><small id="licenseAccessMode">—</small></div>
+              </div>
+
+              <div class="license-expiring-banner hidden" id="licenseExpiringBanner">
+                <strong id="licenseExpiringTitle">License expires soon</strong>
+                <span id="licenseExpiringRemaining">—</span>
+              </div>
+
+              <div class="license-grace-banner hidden" id="licenseGraceBanner">
+                <strong id="licenseGraceTitle">License renewal required</strong>
+                <span id="licenseGraceRemaining">—</span>
+              </div>
+
+              <div class="license-over-capacity-banner hidden" id="licenseOverCapacityBanner">
+                <strong id="licenseOverCapacityTitle">License capacity exceeded</strong>
+                <span id="licenseOverCapacityDetail">—</span>
+              </div>
+
+              <div class="license-commercial-stats">
+                <div><span data-i18n="tagCapacity">Tag Capacity</span><strong id="licenseTagCapacity">—</strong><small id="licenseTagUsage">—</small></div>
+                <div><span data-i18n="subscriptionPeriod">Subscription</span><strong id="licenseBillingPeriod">—</strong><small data-i18n="offlineFirst">Offline-first entitlement</small></div>
+                <div><span data-i18n="licenseState">License Status</span><strong id="licenseLifecycleStatus">—</strong><small id="licenseValidFrom">—</small></div>
+              </div>
+
+              <div class="license-module-strip">
+                <div id="licenseAlarmModule"><span class="module-dot"></span><div><strong data-i18n="alarmMonitoring">Alarm Monitoring</strong><small data-i18n="moduleIncluded">Included</small></div></div>
+                <div id="licenseHistorianModule"><span class="module-dot"></span><div><strong data-i18n="historian">Historian</strong><small data-i18n="moduleIncluded">Included</small></div></div>
+                <div><span class="module-dot"></span><div><strong data-i18n="offlineLogin">Offline Login</strong><small data-i18n="enabled">Enabled</small></div></div>
+                <div><span class="module-dot"></span><div><strong data-i18n="lanClientAccess">LAN Client Access</strong><small data-i18n="enabled">Enabled</small></div></div>
+                <div id="licenseRemoteAccessModule"><span class="module-dot"></span><div><strong data-i18n="remoteAccess">Remote Access</strong><small id="licenseRemoteAccessCapacity">Not included</small></div></div>
+              </div>
+            </article>
+
+            <article class="panel license-actions-card">
+              <span class="panel-kicker" data-i18n="licenseActions">LICENSE ACTIONS</span>
+              <h3 data-i18n="manageLicense">Manage your license</h3>
+              <p class="panel-copy" data-i18n="manageLicenseHelp">Renew or purchase a subscription online, then import the refreshed .pgnlicense file here. Offline runtime continues without a cloud dependency.</p>
+              <a class="primary license-action-full" href="https://prognode.io/" target="_blank" rel="noopener noreferrer" data-i18n="openPrognodeStore">Open PROGNODE ↗</a>
+              <div class="license-divider"><span data-i18n="orImportLicense">OR IMPORT A LICENSE</span></div>
+              <input id="licenseImportFile" class="license-file-input" type="file" accept=".pgnlicense,application/json" />
+              <button class="secondary license-action-full" id="licenseImportButton" data-i18n="importLicense">Import License</button>
+              <small class="license-local-note" data-i18n="licenseLocalNote">Signature, expiry and account credentials are verified locally.</small>
+            </article>
+          </div>
+        </section>
+
+        <section class="page" id="page-settings">
+          <div class="page-actions">
+            <div>
+              <span class="kicker" data-i18n="system">SYSTEM</span>
+              <h2 data-i18n="settings">Settings</h2>
+              <p data-i18n="settingsActualHelp">Server, secure mobile access, remote clients and project safety — each in one place.</p>
+            </div>
+          </div>
+
+          <div class="customer-settings-landing" id="customerSettingsLanding"><div class="customer-settings-heading"><div class="customer-settings-heading-copy"><h3 data-customer-en="System configuration" data-customer-tr="Sistem yapılandırması">System configuration</h3><p data-customer-en="Everything in its place. Daily operations first; advanced options when needed." data-customer-tr="Her şey yerli yerinde. Önce günlük işlemler, gerektiğinde teknik seçenekler.">Everything in its place. Daily operations first; advanced options when needed.</p></div><div class="customer-sidebar-mode"><span class="customer-sidebar-mode-label" data-customer-en="Navigation" data-customer-tr="Gezinme">Navigation</span><div class="customer-sidebar-mode-options" role="group" aria-label="Sidebar behavior"><button type="button" data-sidebar-mode="auto" aria-pressed="true" data-customer-en="Auto" data-customer-tr="Otomatik">Auto</button><button type="button" data-sidebar-mode="compact" aria-pressed="false" data-customer-en="Compact" data-customer-tr="Kompakt">Compact</button><button type="button" data-sidebar-mode="expanded" aria-pressed="false" data-customer-en="Expanded" data-customer-tr="Geniş">Expanded</button></div></div></div><div class="customer-settings-cards">
+<button type="button" class="customer-setting-card" data-open-settings="general"><span class="customer-setting-icon">▣</span><span class="customer-setting-badge" data-customer-en="LOCAL" data-customer-tr="YEREL">LOCAL</span><strong data-customer-en="Server & QR pairing" data-customer-tr="Sunucu ve QR eşleştirme">Server & QR pairing</strong><small data-customer-en="Server identity, trusted devices and quick QR enrollment." data-customer-tr="Sunucu kimliği, güvenilir cihazlar ve QR ile hızlı eşleştirme.">Server identity, trusted devices and quick QR enrollment.</small><span class="customer-card-footer"><span data-customer-en="Manage paired devices" data-customer-tr="Cihazları yönet">Manage paired devices</span><b>→</b></span></button>
+<button type="button" class="customer-setting-card" data-open-settings="lan"><span class="customer-setting-icon">⌁</span><span class="customer-setting-badge" data-customer-en="SECURE" data-customer-tr="GÜVENLİ">SECURE</span><strong data-customer-en="Mobile LAN access" data-customer-tr="Mobil LAN erişimi">Mobile LAN access</strong><small data-customer-en="Choose a plant network, verify HTTPS and control firewall access." data-customer-tr="Tesis ağını seçin; HTTPS'i ve güvenlik duvarını kontrol edin.">Choose a plant network, verify HTTPS and control firewall access.</small><span class="customer-card-footer"><span data-customer-en="Manage LAN" data-customer-tr="LAN yönetimi">Manage LAN</span><b>→</b></span></button>
+<button type="button" class="customer-setting-card" data-open-settings="backup"><span class="customer-setting-icon">▤</span><span class="customer-setting-badge" data-customer-en="ON-SITE" data-customer-tr="YEREL">ON-SITE</span><strong data-customer-en="Backup & audit" data-customer-tr="Yedekleme ve işlem geçmişi">Backup & audit</strong><small data-customer-en="Encrypted project snapshots, restore and configuration history." data-customer-tr="Şifreli proje yedekleri, geri yükleme ve değişiklik geçmişi.">Encrypted project snapshots, restore and configuration history.</small><span class="customer-card-footer"><span data-customer-en="Project safety" data-customer-tr="Proje güvenliği">Project safety</span><b>→</b></span></button>
+<button type="button" class="customer-setting-card" data-open-settings="data"><span class="customer-setting-icon">⌫</span><span class="customer-setting-badge" data-customer-en="ADMIN ONLY" data-customer-tr="YÖNETİCİ">ADMIN ONLY</span><strong data-customer-en="Data management" data-customer-tr="Veri yönetimi">Data management</strong><small data-customer-en="Select data categories to remove, review them and confirm with your account password." data-customer-tr="Silinecek veri türlerini seçin, gözden geçirin ve hesap şifrenizle onaylayın.">Select data categories to remove, review them and confirm with your account password.</small><span class="customer-card-footer"><span data-customer-en="Permanent deletion" data-customer-tr="Kalıcı silme">Permanent deletion</span><b>→</b></span></button>
+<button type="button" class="customer-setting-card" data-open-settings="remote"><span class="customer-setting-icon">◎</span><span class="customer-setting-badge" data-customer-en="OPTIONAL" data-customer-tr="İSTEĞE BAĞLI">OPTIONAL</span><strong data-customer-en="Remote access" data-customer-tr="Uzak erişim">Remote access</strong><small data-customer-en="Internet clients and optional remote notification entitlements." data-customer-tr="İnternet istemcileri ve isteğe bağlı uzak bildirim lisansları.">Internet clients and optional remote notification entitlements.</small><span class="customer-card-footer"><span data-customer-en="Remote clients" data-customer-tr="Uzak istemciler">Remote clients</span><b>→</b></span></button>
+</div><div class="customer-settings-advanced"><span class="customer-setting-icon">⚙</span><div><strong data-customer-en="Advanced & diagnostics" data-customer-tr="Gelişmiş ayarlar ve tanılama">Advanced & diagnostics</strong><small data-customer-en="Service health, technical logs and detailed troubleshooting live here, not in daily settings." data-customer-tr="Servis sağlığı, teknik loglar ve ayrıntılı sorun giderme günlük ayarlardan ayrıdır.">Service health, technical logs and detailed troubleshooting live here, not in daily settings.</small></div><button type="button" class="customer-secondary" id="customerDiagnostics" data-customer-en="View diagnostics →" data-customer-tr="Tanılamayı aç →">View diagnostics →</button></div></div>
+<div class="customer-settings-detail" id="customerSettingsDetail" hidden><button type="button" class="customer-back" id="customerSettingsBack" data-customer-en="← All settings" data-customer-tr="← Tüm ayarlar">← All settings</button><div class="settings-workspace">
+            <div class="settings-workspace-intro">
+              <strong id="settingsGroupTitle">Server &amp; paired devices</strong>
+              <p id="settingsGroupHelp">Manage server identity, QR pairing and local-first operation.</p>
+            </div>
+            <div class="settings-tabs" role="tablist" aria-label="Settings categories">
+              <button type="button" class="settings-tab active" role="tab" aria-selected="true" aria-controls="settingsPanelGeneral" data-settings-tab="general"><span class="settings-tab-icon" aria-hidden="true">◫</span><span data-i18n="hf5General">Server &amp; QR</span></button>
+              <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="lanWizardPanel" data-settings-tab="lan"><span class="settings-tab-icon" aria-hidden="true">⌁</span><span data-i18n="hf5Lan">Mobile LAN</span></button>
+              <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="settingsPanelRemote" data-settings-tab="remote"><span class="settings-tab-icon" aria-hidden="true">◎</span><span data-i18n="hf5Remote">Remote access</span></button>
+              <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="backupCenterPanel" data-settings-tab="backup"><span class="settings-tab-icon" aria-hidden="true">▤</span><span data-i18n="hf5Backup">Backup &amp; audit</span></button>
+              <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="settingsDataPanel" data-settings-tab="data"><span class="settings-tab-icon" aria-hidden="true">⌫</span><span data-customer-en="Data management" data-customer-tr="Veri yönetimi">Data management</span></button>
+            </div>
+          </div>
+          <div class="settings-grid">
+            <article class="panel lan-wizard-panel settings-pane" id="lanWizardPanel" data-settings-panel="lan">
+              <div class="panel-head"><div><span class="panel-kicker" data-i18n="lanWizardKicker">MOBILE ACCESS</span>
+                <h3 data-i18n="lanWizardTitle">Enable LAN Access</h3></div><span class="active-badge" id="lanWizardBadge">NOT CONFIGURED</span></div>
+              <p class="panel-copy" data-i18n="lanWizardIntro">Grant this Core's mobile HTTPS port access only on the chosen plant LAN. No Windows profile change, remote license or manual firewall commands.</p>
+              <div class="lan-wizard-box">
+                <label class="field"><span data-i18n="lanWizardAdapter">Plant / LAN interface (never Tailscale)</span>
+                  <select id="lanWizardNic"><option value="" data-i18n="lanWizardChoose">Choose interface</option></select></label>
+                <div id="lanWizardNicDetails" class="lan-wizard-note" role="status"></div>
+                <label class="field"><span data-i18n="lanWizardScope">Windows firewall access scope</span>
+                  <select id="lanWizardScope"><option value="DEVICES" data-i18n="lanWizardDevices">Selected mobile device IPs</option>
+                    <option value="SUBNET" data-i18n="lanWizardSubnet">Approved plant LAN subnet</option></select></label>
+                <label class="field" id="lanWizardDevicesRow"><span data-i18n="lanWizardIps">Approved mobile IPs (comma-separated, up to 8)</span>
+                  <input id="lanWizardDeviceIps" type="text" spellcheck="false" placeholder="192.168.1.61" autocomplete="off"/></label>
+                <p class="lan-wizard-warning hidden" id="lanWizardSubnetWarning" data-i18n="lanWizardSubnetWarning">All hosts in the approved subnet may reach TCP 5443 until PROGNODE authentication; prefer a dedicated plant VLAN.</p>
+                <label class="lan-wizard-warning hidden" id="lanWizardPublicRow"><input id="lanWizardPublicConfirm" type="checkbox"/>
+                  <span data-i18n="lanWizardPublicConfirm">This is a Public Windows network. I explicitly approve opening ONLY this selected adapter and source range.</span></label>
+                <div class="lan-wizard-actions">
+                  <button type="button" id="lanWizardPrepare" class="primary" data-i18n="lanWizardPrepare">Prepare LAN access</button>
+                  <button type="button" id="lanWizardVerify" class="secondary" data-i18n="lanWizardVerify">Verify / refresh</button>
+                </div>
+                <div class="lan-wizard-approval hidden" id="lanWizardApproval" role="status">
+                  <strong data-i18n="lanWizardApprove">Review the exact rule below. On this PC, open the PROGNODE tray Agent and choose “Complete LAN Access Setup (UAC)”. Confirm the local preview and Windows UAC once.</strong>
+                  <pre id="lanWizardPreview"></pre>
+                </div>
+                <p id="lanWizardStatus" class="lan-wizard-note" role="status"></p>
+                <div class="lan-wizard-actions">
+                  <button type="button" class="secondary" id="lanWizardProbe" data-i18n="lanWizardProbe">Test from phone</button>
+                  <button type="button" class="secondary" id="lanWizardRepair" data-i18n="lanWizardRepair">Repair rule</button>
+                  <button type="button" class="ghost-button" id="lanWizardDisable" data-i18n="lanWizardDisable">Disable LAN access</button>
+                  <button type="button" class="secondary" id="lanWizardQr" data-i18n="lanWizardQr">Continue to QR pairing</button>
+                </div>
+                <p id="lanWizardPhoneUrl" class="lan-wizard-note" role="status"></p>
+                <div id="lanWizardPhoneQr" class="qr-code-frame hidden" aria-label="Phone LAN test QR"></div>
+                <p class="lan-wizard-note" data-i18n="lanWizardIt">If guest VLAN/client isolation or enterprise GPO blocks traffic, request TCP 5443 from the approved device/subnet to the selected Core IP from your IT administrator. PROGNODE does not bypass policy.</p>
+              </div>
+            </article>
+            <article class="panel server-access-panel settings-pane" id="settingsPanelGeneral" data-settings-panel="general">
+              <div class="panel-head">
+                <div><span class="panel-kicker" data-i18n="clientAccess">CLIENT ACCESS</span><h3>PROGNODE Server</h3></div>
+                <span class="active-badge" data-i18n="lanAutoDiscovery">LAN AUTO-DISCOVERY</span>
+              </div>
+              <p class="panel-copy" data-i18n="clientDiscoveryHelp">Supported PROGNODE clients can discover this Server automatically and remember its stable Server ID instead of a changing IP address.</p>
+              <div class="server-access-grid">
+                <div><span data-i18n="serverName">Server Name</span><strong id="serverAccessName">—</strong></div>
+                <div><span data-i18n="serverId">Server ID</span><strong id="serverAccessId">—</strong></div>
+                <div><span data-i18n="clientApi">Client API</span><strong id="serverAccessApi">—</strong></div>
+                <div><span data-i18n="discovery">Discovery</span><strong id="serverAccessDiscovery">—</strong></div>
+              </div>
+              <div class="manual-pair-selector" role="tablist" aria-label="Add mobile device">
+                <button type="button" id="pairModeQr" class="active" role="tab" aria-selected="true" aria-controls="pairQrPanel">QR ile eşleştir / QR pairing</button>
+                <button type="button" id="pairModeManual" role="tab" aria-selected="false" aria-controls="pairManualPanel">Kod ile eşleştir / Manual</button>
+              </div>
+              <section class="pair-manual-card hidden" id="pairManualPanel" role="tabpanel" aria-labelledby="pairModeManual" aria-live="polite">
+                <div class="pair-manual-grid">
+                  <div><span class="panel-kicker" data-i18n="pairNewClient">PAIR NEW CLIENT</span>
+                    <strong class="pairing-code" id="serverPairingCode">------</strong>
+                    <small id="serverPairingExpiry">Valid for 120 seconds, one use</small></div>
+                  <div><span class="panel-kicker">CERTIFICATE CHECK • SAS V1</span>
+                    <strong id="manualSasCode" class="manual-sas">---- — ---- — ----</strong>
+                    <small>Compare with the 12-character code independently calculated on your phone.</small></div>
+                </div>
+                <p class="manual-note" id="manualStatus">Log in locally as an administrator to display pairing codes. Never share codes or screenshots.</p>
+                <div class="manual-actions"><button class="primary" type="button" id="manualRefresh">Create new code</button>
+                  <button class="secondary" type="button" id="manualCancel">Cancel</button>
+                  <button class="secondary" type="button" id="manualAdvancedToggle" aria-expanded="false">Advanced · Full fingerprint</button></div>
+                <div class="manual-advanced hidden" id="manualAdvanced"><span>Full SHA-256 certificate fingerprint (admin only)</span><code id="manualFullPin">Not requested</code></div>
+                <p class="manual-note">Use the six-digit code only AFTER you verify both displays show the SAME 12-character check code. IP / TCP 5443 are available in LAN network details.</p>
+              </section>
+              <div class="qr-enroll-card" id="pairQrPanel" role="tabpanel" aria-labelledby="pairModeQr">
+                <div class="qr-enroll-head">
+                  <div><strong data-i18n="qrPairTitle">Pair a phone by QR</strong>
+                    <p data-i18n="qrPairIntro">Scan on the Core PC. No IP, code or certificate fingerprint to type.</p></div>
+                  <button class="primary" type="button" id="qrPairStart" data-i18n="qrPairStart">+ Pair by QR</button>
+                </div>
+                <section id="qrPairBox" class="qr-pair-box hidden" aria-live="polite">
+                  <label class="field"><span data-i18n="qrLanLabel">LAN address reachable by phone</span>
+                    <select id="qrLanHost" aria-label="Local network adapter"></select>
+                  </label>
+                  <div class="qr-tls-guide hidden" id="qrTlsGuide" role="status">
+                    <strong data-i18n="qrTlsGuideTitle">QR için LAN HTTPS gerekli</strong>
+                    <p data-i18n="qrTlsGuideText">Mobil LAN sayfasında HTTPS durumunu kontrol edin; gerekirse Windows Agent üzerinden yerel yönetici onaylı onarım yapın. Mevcut sertifikayı değiştirmeyin.</p>
+                    <div class="lan-wizard-actions"><button class="primary" id="qrTlsOpenLan" type="button" data-i18n="hf5Lan">Mobil LAN</button><button class="secondary" id="qrTlsRecheck" type="button" data-i18n="qrTlsRecheck">Kontrol et</button></div>
+                  </div>
+                  <div class="qr-code-frame hidden" id="qrGraphic"></div>
+                  <p class="qr-status" id="qrPairStatus"></p>
+                  <strong class="qr-countdown" id="qrPairCountdown"></strong>
+                  <div class="qr-buttons">
+                    <button class="secondary" type="button" id="qrPairRenew" data-i18n="qrPairRenew">Renew QR</button>
+                    <button class="ghost-button" type="button" id="qrPairCancel" data-i18n="qrPairCancel">Cancel</button>
+                  </div>
+                  <small class="qr-pair-note" data-i18n="qrPairWarning">QR is valid for 120 seconds, once, only from the authorized Core screen. Use local HTTPS.</small>
+                </section>
+              </div>
+              <section class="hf64-device-panel" aria-label="Paired mobile device permissions">
+                <div class="panel-head"><div><span class="panel-kicker">DEVICE ACCESS</span>
+                  <h3 data-customer-en="Paired mobile devices" data-customer-tr="Bağlı mobil cihazlar">Paired mobile devices</h3></div>
+                  <button type="button" class="secondary" id="hf64RefreshDevices">Refresh</button></div>
+                <p class="panel-copy" data-customer-en="QR pairing does not grant ACK permission. An administrator explicitly authorizes each device."
+                   data-customer-tr="QR eşleştirmesi ACK yetkisi vermez. Her cihaza yetkiyi yönetici ayrıca tanımlar.">QR pairing does not grant ACK permission. An administrator explicitly authorizes each device.</p>
+                <div id="hf64PairedDevices" class="hf64-device-list" aria-live="polite">Sign in as administrator to manage devices.</div>
+              </section>
+            </article>
+
+            <article class="panel remote-access-panel settings-pane" id="settingsPanelRemote" data-settings-panel="remote">
+              <div class="panel-head">
+                <div><span class="panel-kicker" data-i18n="remoteAccess">REMOTE ACCESS</span><h3 data-i18n="remoteAccessTitle">Remote clients</h3></div>
+                <span class="active-badge" id="remoteAccessBadge">—</span>
+              </div>
+              <p class="panel-copy" data-i18n="remoteAccessHelp">LAN clients never consume a remote seat. Phones, tablets and Windows Clients consume one seat only when Remote Access is enabled.</p>
+              <div class="server-access-grid remote-access-stats">
+                <div><span data-i18n="subscription">Subscription</span><strong id="remoteAccessSubscription">—</strong></div>
+                <div><span data-i18n="serverBinding">Server binding</span><strong id="remoteAccessBinding">—</strong></div>
+                <div><span data-i18n="remoteClients">Remote clients</span><strong id="remoteAccessCapacity">—</strong></div>
+                <div><span data-i18n="lastSync">Last sync</span><strong id="remoteAccessLastSync">—</strong></div>
+              </div>
+              <div class="remote-access-actions">
+                <button class="secondary" id="remoteAccessBind" data-i18n="bindRemoteAccess">Bind Remote Access</button>
+                <button class="ghost-button" id="remoteAccessSync" data-i18n="syncNow">Sync now</button>
+              </div>
+              <div class="remote-client-list" id="remoteAccessClientList"></div>
+              <small class="license-local-note" id="remoteAccessNote" data-i18n="remoteAccessLocalNote">Local runtime and LAN access never depend on this cloud connection.</small>
+            </article>
+
+
+            <article class="panel backup-center-panel settings-pane" id="backupCenterPanel" data-settings-panel="backup">
+              <div class="panel-head"><div><span class="panel-kicker" data-i18n="backupKicker">PROJECT SAFETY</span>
+                <h3 data-i18n="backupTitle">Backup Center</h3></div><span class="active-badge">.pgnbackup</span></div>
+              <p class="panel-copy" data-i18n="backupIntro">Encrypted factory snapshot: configuration, alarms, Historian and your saved Trend Studio layout.</p>
+              <div class="backup-box">
+                <label class="field"><span data-i18n="backupPassword">Backup passphrase (min. 12 characters)</span>
+                  <input id="backupPassword" type="password" minlength="12" autocomplete="new-password" placeholder="At least 12 characters" /></label>
+                <label class="field"><span data-i18n="backupPasswordConfirm">Confirm passphrase</span>
+                  <input id="backupPasswordConfirm" type="password" minlength="12" autocomplete="new-password" placeholder="Repeat passphrase" /></label>
+                <div class="backup-actions"><button class="primary" id="backupCreate" type="button" data-i18n="backupCreate">Create encrypted snapshot</button>
+                  <button class="secondary" id="backupRefresh" type="button" data-i18n="backupRefresh">Refresh</button></div>
+                <p id="backupStatusLine" role="status" class="backup-status"></p>
+                <div class="backup-info" id="backupScheduleNote"></div>
+              </div>
+              <div class="backup-subhead" data-i18n="backupSaved">Available encrypted snapshots</div>
+              <div id="backupList" class="backup-list"></div>
+              <div class="backup-subhead" data-i18n="backupRestoreTitle">Inspect and prepare restore</div>
+              <p class="panel-copy" data-i18n="backupRestoreHelp">Upload an existing .pgnbackup to verify it. Final restoration happens offline after stopping Core; nothing is overwritten by uploading.</p>
+              <div class="backup-box">
+                <input type="file" id="backupImportFile" accept=".pgnbackup" aria-label="Encrypted PROGNODE backup" />
+                <label class="field"><span data-i18n="backupImportPassword">Passphrase for uploaded backup</span>
+                  <input id="backupImportPassword" type="password" autocomplete="off" /></label>
+                <button class="secondary" id="backupInspect" type="button" data-i18n="backupInspect">Verify uploaded backup</button>
+                <div id="backupImportResult" role="status" class="backup-status"></div>
+              </div>
+              <div class="backup-subhead" data-i18n="backupAuditTitle">Recent configuration changes</div>
+              <div class="backup-audit-list" id="backupAuditList"></div>
+            </article>
+
+            <article class="panel settings-pane" id="settingsDataPanel" data-settings-panel="data">
+              <section class="data-reset-box" aria-labelledby="dataResetTitle">
+                <div class="data-reset-heading"><div><span class="panel-kicker" data-i18n="dataResetKicker">DATA MANAGEMENT</span><h3 id="dataResetTitle" data-i18n="dataResetTitle">Delete selected data</h3><p data-i18n="dataResetIntro">Choose the records to remove. License, server identity, security certificates and backups are kept.</p></div><div class="data-reset-heading-actions"><button type="button" class="secondary" id="dataResetSelectAll" data-i18n="dataResetSelectAll">Select all categories</button><button type="button" class="danger-button" id="dataResetAllButton" data-i18n="dataResetAll">Delete all data</button></div></div>
+                <div class="data-reset-options">
+                  <label><input type="checkbox" data-reset-category="devices"><span data-i18n="dataResetDevices">Devices</span></label>
+                  <label><input type="checkbox" data-reset-category="tags"><span data-i18n="dataResetTags">Tags</span></label>
+                  <label><input type="checkbox" data-reset-category="alarms"><span data-i18n="dataResetAlarms">Alarm rules</span></label>
+                  <label><input type="checkbox" data-reset-category="alarmHistory"><span data-i18n="dataResetAlarmHistory">Alarm history</span></label>
+                  <label><input type="checkbox" data-reset-category="historian"><span data-i18n="dataResetHistorian">Historian samples and settings</span></label>
+                  <label><input type="checkbox" data-reset-category="trends"><span data-i18n="dataResetTrends">Saved trends</span></label>
+                  <label><input type="checkbox" data-reset-category="batchHistory"><span data-i18n="dataResetBatch">Batch history</span></label>
+                  <label><input type="checkbox" data-reset-category="notifications"><span data-i18n="dataResetNotifications">Notifications</span></label>
+                </div>
+                <p class="data-reset-cascade" data-i18n="dataResetCascade">Deleting devices also removes their Tags and related recording/alarm configuration. Deleting Tags removes their recording data, alarm rules and trend links.</p>
+                <button type="button" class="danger-button" id="dataResetReviewButton" data-i18n="dataResetReview" disabled>Review selected data</button>
+                <div id="dataResetReview" class="data-reset-review" hidden>
+                  <strong data-i18n="dataResetReviewTitle">Review before deletion</strong><p id="dataResetSummary"></p>
+                  <button type="button" class="primary" id="dataResetContinue" data-i18n="dataResetContinue">Continue to password</button>
+                  <button type="button" class="secondary" id="dataResetCancel" data-i18n="dataResetCancel">Cancel</button>
+                </div>
+                <div id="dataResetPasswordStage" class="data-reset-review" hidden>
+                  <label class="field"><span data-i18n="dataResetPassword">Current PROGNODE account password</span><input id="dataResetPassword" type="password" autocomplete="current-password"></label>
+                  <label class="data-reset-final"><input type="checkbox" id="dataResetFinalAck"><span data-i18n="dataResetFinalAck">I understand these records will be permanently deleted.</span></label>
+                  <button type="button" class="danger-button" id="dataResetExecute" data-i18n="dataResetExecute" disabled>Delete selected records</button>
+                  <button type="button" class="secondary" id="dataResetBack" data-i18n="dataResetBack">Back</button>
+                </div>
+                <p id="dataResetStatus" class="data-reset-status" role="status"></p>
+              </section>
+            </article>
+
+            <article class="panel settings-pane settings-context" data-settings-panel="general">
+              <div class="panel-head"><div><span class="panel-kicker" data-i18n="dataBoundary">DATA BOUNDARY</span><h3 data-i18n="localFirstRuntime">Local-first runtime</h3></div></div>
+              <div class="status-stack">
+                <div class="status-row"><div><span class="status-dot ok"></span><span data-i18n="processConfiguration">Process configuration</span></div><strong data-i18n="serverOnly">Server only</strong></div>
+                <div class="status-row"><div><span class="status-dot ok"></span><span data-i18n="processData">Process data</span></div><strong data-i18n="serverOnly">Server only</strong></div>
+                <div class="status-row"><div><span class="status-dot ok"></span><span data-i18n="lanClientApi">LAN client API</span></div><strong data-i18n="localPairedAccess">Local / paired access</strong></div>
+                <div class="status-row"><div><span class="status-dot ok"></span><span data-i18n="cloudDependency">Cloud dependency</span></div><strong data-i18n="notRequired">Not required</strong></div>
+                <div class="status-row"><div><span class="status-dot ok"></span><span>PROGNODE Account</span></div><strong data-i18n="identityLicenseOnly">Identity + license only</strong></div>
+              </div>
+            </article>
+          </div>
+        </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden first-run-backdrop" id="firstRunQuickStart" role="dialog" aria-modal="true" aria-labelledby="firstRunTitle">
+    <div class="modal first-run-modal">
+      <div class="modal-head">
+        <div>
+          <span class="kicker" data-i18n="commissioningAssistant">COMMISSIONING ASSISTANT</span>
+          <h2 id="firstRunTitle" data-i18n="firstRunTitle">Get to your first live signal in about 15 minutes</h2>
+        </div>
+        <button class="icon-button" id="closeFirstRunQuickStart" aria-label="Close">×</button>
+      </div>
+
+      <div class="first-run-intro-row">
+        <p class="first-run-copy" data-i18n="firstRunText">A guided commissioning path from local access to device, live Tag, alarm and Historian recording.</p>
+        <div class="first-run-progress-summary"><strong id="firstRunProgressText">0/4</strong><span data-i18n="setupProgress">Setup progress</span></div>
+      </div>
+      <div class="first-run-progress-track"><i id="firstRunProgressFill"></i></div>
+
+      <div class="first-run-access-state" id="firstRunAccessState" data-i18n="firstRunAccessRequired">Sign in to configure this PROGNODE Server.</div>
+
+      <div class="first-run-steps">
+        <div id="firstRunStepDevice"><span>01</span><div><strong data-i18n="firstRunDevice">Connect a device</strong><small>PENDING</small></div></div>
+        <div id="firstRunStepTag"><span>02</span><div><strong data-i18n="firstRunTags">Verify a live Tag</strong><small>PENDING</small></div></div>
+        <div id="firstRunStepAlarm"><span>03</span><div><strong data-i18n="firstRunAlarm">Create an alarm</strong><small>PENDING</small></div></div>
+        <div id="firstRunStepHistorian"><span>04</span><div><strong data-i18n="firstRunHistorian">Enable Historian</strong><small>PENDING</small></div></div>
+      </div>
+
+      <div class="first-run-footnote">
+        <span>LOCAL-FIRST</span>
+        <p data-i18n="localFirstFootnote">PLC polling, alarms and Historian stay on this PROGNODE Server.</p>
+      </div>
+
+      <label class="first-run-dont-show">
+        <input id="firstRunDontShowAgain" type="checkbox" />
+        <span data-i18n="firstRunDontShowAgain">Don't show this again</span>
+      </label>
+
+      <div class="modal-actions first-run-actions">
+        <button class="secondary" id="firstRunLater" data-i18n="firstRunLater">Not now</button>
+        <button class="primary" id="firstRunStart" data-i18n="firstRunStart">Continue setup</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="csvImportModal">
+    <div class="modal csv-import-modal">
+      <button class="modal-close" id="closeCsvImportModal">×</button>
+      <span class="kicker">CSV COMMISSIONING</span>
+      <h2 id="csvImportTitle">Import Devices</h2>
+      <p class="modal-intro" id="csvImportIntro">Choose an Excel-compatible CSV. PROGNODE validates every row before import.</p>
+
+      <label class="field hidden">
+        <span data-i18n="dataset">Dataset</span>
+        <select id="importDataset">
+          <option value="devices">Devices</option>
+          <option value="tags">Tags</option>
+          <option value="alarms">Alarm Definitions</option>
+          <option value="historian">Historian Recording</option>
+        </select>
+      </label>
+
+      <label class="file-drop csv-modal-drop" id="importDrop">
+        <input type="file" id="importFile" accept=".csv,text/csv" />
+        <strong data-i18n="chooseCsv">Choose CSV file</strong>
+        <span data-i18n="csvExcelCompatible">CSV / Excel compatible</span>
+      </label>
+      <label class="field csv-existing-mode"><span id="importExistingModeLabel">Existing records</span><select id="importExistingMode"><option value="update" selected>Update matching records, keep others</option><option value="skip">Skip matching records, add new</option></select><small id="importExistingModeHelp">Matching records are updated in place. Records absent from the file are kept; nothing is deleted.</small></label>
+
+      <div class="import-summary hidden" id="importSummary">
+        <div class="summary-chip valid"><strong id="importValidCount">0</strong><span data-i18n="validRows">valid</span></div>
+        <div class="summary-chip error"><strong id="importErrorCount">0</strong><span data-i18n="errorRows">errors</span></div>
+        <div class="summary-chip"><strong id="importTotalCount">0</strong><span data-i18n="totalRows">total</span></div>
+        <button class="primary" id="executeImport" data-i18n="importValidRows">Import valid rows</button>
+      </div>
+
+      <div class="table-wrap hidden csv-preview-wrap" id="importPreviewWrap">
+        <table>
+          <thead><tr><th>#</th><th data-i18n="status">Status</th><th data-i18n="preview">Preview</th><th data-i18n="details">Details</th></tr></thead>
+          <tbody id="importPreviewBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-inline" id="importEmpty" data-i18n="importEmpty">Choose a CSV file to validate before import.</div>
+
+      <div class="modal-actions csv-modal-actions">
+        <button class="secondary" id="downloadSelectedTemplate" data-i18n="downloadTemplate">Download template</button>
+        <button class="secondary" id="cancelCsvImport" data-i18n="close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="deviceModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <span class="kicker" data-i18n="commissioning">COMMISSIONING</span>
+          <h2 data-i18n="addDevice">Add Device</h2>
+        </div>
+        <button class="icon-button" id="closeDeviceModal">×</button>
+      </div>
+
+      <div class="wizard-steps">
+        <div class="wizard-step active" id="wizardStep1Label">
+          <span class="wizard-step-number">1</span>
+          <div class="wizard-step-copy">
+            <small>STEP 1</small>
+            <strong data-i18n="protocol">Protocol</strong>
+          </div>
+        </div>
+        <div class="wizard-line"></div>
+        <div class="wizard-step" id="wizardStep2Label">
+          <span class="wizard-step-number">2</span>
+          <div class="wizard-step-copy">
+            <small>STEP 2</small>
+            <strong data-i18n="configure">Configuration</strong>
+          </div>
+        </div>
+      </div>
+
+      <div id="wizardStep1">
+        <p class="modal-intro" data-i18n="chooseProtocolText">
+          Choose how PROGNODE will communicate with the industrial device.
+        </p>
+        <div class="protocol-grid" id="protocolGrid"></div>
+      </div>
+
+      <div class="hidden" id="wizardStep2">
+        <button class="back-button" id="wizardBack" data-i18n="backProtocols">← Back to protocols</button>
+
+        <div class="selected-protocol">
+          <div class="protocol-logo" id="selectedProtocolLogo">M</div>
+          <div>
+            <span data-i18n="selectedProtocol">Selected protocol</span>
+            <strong id="selectedProtocolName">—</strong>
+          </div>
+        </div>
+
+        <label class="field">
+          <span data-i18n="deviceName">Device name</span>
+          <input id="deviceNameInput" maxlength="80" placeholder="e.g. Boiler PLC" />
+          <small data-i18n="deviceNameHelp">Use a name that makes sense to operators and service teams.</small>
+        </label>
+
+        <div id="mockFields">
+          <div class="info-box" data-i18n="mockInfo">
+            Protocol-specific settings are stored in the local configuration database.
+          </div>
+        </div>
+
+        <div id="modbusFields" class="hidden">
+          <div class="form-grid">
+            <label class="field wide">
+              <span data-i18n="hostIp">Host / IP</span>
+              <input id="modbusHost" value="127.0.0.1" placeholder="192.168.1.10" />
+            </label>
+
+            <label class="field">
+              <span data-i18n="port">Port</span>
+              <input id="modbusPort" type="number" min="1" max="65535" value="502" />
+            </label>
+
+            <label class="field">
+              <span data-i18n="unitId">Unit ID</span>
+              <input id="modbusUnitId" type="number" min="0" max="255" value="1" />
+            </label>
+
+            <label class="field">
+              <span data-i18n="pollInterval">Poll interval (ms)</span>
+              <input id="modbusPoll" type="number" min="100" value="1000" />
+            </label>
+
+            <label class="field">
+              <span data-i18n="timeout">Timeout (ms)</span>
+              <input id="modbusTimeout" type="number" min="250" value="2000" />
+            </label>
+          </div>
+
+          <div class="info-box" data-i18n="modbusTestInfo">
+            Connection checks are optional. You can save a device even when it is offline.
+          </div>
+
+          <div class="test-result hidden" id="modbusPingResult"></div>
+          <div class="test-result hidden" id="modbusTestResult"></div>
+        </div>
+
+
+        <div id="s7Fields" class="hidden">
+          <div class="form-grid">
+            <label class="field wide"><span>PLC IP / Host</span><input id="s7Host" placeholder="192.168.1.20" /></label>
+            <label class="field"><span>TCP Port</span><input id="s7Port" type="number" min="1" max="65535" value="102" /></label>
+            <label class="field"><span>Rack</span><input id="s7Rack" type="number" min="0" max="7" value="0" /></label>
+            <label class="field"><span>Slot</span><input id="s7Slot" type="number" min="0" max="31" value="1" /></label>
+            <label class="field"><span>Poll interval (ms)</span><input id="s7Poll" type="number" min="100" value="1000" /></label>
+            <label class="field"><span>Timeout (ms)</span><input id="s7Timeout" type="number" min="250" max="30000" value="2000" /></label>
+          </div>
+          <div class="info-box">Read-only S7 TCP · Non-optimized DB · Enable PUT/GET in TIA Portal. Addresses: DB1.DBX0.0, DB1.DBW2, DB1.DBD4. TCP 102.</div>
+          <div id="s7TestResult" class="test-result hidden"></div>
+        </div>
+
+        <div id="mqttFields" class="hidden">
+          <div class="form-grid">
+            <label class="field wide"><span>MQTT Broker</span><input id="mqttHost" placeholder="mqtts://broker.example.com" /></label>
+            <label class="field"><span>TCP Port</span><input id="mqttPort" type="number" min="1" max="65535" value="8883" /></label>
+            <label class="field"><span>Tag sample interval (ms)</span><input id="mqttPoll" type="number" min="100" value="1000" /></label>
+          </div>
+          <div class="info-box">Read-only exact-topic subscriptions. Use mqtts:// for verified TLS or mqtt:// for an explicitly trusted local broker. Credentials and publish are not supported in this pilot.</div>
+        </div>
+
+        <div id="opcUaFields" class="hidden">
+          <div class="form-grid">
+            <label class="field wide"><span>OPC UA Endpoint URL</span><input id="opcUaUrl" placeholder="opc.tcp://192.168.1.20:4840/" /></label>
+            <label class="field"><span>Poll interval (ms)</span><input id="opcUaPoll" type="number" min="100" value="1000" /></label>
+          </div>
+          <div class="info-box">Read-only NodeId polling. Only SignAndEncrypt endpoints are accepted. An administrator must trust the server certificate in the Core OPC UA PKI store; unknown certificates are never accepted automatically.</div>
+          <button type="button" class="secondary" id="inspectOpcUaCertificate">Inspect server certificate</button>
+          <div id="opcUaCertificateResult" class="test-result hidden"></div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="secondary hidden" id="testS7Connection">Test Siemens S7</button>
+          <button class="secondary hidden" id="pingModbusHost" data-i18n="ping">Ping</button>
+          <button class="secondary hidden" id="testModbusConnection" data-i18n="testConnection">Test Modbus</button>
+          <button class="primary" id="saveDevice" data-i18n="saveDevice">Save Device</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="tagModal">
+    <div class="modal compact-modal">
+      <div class="modal-head">
+        <div>
+          <span class="kicker" data-i18n="tagRuntime">TAG RUNTIME</span>
+          <h2 data-i18n="addTag">Add Tag</h2>
+        </div>
+        <button class="icon-button" id="closeTagModal">×</button>
+      </div>
+
+      <label class="field">
+        <span data-i18n="device">Device</span>
+        <select id="tagDevice"></select>
+        <small data-i18n="modbusDeviceOnly">Configured Modbus TCP, Siemens S7 TCP, MQTT and OPC UA devices are available.</small>
+      </label>
+
+      
+      <div class="form-grid tag-form-grid">
+        <label class="field wide">
+          <span data-i18n="tagName">Tag name</span>
+          <input id="tagName" placeholder="Tank Level PV" />
+        </label>
+
+        <label class="field">
+          <span data-i18n="address">Address</span>
+          <input id="tagAddress" value="40001" />
+          <small id="tagAddressState" class="field-state"></small>
+        </label>
+
+        <label class="field">
+          <span data-i18n="datatype">Datatype</span>
+          <select id="tagDataType">
+            <option value="Bool">BOOL (Coil / Discrete / Register Bit)</option>
+            <option value="Word">WORD (16-bit)</option>
+            <option value="UInt16">UINT16</option>
+            <option value="Int16">INT16</option>
+            <option value="UInt32">UINT32</option>
+            <option value="Int32">INT32</option>
+            <option value="Float32">FLOAT32 / REAL</option>
+          </select>
+        </label>
+
+        <label class="field hidden" id="tagBitField">
+          <span>Bit (0..15)</span>
+          <input id="tagBitIndex" type="number" min="0" max="15" value="0" />
+        </label>
+
+        <label class="field hidden" id="tagByteOrderField">
+          <span>32-bit Byte / Word Order</span>
+          <select id="tagByteOrder">
+            <option value="ABCD">ABCD</option>
+            <option value="CDAB">CDAB</option>
+            <option value="BADC">BADC</option>
+            <option value="DCBA">DCBA</option>
+          </select>
+        </label>
+
+        <label class="field" id="tagUnitField">
+          <span data-i18n="unit">Unit</span>
+          <input id="tagUnit" placeholder="°C" />
+        </label>
+
+        <label class="field" id="tagDecimalsField">
+          <span id="tagDecimalsLabel" data-i18n="decimalPoint">Decimal point</span>
+          <select id="tagDecimalPlaces">
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+          </select>
+          <small id="tagDecimalsHelp" data-i18n="decimalPointHelp">
+            Integer example: raw 236 + 1 decimal = 23.6
+          </small>
+        </label>
+
+        <label class="field" id="tagOffsetField">
+          <span data-i18n="offset">Offset</span>
+          <input id="tagOffset" type="number" step="any" value="0" />
+        </label>
+      </div>
+
+
+      <div class="info-box" id="tagAddressHelp" data-i18n="tagAddressHelp">Modbus read areas: 00001 Coil (FC01), 10001 Discrete Input (FC02), 30001 Input Register (FC04), 40001 Holding Register (FC03). Coil/Discrete use BOOL directly; Holding Register BOOL uses bit 0..15. Input Register uses WORD/numeric types. 32-bit values use two consecutive registers.</div>
+
+      <div class="modal-actions">
+        <button class="primary" id="saveTag" data-i18n="saveTag">Save Tag</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="alarmModal">
+    <div class="modal compact-modal">
+      <div class="modal-head">
+        <div>
+          <span class="kicker" data-i18n="alarmEngine">ALARM ENGINE</span>
+          <h2 id="alarmModalTitle" data-i18n="addAlarm">Add Alarm</h2>
+        </div>
+        <button class="icon-button" id="closeAlarmModal">×</button>
+      </div>
+
+      <label class="field">
+        <span data-i18n="sourceTag">Source Tag</span>
+        <select id="alarmTag"></select>
+        <small data-i18n="alarmSourceHelp">BOOL / WORD digital alarms and UInt16 / Int16 / UInt32 / Int32 / Float32 numeric alarms are supported.</small>
+      </label>
+
+      <div class="form-grid">
+        <label class="field">
+          <span>Condition</span>
+          <select id="alarmCondition">
+            <option value="DigitalEquals">Digital equals</option>
+            <option value="GreaterThan">Greater than (&gt;)</option>
+            <option value="GreaterThanOrEqual">Greater than or equal (&gt;=)</option>
+            <option value="LessThan">Less than (&lt;)</option>
+            <option value="LessThanOrEqual">Less than or equal (&lt;=)</option>
+          </select>
+        </label>
+
+        <label class="field hidden" id="alarmBitField">
+          <span>WORD Bit (0..15)</span>
+          <input id="alarmBitIndex" type="number" min="0" max="15" value="0" />
+        </label>
+
+        <label class="field" id="alarmTriggerField">
+          <span data-i18n="triggerWhen">Trigger when</span>
+          <select id="alarmTriggerValue">
+            <option value="true">TRUE</option>
+            <option value="false">FALSE</option>
+          </select>
+        </label>
+
+        <label class="field hidden" id="alarmThresholdField">
+          <span>Threshold</span>
+          <input id="alarmThreshold" type="number" step="any" value="80" />
+        </label>
+
+        <label class="field hidden" id="alarmDeadbandField">
+          <span>Deadband / Hysteresis</span>
+          <input id="alarmDeadband" type="number" min="0" step="any" value="0" />
+        </label>
+
+        <label class="field">
+          <span data-i18n="priority">Priority</span>
+          <select id="alarmPriority">
+            <option value="Low">Low</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="High">High</option>
+            <option value="Critical">Critical</option>
+          </select>
+        </label>
+      </div>
+
+      <label class="field">
+        <span data-i18n="alarmText">Alarm Text</span>
+        <input id="alarmText" maxlength="240" placeholder="High Tank Level" />
+      </label>
+
+      <div class="form-grid">
+        <label class="field">
+          <span data-i18n="delayOn">Delay ON (ms)</span>
+          <input id="alarmDelayOn" type="number" min="0" value="0" />
+        </label>
+
+        <label class="field">
+          <span data-i18n="delayOff">Delay OFF (ms)</span>
+          <input id="alarmDelayOff" type="number" min="0" value="0" />
+        </label>
+      </div>
+
+      <div class="form-grid notification-policy-grid">
+        <label class="field">
+          <span data-i18n="notificationMode">Mobile notification mode</span>
+          <select id="alarmNotificationMode">
+            <option value="NotifyOnce" data-i18n="notifyOnce">Notify once</option>
+            <option value="RepeatUntilAcknowledged" data-i18n="repeatUntilAck">Repeat at interval while active</option>
+          </select>
+        </label>
+
+        <label class="field" id="alarmRepeatIntervalField">
+          <span data-i18n="repeatEvery">Repeat every</span>
+          <select id="alarmRepeatInterval">
+            <option value="30">30 sec</option>
+            <option value="60" selected>1 min</option>
+            <option value="120">2 min</option>
+            <option value="300">5 min</option>
+            <option value="600">10 min</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="info-box compact-info" data-i18n="ackPolicyHelp">
+        ACK confirms the alarm was seen; it does not clear the process alarm. When interval reminders are enabled, they continue while active even after ACK.
+      </div>
+
+      <label class="check-card">
+        <input id="alarmRequiresAcknowledgement" type="checkbox" checked />
+        <div>
+          <strong data-i18n="requiresAcknowledgement">Require operator ACK</strong>
+          <span data-i18n="requiresAcknowledgementHelp">Show an ACK action in Core and mobile for this alarm.</span>
+        </div>
+      </label>
+
+      <label class="check-card ack-after-clear" id="alarmContinueAfterClearCard">
+        <input id="alarmContinueAfterClear" type="checkbox" />
+        <div>
+          <strong data-i18n="continueAfterClear">Continue reminders after CLEAR until ACK</strong>
+          <span data-i18n="continueAfterClearHelp">Useful for short critical events that must still be seen.</span>
+        </div>
+      </label>
+
+      <div class="notification-options">
+        <label class="check-card">
+          <input id="alarmNotifyActive" type="checkbox" checked />
+          <div>
+            <strong data-i18n="notifyOnActive">Notify when ACTIVE</strong>
+            <span data-i18n="notifyOnActiveHelp">Recommended default</span>
+          </div>
+        </label>
+
+        <label class="check-card">
+          <input id="alarmNotifyCleared" type="checkbox" />
+          <div>
+            <strong data-i18n="notifyOnCleared">Notify when CLEARED</strong>
+            <span data-i18n="notifyOnClearedHelp">Optional recovery notification</span>
+          </div>
+        </label>
+      </div>
+
+      <div class="info-box" data-i18n="alarmInfo">
+        Alarm reads the existing Tag value. It never creates a second PLC/Modbus read.
+      </div>
+
+      <div class="modal-actions">
+        <button class="primary" id="saveAlarm" data-i18n="saveAlarm">Save Alarm</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="trendModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <span class="kicker">HISTORIAN TREND</span>
+          <h2 id="trendModalTitle" data-i18n="addTrend">Add Trend</h2>
+        </div>
+        <button class="icon-button" id="closeTrendModal">×</button>
+      </div>
+
+      <div class="form-grid">
+        <label class="field wide">
+          <span data-i18n="trendName">Trend name</span>
+          <input id="trendName" maxlength="100" placeholder="Utilities Overview" />
+        </label>
+
+        <label class="field">
+          <span data-i18n="defaultRange">Default range</span>
+          <select id="trendDefaultWindow">
+            <option value="5">5 min</option>
+            <option value="15">15 min</option>
+            <option value="60" selected>1 hour</option>
+            <option value="480">8 hours</option>
+            <option value="1440">24 hours</option>
+            <option value="10080">7 days</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="field">
+        <span data-i18n="selectTagsColors">Select Tags + colors (max 8)</span>
+        <div id="trendTagChecklist" class="tag-checklist"></div>
+      </div>
+
+      <div class="info-box" data-i18n="trendInfo">
+        Trend only visualizes Tags. To record history, add the Tag on the Historian page.
+      </div>
+
+      <div class="modal-actions">
+        <button class="primary" id="saveTrend" data-i18n="saveTrend">Save Trend</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="modal-backdrop hidden" id="historianModal">
+    <div class="modal compact-modal">
+      <div class="modal-head">
+        <div>
+          <span class="kicker" data-i18n="localHistorian">LOCAL HISTORIAN</span>
+          <h2 id="historianModalTitle" data-i18n="historianAddTag">Add Tag to Historian</h2>
+        </div>
+        <button class="icon-button" id="closeHistorianModal">×</button>
+      </div>
+
+      <label class="field">
+        <span data-i18n="tag">Tag</span>
+        <select id="historianTag"></select>
+        <small data-i18n="historianTagHelp">Adding a Tag here starts persistent local recording.</small>
+      </label>
+
+      <div class="form-grid">
+        <label class="field">
+          <span data-i18n="sampleEvery">Sample every</span>
+          <select id="historianSampleInterval">
+            <option value="10">10 sec</option>
+            <option value="30" selected>30 sec</option>
+            <option value="60">1 min</option>
+            <option value="300">5 min</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span data-i18n="retention">Retention</span>
+          <select id="historianRetention">
+            <option value="30">30 days</option>
+            <option value="90">90 days</option>
+            <option value="365" selected>1 year</option>
+            <option value="1825">5 years</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="info-box" data-i18n="historianModalInfo">Historian continues recording even if a Trend is deleted or the browser is closed.</div>
+
+      <div class="modal-actions">
+        <button class="primary" id="saveHistorianConfig" data-i18n="save">Save</button>
+      </div>
+    </div>
+  </div>
+
+<div class="toast hidden" id="toast"></div>
+
+
+  <div class="modal-backdrop hidden" id="accountModal">
+    <div class="modal account-modal account-modal-compact">
+      <div class="panel-head">
+        <div>
+          <span class="kicker" data-i18n="localAccess">LOCAL ACCESS</span>
+          <h3 id="accountModalTitle" data-i18n="prognodeAccess">PROGNODE Access</h3>
+          <p class="modal-intro" data-i18n="accessIntro">Import the offline license once, then sign in with the PROGNODE account linked to that license.</p>
+        </div>
+        <button class="modal-close" id="closeAccountModal" aria-label="Close">×</button>
+      </div>
+
+      <div class="account-access-stack">
+        <section class="account-license-import" id="accountLicenseImportSection">
+          <div class="account-license-import-copy">
+            <span class="panel-kicker" data-i18n="offlineLicense">OFFLINE LICENSE</span>
+            <strong id="accountLicenseImportState">Import .pgnlicense</strong>
+            <small id="accountLicenseHint">The license is verified locally. No cloud connection is required for sign-in.</small>
+          </div>
+          <div class="account-license-import-actions">
+            <input id="accountLicenseFile" type="file" accept=".pgnlicense,application/json" />
+            <button class="secondary" id="accountImportLicense" data-i18n="importLicense">Import license</button>
+          </div>
+        </section>
+
+        <section class="account-signed-license hidden" id="accountSignedLicense">
+          <div>
+            <span data-i18n="license">LICENSE</span>
+            <strong id="accountSignedLicensePlan">—</strong>
+          </div>
+          <div class="account-license-remaining">
+            <span data-i18n="remaining">REMAINING</span>
+            <strong id="accountLicenseRemaining">—</strong>
+          </div>
+        </section>
+
+        <article class="panel account-login-card">
+          <span class="panel-kicker" data-i18n="signIn">SIGN-IN</span>
+          <h3 id="accountSignInTitle" data-i18n="signInConfig">Sign in to edit configuration</h3>
+          <p class="panel-copy" id="accountSignInCopy" data-i18n="signInConfigHelp">Use the email and password linked to this PROGNODE license.</p>
+
+          <div id="accountCredentials" class="account-credentials">
+            <label class="field">
+              <span data-i18n="email">Email</span>
+              <input id="accountEmail" type="email" placeholder="user@customer.com" autocomplete="username" />
+            </label>
+            <label class="field">
+              <span data-i18n="password">Password</span>
+              <input id="accountPassword" type="password" placeholder="PROGNODE password" autocomplete="current-password" />
+            </label>
+          </div>
+
+          <div class="account-session-state" id="accountSessionState">Import a license to continue</div>
+          <div class="account-login-actions">
+            <button class="primary" id="accountSignIn" data-i18n="signIn">Sign in</button>
+            <button class="secondary hidden" id="accountSignOut" data-i18n="signOut">Sign out</button>
+          </div>
+        </article>
+      </div>
+
+      <div class="modal-actions">
+        <button class="secondary" id="cancelAccountModal" data-i18n="close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/qr-local.js?v=0.7.2-rc6.4.7-hf5-ui-stabilization"></script>
+  <script src="/app.js?v=20261004-alarm-ack-persistence-2"></script>
+  <script src="/trend-studio.js?v=20261004-csv-audit"></script>
+  <script src="/trend-studio-mount.js?v=rc647-hf63-auth-catalog"></script>
+  <script src="/hf5-ui.js?v=20261004-bulk-management"></script>
+  <script defer src="/customer-v2.js?v=20261004-visual-hierarchy"></script>
+<script>
+(()=>{
+const shell=document.querySelector('.app-shell'),sidebar=document.getElementById('sidebar');
+if(!shell||!sidebar)return;
+const modeKey='prognode.sidebarMode',validModes=['auto','compact','expanded'],desktop=window.matchMedia('(min-width: 851px)');
+let mode=localStorage.getItem(modeKey),timer=0;
+if(!validModes.includes(mode)){mode=localStorage.getItem('prognode.sidebarCollapsed')==='true'?'compact':'auto';localStorage.setItem(modeKey,mode);}
+const clearTimer=()=>{if(timer){clearTimeout(timer);timer=0;}};
+const pointerInside=()=>sidebar.matches(':hover');
+const focusInside=()=>sidebar.contains(document.activeElement);
+function setCollapsed(value){shell.classList.toggle('sidebar-collapsed',!!value);shell.classList.remove('sidebar-peeking');}
+function updateModeButtons(){document.querySelectorAll('button[data-sidebar-mode]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.sidebarMode===mode)));}
+function scheduleAutoCollapse(delay=8000){clearTimer();if(mode!=='auto'||!desktop.matches||pointerInside()||focusInside()||shell.classList.contains('sidebar-peeking'))return;timer=window.setTimeout(()=>{timer=0;if(mode==='auto'&&desktop.matches&&!pointerInside()&&!focusInside()&&!shell.classList.contains('sidebar-peeking'))setCollapsed(true);},delay);}
+function schedulePeekClose(){clearTimer();if(!shell.classList.contains('sidebar-collapsed')){scheduleAutoCollapse();return;}if(mode==='expanded')return;shell.classList.add('sidebar-peeking');timer=window.setTimeout(()=>{timer=0;if(!pointerInside()&&!focusInside())shell.classList.remove('sidebar-peeking');},650);}
+function applyMode(next){if(!validModes.includes(next))return;mode=next;localStorage.setItem(modeKey,mode);shell.dataset.sidebarMode=mode;clearTimer();updateModeButtons();if(!desktop.matches){setCollapsed(false);return;}setCollapsed(mode==='compact');if(mode==='auto')scheduleAutoCollapse();}
+sidebar.addEventListener('mouseenter',()=>{clearTimer();if(shell.classList.contains('sidebar-collapsed')&&mode!=='expanded')shell.classList.add('sidebar-peeking');});
+sidebar.addEventListener('mouseleave',()=>{if(shell.classList.contains('sidebar-collapsed'))schedulePeekClose();else if(mode==='auto')scheduleAutoCollapse();});
+sidebar.addEventListener('focusin',()=>{clearTimer();if(shell.classList.contains('sidebar-collapsed')&&mode!=='expanded')shell.classList.add('sidebar-peeking');});
+sidebar.addEventListener('focusout',event=>{if(sidebar.contains(event.relatedTarget))return;if(shell.classList.contains('sidebar-collapsed'))schedulePeekClose();else if(mode==='auto')scheduleAutoCollapse();});
+document.querySelectorAll('button[data-sidebar-mode]').forEach(button=>button.addEventListener('click',()=>applyMode(button.dataset.sidebarMode)));
+desktop.addEventListener('change',()=>applyMode(mode));
+applyMode(mode);
+})();
+</script>
+<script src="/mobile-device-access.js?v=hf64" defer></script>
+<script src="/manual-pairing.js?v=hf65" defer></script>
+</body>
+</html>

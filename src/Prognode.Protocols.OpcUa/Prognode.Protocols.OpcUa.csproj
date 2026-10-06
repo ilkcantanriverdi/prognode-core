@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Client" Version="1.5.378.176" />
+    <ProjectReference Include="..\Prognode.Contracts\Prognode.Contracts.csproj" />
+    <ProjectReference Include="..\Prognode.Protocols.Abstractions\Prognode.Protocols.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

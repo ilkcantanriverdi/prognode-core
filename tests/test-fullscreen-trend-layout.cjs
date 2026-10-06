@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.join(__dirname,'../src/Prognode.Host/wwwroot');
+const css=fs.readFileSync(path.join(root,'trend-hf61.css'),'utf8');
+const js=fs.readFileSync(path.join(root,'trend-hf3plus.js'),'utf8');
+assert.match(css,/html\.charts-only \.app\.core-embedded \.view\.hf61-view\{display:flex;grid-template-columns:none;gap:0;padding:0;width:100%;min-width:0\}/);
+assert.match(css,/html\.charts-only \.app\.core-embedded \.view\.hf61-view>\.board\{width:100%;min-width:0;flex:1\}/);
+assert.match(js,/toggleChartsOnly\(\).*?setTimeout\(\(\)=>\{resizeLayout\(\);S\.charts\.forEach\(drawChart\)\},100\)/);
+assert.match(js,/fullscreenchange'.*?resizeLayout\(\);S\.charts\.forEach\(drawChart\)/);
+console.log('PASS: fullscreen removes explorer column and recomputes chart columns');

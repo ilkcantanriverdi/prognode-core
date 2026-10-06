@@ -1,0 +1,18 @@
+PROGNODE RC6.4.4 — Trend Studio feedback preview
+
+CHANGES
+- Always render individual Historian charts; Compare checkbox adds/removes shared overlay
+- Shape-preserving smooth is default and no longer user-toggled
+- Manual Historian enrollment only; removed repeated automatic Trend -> Historian migration
+- Retain existing recording configurations and SQLite historian samples for safety
+- Compact graph-first layout, optional Saved Views, device name + Tag name labels
+- Stronger light theme contrast and reactive TR/EN strings
+- Correct PNG export of separate chart canvases
+
+STATIC: node --check app.js / trend-studio.js PASS
+TESTS: tests/test-trend-logic.cjs PASS
+TESTS: tests/test-trend-ui.cjs PASS
+TESTS: tests/test-trend-v644-browser.py PASS (Chromium; simulated data)
+TRANSLATION: existing app translations.en / translations.tr both have 467 keys; no missing keys
+BACKEND: changed only old auto-enrollment migration invocation/method; Core API enforces active Historian Tag membership
+INTEGRATION: .NET SDK not present in this environment: Windows dotnet build, hardware PLC polling, and existing SQLite migration still require acceptance testing

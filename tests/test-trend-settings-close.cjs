@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.join(__dirname,'../src/Prognode.Host/wwwroot');
+const js=fs.readFileSync(path.join(root,'trend-hf3plus.js'),'utf8');
+const css=fs.readFileSync(path.join(root,'trend-hf3plus.css'),'utf8');
+assert.match(js,/data-action="close-settings" aria-label=/);
+assert(js.includes("action==='close-settings'){c.settings=false;renderLayout();}"));
+assert.match(js,/document\.addEventListener\('click',e=>\{\s*if\(e\.target\.closest\('\.settings,\[data-action="settings"\]'\)\)return;/);
+assert.match(js,/e\.key==='Escape'&&S\.charts\.some\(c=>c\.settings\)/);
+assert.match(css,/\.settings-head button\{/);
+console.log('PASS: Trend settings closes by X, outside click and Escape');

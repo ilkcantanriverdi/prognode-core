@@ -1,0 +1,20 @@
+PROGNODE V0.7.2 RC6.4 — TREND STUDIO FEEDBACK PREVIEW
+
+Tested in generation environment:
+PASS: Existing app.js syntax — node --check
+PASS: New trend-studio.js syntax — node --check
+PASS: Self-contained desktop Chromium visual fixture, 3 signals and alarm+lot overlays
+PASS: Add a fourth signal interactively in visual fixture
+PASS: A cursor can be placed interactively
+PASS: Mobile Chromium fixture 390 px: no horizontal document overflow, live/pause toggle
+PASS: No uncaught JS errors during exercised Chromium interactions
+PASS: The new read-only Studio API references existing TagService/HistorianService
+
+NOT RUN HERE:
+- dotnet build on Windows (.NET SDK unavailable in this environment)
+- Live Core API + PLC simulator end-to-end test
+- Long-range historian load/performance validation
+- RC6.3.1-HF2 license/revoke/session regression under Windows
+
+Visual fixture ONLY uses simulated data, labeled in the header.
+Production Core Trend Studio queries only real Core API / SQLite historian data.

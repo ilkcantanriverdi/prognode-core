@@ -1,0 +1,9 @@
+RC6.4.7 HF2 FULL SOURCE · QR + HF3+ real Historian
+PASS: Node JS syntax for app, QR renderer and active HF3+ frontend.
+PASS: Existing Trend Studio Node logic/UI tests.
+PASS: Chromium mock-API test: real HF3+ assets, no fake defaults, independent time windows, shared cursor, saved layout, no JS errors.
+PASS: Chromium mock-API QR test: HTTPS required, setup/recheck, offline SVG QR, cancel cleanup.
+PASS: Exact SQLite bucket query: 12,000 recorded rows → 1,178 actual timestamped rows; both short spikes and BAD/STALE preserved.
+PASS: Native iframe, cache-busted HF2 version, certificate reuse guard, no bundled production license.
+NOT RUN: Windows PowerShell/UAC execution, .NET 10 compile, real PLC/Historian performance, Windows service, Android/iOS hardware pairing.
+Next on Windows: 1) protect old data/root/cert, 2) SETUP_PROGNODE_QR.cmd if needed, 3) START_PROGNODE_RC6_4_7_HF2.cmd, 4) TEST_PROGNODE_RC647_HF2_MERGE.ps1 and TEST_PROGNODE_QR_V05.ps1, 5) real historian + mobile acceptance.

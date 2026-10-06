@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
+    <ProjectReference Include="..\Prognode.Contracts\Prognode.Contracts.csproj" />
+    <ProjectReference Include="..\Prognode.Core\Prognode.Core.csproj" />
+    <ProjectReference Include="..\Prognode.Notifications\Prognode.Notifications.csproj" />
+  </ItemGroup>
+</Project>

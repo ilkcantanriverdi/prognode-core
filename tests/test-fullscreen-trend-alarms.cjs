@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.join(__dirname,'../src/Prognode.Host/wwwroot');
+const html=fs.readFileSync(path.join(root,'trend-hf3plus.html'),'utf8');
+const css=fs.readFileSync(path.join(root,'trend-hf3plus.css'),'utf8');
+const js=fs.readFileSync(path.join(root,'trend-hf3plus.js'),'utf8');
+assert.match(html,/id="fullscreen-alarm-indicator"[^>]+hidden/);
+assert.match(css,/html\.charts-only \.fullscreen-alarm-indicator:not\(\[hidden\]\)\{display:flex\}/);
+assert.match(js,/api\('\/api\/alarms\/active'\)/);
+assert.match(js,/indicator\.hidden=activeAlarmCount===0/);
+assert.match(js,/window\.parent\.navigate\('alarms'\)/);
+assert.match(js,/setInterval\(\(\)=>\{void refreshFullscreenAlarmIndicator\(\)\},3000\)/);
+console.log('PASS: charts-only alarm badge polls active alarms, hides at zero and opens alarms');

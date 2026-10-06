@@ -1,0 +1,14 @@
+/* HF6.4: compact device grants inside Server & QR; no additional page or large sidebar. */
+.hf64-device-panel{border-top:1px solid var(--border,#294453);margin-top:28px;padding-top:20px}
+.hf64-device-list{display:grid;gap:12px;margin-top:18px}
+.hf64-device{display:grid;grid-template-columns:minmax(200px,1fr) auto;gap:16px;
+  border:1px solid #284558;background:#102334;border-radius:12px;padding:16px;align-items:center}
+.hf64-device strong{display:block;font-size:13px;color:#e3f4f7}
+.hf64-device small{display:block;color:#9ab6c8;font-size:11px;line-height:1.5;margin-top:5px;overflow-wrap:anywhere}
+.hf64-access-fields{display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.hf64-access-fields label{font-size:12px;white-space:nowrap;color:#daeaf3}
+.hf64-access-fields input{accent-color:#1ebbd2;vertical-align:middle}
+.hf64-access-fields select,.hf64-device-name{background:#0e2231;border:1px solid #39566a;color:#ecf9ff;border-radius:8px;padding:8px;max-width:190px}
+.hf64-device-name{width:min(100%,250px)}
+.hf64-msg{color:#80d9df;font-size:12px;min-height:17px}
+@media(max-width:1000px){.hf64-device{grid-template-columns:1fr}}

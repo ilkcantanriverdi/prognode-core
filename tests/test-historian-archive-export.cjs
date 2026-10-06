@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const web=fs.readFileSync(path.join(__dirname,'../src/Prognode.Web/EndpointExtensions.cs'),'utf8');
+const repo=fs.readFileSync(path.join(__dirname,'../src/Prognode.Data/Sqlite/SqliteHistorianRepository.cs'),'utf8');
+const ui=fs.readFileSync(path.join(__dirname,'../src/Prognode.Host/wwwroot/app.js'),'utf8');
+assert(web.includes('"/api/historian/export.zip"'));
+assert(web.includes('"/api/data-exchange/historian/{tagId:guid}.zip"'));
+assert(web.includes('const int rowsPerFile = 500_000'));
+assert(web.includes('WriteHistorianCsvAsync(stream, historian, names'));
+assert(web.includes('CreateHistorianArchiveDownloadAsync(historian, names'));
+assert(web.includes('FileOptions.Asynchronous | FileOptions.SequentialScan | FileOptions.DeleteOnClose'));
+assert(web.includes('return Results.File(file, "application/zip", fileName)'));
+assert(!web.slice(web.indexOf('"/api/historian/export.csv"'),web.indexOf('"/api/system/time"')).includes('250_000'));
+assert(repo.includes('AND timestamp_unix_ms < $to'));
+assert(ui.includes('/api/data-exchange/historian/${encodeURIComponent(tagId)}.zip'));
+console.log('PASS: Historian CSV streams without 250k cap; ZIP splits into Excel-sized parts');

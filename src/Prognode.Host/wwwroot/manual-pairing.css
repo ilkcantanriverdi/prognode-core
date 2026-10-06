@@ -1,0 +1,12 @@
+/* HF6.5 manual SAS flow; no overflow in customer sidebar or settings */
+.manual-pair-selector{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0 12px}
+.manual-pair-selector button{border:1px solid var(--line-soft,#2b4456);border-radius:9px;background:#132838;color:#b4c9d4;padding:11px 17px;font-weight:650;cursor:pointer}
+.manual-pair-selector button.active{background:#10394b;border-color:#24bad0;color:#e9fcff}
+.pair-manual-card{border:1px solid #315365;background:#0d2333;border-radius:14px;padding:22px;margin:0 0 15px;min-width:0}
+.pair-manual-card.hidden{display:none!important}.pair-manual-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+.pair-manual-grid>div{min-width:0;display:flex;flex-direction:column;gap:10px}.pair-manual-grid small{color:#9ab3c3;line-height:1.6;font-size:12px}
+.manual-sas{font:700 clamp(17px,2vw,27px)/1.5 ui-monospace,Consolas,monospace;color:#77deed;letter-spacing:1px;overflow-wrap:anywhere}
+.manual-note{font-size:12px;color:#adc7d3;line-height:1.6;margin:18px 0}.manual-actions{display:flex;gap:10px;flex-wrap:wrap}
+.manual-advanced{margin:16px 0;padding:12px;border:1px dashed #3e6070;border-radius:9px;min-width:0}.manual-advanced.hidden{display:none}.manual-advanced span{display:block;color:#aac6d0;margin-bottom:8px}.manual-advanced code{overflow-wrap:anywhere;user-select:all;font-size:12px;line-height:1.5}
+.backup-cross-server{border:1px solid #c79948;padding:14px;border-radius:10px;background:#392e193f}
+@media(max-width:870px){.pair-manual-grid{grid-template-columns:1fr}}

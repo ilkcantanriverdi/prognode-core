@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "domainSeparatorUtf8": "PROGNODE-MANUAL-PAIR-V1\u0000",
+  "serverId": "12345678-1234-5678-90ab-1234567890ab",
+  "certDerFixture": "tests/ManualPairingContract/fixtures/leaf.der",
+  "certSha256Hex": "F414FAFABDAEE0219F85E00EE610ECAC02E4EDB64194D16027C1B2E8487B0935",
+  "hashSha256Hex": "5DDE41683BC01117A0D0B2F2659CEB973A1D8ED00933C2DBCB9A21B8FA3DAE8E",
+  "first60BitsHex": "5DDE41683BC0111",
+  "sasAlphabet": "0123456789ABCDEFGHJKMNPQRSTVWXYZ",
+  "controlCode": "BQF4-2T1V-R08H",
+  "formatted": "XXXX-XXXX-XXXX"
+}

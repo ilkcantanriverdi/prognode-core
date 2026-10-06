@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\Prognode.Contracts\Prognode.Contracts.csproj" />
+    <ProjectReference Include="..\Prognode.Core\Prognode.Core.csproj" />
+    <ProjectReference Include="..\Prognode.Licensing\Prognode.Licensing.csproj" />
+    <ProjectReference Include="..\Prognode.Notifications\Prognode.Notifications.csproj" />
+    <ProjectReference Include="..\Prognode.RemoteAccess\Prognode.RemoteAccess.csproj" />
+    <ProjectReference Include="..\Prognode.Protocols.Modbus\Prognode.Protocols.Modbus.csproj" />
+    <ProjectReference Include="..\Prognode.Protocols.S7\Prognode.Protocols.S7.csproj" />
+    <ProjectReference Include="..\Prognode.Alarm\Prognode.Alarm.csproj" />
+    <ProjectReference Include="..\Prognode.Trends\Prognode.Trends.csproj" />
+    <ProjectReference Include="..\Prognode.Historian\Prognode.Historian.csproj" />
+  </ItemGroup>
+</Project>

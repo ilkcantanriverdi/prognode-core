@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <WindowsPackageType>None</WindowsPackageType>
+
+    <AssemblyName>PROGNODE.Agent</AssemblyName>
+    <AssemblyTitle>PROGNODE</AssemblyTitle>
+    <Product>PROGNODE</Product>
+    <Description>PROGNODE local Windows notification agent</Description>
+    <Company>PROGNODE</Company>
+    <ApplicationIcon>Assets\prognode.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Prognode.Contracts\Prognode.Contracts.csproj" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260804001" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\LAN_ACCESS_ELEVATED.ps1" Link="LAN_ACCESS_ELEVATED.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\prognode.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\prognode.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>

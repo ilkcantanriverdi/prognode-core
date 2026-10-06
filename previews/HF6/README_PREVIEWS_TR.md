@@ -1,0 +1,1 @@
+HF6 görsel inceleme görüntüleri, gerçek Core backend'e bağlı olmayan tarayıcı testlerinden üretilmiştir. Trend 8 panel görüntüsü yalnız simülasyon API fixture içerir ve üretim verisi değildir. Gerçek `wwwroot` dosyaları kaynakta bulunur; görüntüler bir pazarlama/ürün kabul referansıdır.

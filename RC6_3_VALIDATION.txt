@@ -1,0 +1,30 @@
+PROGNODE V0.7.2 RC6.3 - PACKAGE VALIDATION
+
+Completed in generation environment before packaging:
+- JavaScript syntax: PASS (node --check src/Prognode.Host/wwwroot/app.js)
+- JSON parse: PASS
+- .csproj / Directory.Build.props XML parse: PASS
+- C# source delimiter/structure scan: PASS
+- Fresh SQLite v8 schema execution: PASS
+- RC6.2-like -> v8 additive migration simulation: PASS
+  - legacy alarm retained and defaults to DigitalEquals
+  - historian sample retained; batch_id added nullable
+- Numeric GTE hysteresis source contract: PASS
+  - >=80 activation boundary
+  - 79.9 remains active with deadband 2
+  - <=78 clear boundary
+- BAD/STALE timer reset/freeze source contract: PASS
+- Modbus parser source contract: PASS
+  - 00001 FC01 / 10001 FC02 / 30001 FC04 / 40001 FC03
+- Modbus low-level read methods: PASS
+- Modbus area/function batching and 2000-bit / 125-register caps: PASS
+- BatchRun fields + normal HTTP API routes: PASS
+- Historian batch_id persistence contract: PASS
+- Alarm occurrence many-to-many Batch mapping contract: PASS
+
+IMPORTANT:
+The generation environment does not contain the .NET SDK or PowerShell, so a real
+.NET compile and Windows runtime smoke test could not be executed here.
+Run BUILD_PROGNODE_CORE.cmd on the Windows development PC before accepting RC6.3.
+Then run the retained regression scripts plus TEST_PROGNODE_RC6_3_BATCH_API.ps1.
+FC01/FC02/FC03/FC04 wire-level and alarm timing acceptance belong in the Developer Test Bench simulator.

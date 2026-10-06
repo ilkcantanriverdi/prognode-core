@@ -1,0 +1,33 @@
+PROGNODE V0.7.2 RC6.3.1 validation
+==================================
+
+Static validation performed in generation environment:
+- JavaScript syntax (node --check): PASS
+- JSON parse: PASS
+- XML project/props parse: PASS
+- HTML duplicate ID check: PASS (350 unique IDs)
+- C# delimiter/source structure check: PASS
+- RC6.3.1 source contract assertions: PASS
+- Private-key scan: PASS (no private keys)
+- Packaged customer .pgnlicense scan: PASS (none included)
+
+Implemented contract checks:
+- Commercial CUSTOMER + paymentRequired=true maxTags remains 100/250/500.
+- INTERNAL_QA or paymentRequired=false accepts signed maxTags 1..1,000,000.
+- subscription.maxTags == entitlements.maxTags remains mandatory.
+- Effective runtime limit still comes from signed entitlements.maxTags.
+- Persisted Cloud REVOKED for exact licenseId overlays local signed lifecycle with IsValid=false.
+- Same revoked license re-import does not clear persisted revoke.
+- Different licenseId starts fresh activation.
+- Signed-out license API/UI metadata is redacted.
+- Successful import returns assigned display name/email only for sign-in continuation.
+
+Not executable in this environment:
+- dotnet build (SDK not installed)
+- live Control Center revoke heartbeat (requires production Web contract)
+- signed INTERNAL_QA 5000-tag import (requires a Web-signed test license)
+
+Final Windows acceptance:
+1) BUILD_PROGNODE_CORE.cmd
+2) TEST_PROGNODE_RC6_3_1_LICENSE.ps1 with a signed Internal/Manual license
+3) Revoke in Control Center and rerun with -ExpectRevoked

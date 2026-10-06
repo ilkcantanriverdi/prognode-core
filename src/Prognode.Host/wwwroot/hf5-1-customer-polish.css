@@ -1,0 +1,49 @@
+/* HF5.1 — customer acceptance: a clean, calm navigation. Only presentation changes.
+   Existing DOM IDs and event handlers are preserved for access, clock, status, alerts, translations and page navigation. */
+.app-shell:not(.sidebar-collapsed){grid-template-columns:238px minmax(0,1fr)}
+.sidebar{padding:17px 13px 15px!important;gap:0;overflow-x:hidden;scrollbar-width:thin}
+.brand{height:64px!important;min-height:64px;padding:0 5px 14px!important;gap:10px}
+.brand-logo{max-height:43px;width:43px;object-fit:contain}
+.brand-copy strong{font-size:13px;letter-spacing:.055em}
+.brand-copy>span{font-size:9px}
+/* Every page already has its own heading: no second large title card in navigation. */
+.sidebar-current{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important}
+.nav{padding-top:34px!important;flex:1 0 auto!important}
+.nav-section{font-size:9px!important;margin:17px 10px 8px!important;letter-spacing:.13em}
+.nav-item{min-height:40px!important;margin:2px 0!important;font-size:12px!important;border-radius:9px!important;padding:0 10px!important}
+.nav-item.active{background:color-mix(in srgb,var(--cyan) 9%,transparent)!important;box-shadow:inset 2px 0 0 var(--cyan)!important}
+.nav-count{width:18px!important;min-width:18px!important;height:18px!important;font-size:10px!important}
+/* Access state is important, but it must not occupy a fifth of the sidebar. */
+.sidebar .access-banner:not(.hidden){display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;gap:6px!important;padding:7px 8px!important;margin:8px 0 8px!important;border-radius:9px!important;min-height:0!important;flex:0 0 auto!important}
+.sidebar .access-banner>div{display:block!important;min-width:0!important;flex:1!important}
+.sidebar .access-banner strong{display:block!important;font-size:10px!important;letter-spacing:.02em!important;line-height:1.2!important}
+.sidebar .access-banner span{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip-path:inset(50%)!important}
+.sidebar #bannerOpenLicense{font-size:10px!important;line-height:1.15!important;padding:7px!important;min-height:30px!important;width:auto!important;min-width:72px!important;max-width:100px!important;white-space:normal!important}
+/* The bottom area is a two-row utility dock, not a stack of dashboard cards. */
+.sidebar-utility{margin-top:auto!important;border-top:1px solid var(--line-soft)!important;padding:13px 0 0!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:10px 6px!important;align-items:center!important;flex:0 0 auto!important}
+.sidebar-status-line{grid-column:1;grid-row:1;min-width:0!important;gap:3px!important}
+.sidebar .system-pill{min-width:0!important;font-size:10px!important;padding:7px 8px!important;white-space:nowrap!important}
+.sidebar #systemHealthLabel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sidebar #alarmBell{width:28px;height:28px;flex:0 0 28px}
+.sidebar .server-clock{grid-column:2;grid-row:1;min-width:0!important;width:auto!important;max-width:82px!important;min-height:0!important;padding:0!important;margin:0!important;border:0!important;background:transparent!important;box-shadow:none!important;text-align:right!important;align-items:flex-end!important}
+.sidebar .server-clock-time{font-size:12px!important;font-weight:650!important;white-space:nowrap!important}
+.sidebar .server-clock-date{display:none!important}
+.sidebar-preferences{grid-column:1 / -1;grid-row:2;display:flex!important;justify-content:space-between!important;min-width:0!important;gap:8px!important}
+.sidebar .theme-toggle{width:31px!important;height:31px!important;min-width:31px!important;min-height:31px!important}
+.sidebar .language-switch{margin-left:auto;display:flex!important;flex-direction:row!important}
+.sidebar .language-switch button{min-width:29px!important;min-height:29px!important;font-size:10px!important}
+.sidebar #accountButton{grid-column:1/-1;grid-row:3;min-width:0!important;width:100%!important;min-height:39px!important;max-height:42px!important;padding:6px 9px!important;margin:0!important;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:9px!important;box-shadow:none!important;border-radius:9px!important}
+.sidebar #accountButton .account-avatar{width:26px!important;height:26px!important;min-width:26px!important;flex:0 0 26px!important;font-size:11px!important}
+.sidebar #accountButton .account-copy{min-width:0!important;flex:1!important;text-align:left!important}
+.sidebar #accountButton #accountName{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px!important;max-width:160px}
+.sidebar-footer{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip-path:inset(50%)!important;border:0!important}
+/* Disabled or unsigned states remain represented by the compact access notice and account control. */
+.sidebar-collapsed .nav{padding-top:38px!important}
+.sidebar-collapsed .sidebar-utility{display:flex!important;flex-direction:column!important;gap:9px!important;padding:12px 0 0!important}
+.sidebar-collapsed .sidebar-status-line{width:auto!important;justify-content:center!important}
+.sidebar-collapsed #systemHealthLabel,.sidebar-collapsed .server-clock,.sidebar-collapsed .access-banner,.sidebar-collapsed #accountButton .account-copy{display:none!important}
+.sidebar-collapsed .system-pill{padding:6px!important;justify-content:center!important}
+.sidebar-collapsed .sidebar-preferences{display:flex!important;flex-direction:column!important;align-items:center!important}
+.sidebar-collapsed .language-switch{flex-direction:column!important;margin:0!important}
+.sidebar-collapsed #accountButton{width:35px!important;min-height:35px!important;max-height:35px!important;padding:3px!important;justify-content:center!important}
+@media(max-width:850px){.sidebar{height:100dvh!important}.sidebar-utility{margin-top:auto!important}}

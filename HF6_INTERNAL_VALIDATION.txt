@@ -1,0 +1,15 @@
+PROGNODE RC6.4.7 HF6 source / customer-interface acceptance candidate
+Local validation scope — 2026-09-27
+
+PASS — JavaScript source syntax: app.js, customer-v2.js, trend-hf3plus.js, qr-local.js, hf5-ui.js and trend-studio-mount.js via Node 22 --check.
+PASS — Node Trend deterministic logic contract: numerical alarm limits, A/B, flags/thresholds, navigation.
+PASS — HF3+ real-sample bucketing fixture: 12,000 -> 1,178 render points with timestamp, high/low, BAD/STALE preservation.
+PASS — Existing mocked DOM trend UI deterministic contract.
+PASS — Browser shell: .io logo / no external icon, 4 Settings panes, invalid license + offline Core presentation, TR/EN, 390 / 768 / 1366 / 1920 horizontal-overflow checks, zero page errors.
+PASS — Trend browser mocked Core API: 4 charts, 8 charts, 24h panel selector, zero page errors. Only test fixture data in preview screenshots; no PLC hardware test.
+PASS — Byte-identical sensitive baseline source compared with HF5.1: Host Program.cs, QR pairing service, BackupArchive.cs, LanAccessWizardService.cs, QR renderer, LicenseService.cs, elevated LAN helper.
+PASS — No customer database, signed license, server-access.json or private key bundled.
+
+PENDING — Real Windows .NET 10 build, service/UAC, Schannel TLS test on Core service identity, physical QR + v2 ACK, actual PLC Historian soak, Backup Restore on copied data, clean Win11 installer validation.
+
+Do not advertise this source package as a signed commercial Setup.exe or a field-certified release before the above gates pass.

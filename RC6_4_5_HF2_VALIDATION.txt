@@ -1,0 +1,11 @@
+PROGNODE RC6.4.5 HF2
+- Full source preserved from RC6.4.5 HF1
+- Existing Core B1 logo and navbar restored; global manual collapse
+- Trend Studio embedded in Core content; no parallel fake logo/menu
+- EN/TR and theme synchronized via original Core header
+- Historian recording interval shown; actual raw point markers distinguished from summarized long-range query results
+- Drag-selected time range pauses LIVE and fetches zoomed Core data
+- Node syntax test: executed
+- Chromium mocked API browser tests: executed
+- .NET 10 compile: NOT performed here; required on Windows
+- PLC real data test: NOT performed here

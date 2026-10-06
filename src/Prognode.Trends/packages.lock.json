@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "prognode.contracts": {
+        "type": "Project"
+      },
+      "prognode.core": {
+        "type": "Project",
+        "dependencies": {
+          "Prognode.Contracts": "[1.0.0, )",
+          "Prognode.Protocols.Abstractions": "[1.0.0, )"
+        }
+      },
+      "prognode.protocols.abstractions": {
+        "type": "Project",
+        "dependencies": {
+          "Prognode.Contracts": "[1.0.0, )"
+        }
+      }
+    }
+  }
+}
