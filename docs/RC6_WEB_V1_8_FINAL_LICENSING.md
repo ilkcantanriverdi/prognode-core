@@ -41,8 +41,8 @@ The base subscription state is derived only from signed timestamps:
 ```text
 ACTIVE         now < expiresAtUtc - 7 days
 EXPIRING_SOON  expiresAtUtc - 7 days <= now < expiresAtUtc
-GRACE          expiresAtUtc <= now < graceUntilUtc
-EXPIRED        now >= graceUntilUtc
+GRACE          expiresAtUtc <= now <= graceUntilUtc
+EXPIRED        now > graceUntilUtc
 INVALID        signature/schema/contract invalid or not yet valid
 ```
 

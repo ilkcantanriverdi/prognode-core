@@ -294,11 +294,16 @@ internal static class ProcessDataContract
             new LicenseEntitlementClaimsV2(true, true, "unlimited", null, null, null,
                 100, false), now);
         var lifecycle = new LicenseEntitlementService();
-        Check(lifecycle.GetLicenseStatus(payload, expiry.AddDays(-7).AddTicks(-1)) == "ACTIVE" &&
-              lifecycle.GetLicenseStatus(payload, expiry.AddDays(-7)) == "EXPIRING_SOON" &&
-              lifecycle.GetLicenseStatus(payload, expiry) == "GRACE" &&
-              lifecycle.GetLicenseStatus(payload, expiry.AddDays(7)) == "EXPIRED",
-            "Commercial signed-timestamp lifecycle boundary failed.");
+        Check(lifecycle.GetLicenseStatus(payload, expiry.AddDays(-7).AddTicks(-1)) == "ACTIVE",
+            "Lifecycle must remain ACTIVE one tick before EXPIRING_SOON.");
+        Check(lifecycle.GetLicenseStatus(payload, expiry.AddDays(-7)) == "EXPIRING_SOON",
+            "Lifecycle must become EXPIRING_SOON exactly seven days before expiry.");
+        Check(lifecycle.GetLicenseStatus(payload, expiry) == "GRACE",
+            "Lifecycle must become GRACE exactly at expiresAtUtc.");
+        Check(lifecycle.GetLicenseStatus(payload, expiry.AddDays(7)) == "GRACE",
+            "Lifecycle must remain GRACE exactly at graceUntilUtc.");
+        Check(lifecycle.GetLicenseStatus(payload, expiry.AddDays(7).AddTicks(1)) == "EXPIRED",
+            "Lifecycle must become EXPIRED one tick after graceUntilUtc.");
         Console.WriteLine("PASS license module/capacity, exact-ID revoke and commercial lifecycle boundaries");
     }
 

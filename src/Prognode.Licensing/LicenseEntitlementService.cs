@@ -101,7 +101,7 @@ public sealed class LicenseEntitlementService
             return "ACTIVE";
         if (instant < subscription.ExpiresAtUtc)
             return "EXPIRING_SOON";
-        if (!isTrial && instant < subscription.GraceUntilUtc)
+        if (!isTrial && instant <= subscription.GraceUntilUtc)
             return "GRACE";
         return "EXPIRED";
     }
