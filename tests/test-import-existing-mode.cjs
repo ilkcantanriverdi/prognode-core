@@ -20,6 +20,7 @@ const context={state,$,TextEncoder,URL,Date,Number,String,
   loadDevices:async()=>{},loadTags:async()=>{},loadAlarms:async()=>{},loadHistorianStats:async()=>{},
   renderImportPreview:()=>{},showToast:()=>{},requireConfigurationAccess:()=>true,canMutateConfiguration:()=>true,confirm:()=>true};
 vm.createContext(context);
+vm.runInContext(slice('const ALARM_DEFAULT_REQUIRES_ACK','const state ='),context);
 vm.runInContext(slice('function s7AddressValid(','async function testS7Connection('),context);
 vm.runInContext(slice('function modbusAddressInfo(','function describeTagAddress('),context);
 vm.runInContext(slice('function dev3NormalizeHeader(','function renderImportPreview('),context);

@@ -604,7 +604,22 @@ app.Use(async (ctx,next)=>
 });
 
 app.UseDefaultFiles();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    // O10: browsers must never keep running an old UI against a newer Core. HTML, JS and CSS
+    // are always revalidated (ETag/Last-Modified make this a cheap 304 when nothing changed),
+    // so stale manual ?v= parameters can no longer pin an outdated app.js.
+    OnPrepareResponse = static context =>
+    {
+        var extension = Path.GetExtension(context.File.Name);
+        if (extension.Equals(".html", StringComparison.OrdinalIgnoreCase) ||
+            extension.Equals(".js", StringComparison.OrdinalIgnoreCase) ||
+            extension.Equals(".css", StringComparison.OrdinalIgnoreCase))
+        {
+            context.Context.Response.Headers.CacheControl = "no-cache";
+        }
+    }
+});
 app.MapPrognodeEndpoints();
 app.Run();
 

@@ -113,8 +113,7 @@ public sealed class OpcUaTagReader(OpcUaConnectionFactory connections) : ITagRea
         if (!double.IsFinite(raw) || !InRange(raw, tag.DataType))
             return new(tag.Id, deviceId, null, null, TagQuality.ConfigError, timestamp,
                 "OPC UA", "Node value is outside the Tag data type range.");
-        var value = tag.DataType is TagDataType.Bool or TagDataType.Word
-            ? raw : raw / Math.Pow(10, tag.DecimalPlaces) * tag.Scale + tag.Offset;
+        var value = EngineeringValue.From(raw, tag);
         return new(tag.Id, deviceId, raw, value,
             StatusCode.IsUncertain(result.StatusCode) ? TagQuality.Uncertain : TagQuality.Good,
             timestamp, "OPC UA");

@@ -30,9 +30,7 @@ public sealed class S7TagReader : ITagReader
                 TagDataType.Int32 => BinaryPrimitives.ReadInt32BigEndian(data),
                 TagDataType.Float32 => BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32BigEndian(data)),
                 _ => throw new NotSupportedException("Unsupported S7 type") };
-            var value = tag.DataType is TagDataType.Bool or TagDataType.Word ? raw
-                : (tag.DataType is TagDataType.Int16 or TagDataType.UInt16 or TagDataType.Int32 or TagDataType.UInt32
-                    ? raw / Math.Pow(10,tag.DecimalPlaces) : raw)*tag.Scale+tag.Offset;
+            var value = EngineeringValue.From(raw, tag);
             result.Add(new(tag.Id,device.Id,raw,value,TagQuality.Good,DateTimeOffset.UtcNow,"Siemens S7 TCP",null));
         }
         return result;

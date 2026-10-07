@@ -132,24 +132,8 @@ public sealed class ModbusTagReader(
 
     private static double ConvertToEngineeringValue(
         double raw,
-        TagDefinition tag)
-    {
-        if (tag.DataType is TagDataType.Bool or TagDataType.Word)
-            return raw;
-
-        var value = raw;
-
-        if (tag.DataType is
-            TagDataType.UInt16 or
-            TagDataType.Int16 or
-            TagDataType.UInt32 or
-            TagDataType.Int32)
-        {
-            value /= Math.Pow(10, tag.DecimalPlaces);
-        }
-
-        return value * tag.Scale + tag.Offset;
-    }
+        TagDefinition tag) =>
+        EngineeringValue.From(raw, tag);
 
     private static IReadOnlyList<ReadBlock> PlanBlocks(
         IReadOnlyList<PlannedTag> tags)

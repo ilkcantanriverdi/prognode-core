@@ -1210,15 +1210,6 @@ public static class EndpointExtensions
                 return Results.Ok(new { deleted = await alarms.DeleteHistoryOccurrencesAsync(ids, ct) });
             });
 
-        endpoints.MapPost("/api/alarms/history/delete-selected",
-            async (DeleteAlarmHistoryRequest request, AlarmService alarms, CancellationToken ct) =>
-            {
-                var ids = request.OccurrenceIds?.Where(x => x != Guid.Empty).Distinct().Take(100).ToArray()
-                    ?? Array.Empty<Guid>();
-                if (ids.Length == 0) return Results.BadRequest(new { message = "Select alarm history records first." });
-                return Results.Ok(new { deleted = await alarms.DeleteHistoryOccurrencesAsync(ids, ct) });
-            });
-
         endpoints.MapPost(
             "/api/alarms/definitions",
             async (
@@ -1254,7 +1245,7 @@ public static class EndpointExtensions
                             request.ContinueAfterClearUntilAcknowledged,
                             ct,
                             request.RequiresAcknowledgement ??
-                                request.NotificationMode == AlarmNotificationMode.RepeatUntilAcknowledged);
+                                AlarmDefaults.RequiresAcknowledgement);
 
                     return Results.Created(
                         $"/api/alarms/definitions/{created.Id}",
@@ -1302,7 +1293,7 @@ public static class EndpointExtensions
                             request.ContinueAfterClearUntilAcknowledged,
                             ct,
                             request.RequiresAcknowledgement ??
-                                request.NotificationMode == AlarmNotificationMode.RepeatUntilAcknowledged));
+                                AlarmDefaults.RequiresAcknowledgement));
                 }
                 catch (KeyNotFoundException)
                 {

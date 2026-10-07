@@ -51,8 +51,29 @@ catch (ArgumentException) { }
 
 var fresh = MqttPayloadMapper.Map(deviceId, tag, "12.3"u8.ToArray(), false,
     now, now, 250);
-Check(fresh.Quality == TagQuality.Good && Math.Abs(fresh.Value!.Value - 1.23) < 0.0001,
-    "MQTT numeric mapping failed.");
+// K1: DecimalPlaces is display precision for Float32; it must never divide the value.
+Check(fresh.Quality == TagQuality.Good && Math.Abs(fresh.Value!.Value - 12.3) < 0.0001,
+    "MQTT Float32 value must not be divided by DecimalPlaces.");
+var intTag = tag with { DataType = TagDataType.Int16 };
+var intValue = MqttPayloadMapper.Map(deviceId, intTag, "123"u8.ToArray(), false, now, now, 250);
+Check(intValue.Quality == TagQuality.Good && Math.Abs(intValue.Value!.Value - 12.3) < 0.0001,
+    "MQTT Int16 implied-decimal mapping failed.");
+// The same Tag definition must yield the same engineering value on every protocol.
+foreach (var type in Enum.GetValues<TagDataType>())
+{
+    var probe = tag with { DataType = type, DecimalPlaces = 2, Scale = 2, Offset = 1 };
+    var expected = type switch
+    {
+        TagDataType.Bool or TagDataType.Word => 150d,
+        TagDataType.Float32 => 150d * 2 + 1,
+        _ => 1.5 * 2 + 1,
+    };
+    Check(Math.Abs(EngineeringValue.From(150, probe) - expected) < 0.0001,
+        $"EngineeringValue mismatch for {type}.");
+}
+var mqttFloat = MqttPayloadMapper.Map(deviceId, tag with { Scale = 2, Offset = 1, DecimalPlaces = 2 },
+    "150"u8.ToArray(), false, now, now, 250);
+Check(Math.Abs(mqttFloat.Value!.Value - 301) < 0.0001, "MQTT does not use the shared EngineeringValue path.");
 Check(MqttPayloadMapper.Map(deviceId, tag, "12.3"u8.ToArray(), true,
     now, now, 250).Quality == TagQuality.Uncertain, "Retained value freshness not marked uncertain.");
 Check(MqttPayloadMapper.Map(deviceId, tag, "12.3"u8.ToArray(), false,
@@ -132,7 +153,7 @@ try
         if (latest.Quality == TagQuality.Good) break;
         await Task.Delay(50);
     } while (DateTimeOffset.UtcNow < deadline);
-    Check(latest.Quality == TagQuality.Good && Math.Abs(latest.Value!.Value - 2.5) < 0.0001,
+    Check(latest.Quality == TagQuality.Good && Math.Abs(latest.Value!.Value - 25.0) < 0.0001,
         "MQTT broker-to-Tag subscription failed.");
     await publisher.DisconnectAsync();
 }

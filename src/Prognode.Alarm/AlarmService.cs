@@ -353,6 +353,6 @@ public sealed class AlarmService(
             CreatedAt: createdAt,
             UpdatedAt: DateTimeOffset.UtcNow,
             RequiresAcknowledgement: requiresAcknowledgement ??
-                notificationMode == AlarmNotificationMode.RepeatUntilAcknowledged);
+                AlarmDefaults.RequiresAcknowledgement);
     }
 }
