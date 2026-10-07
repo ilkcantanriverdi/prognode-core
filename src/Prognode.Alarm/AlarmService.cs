@@ -182,7 +182,12 @@ public sealed class AlarmService(
         var tag = await tags.GetByIdAsync(tagId, cancellationToken)
             ?? throw new ArgumentException("Source Tag was not found.");
         await definitions.UpdateAsync(definition, cancellationToken);
-        runtime.ApplyDefinitionUpdate(definition, tag);
+        var waived = runtime.ApplyDefinitionUpdate(definition, tag);
+        if (waived is not null)
+            await events.AddAsync(ToEvent(waived with
+            {
+                AcknowledgedBy = "ACK requirement removed from alarm definition"
+            }, AlarmEventType.Acknowledged), cancellationToken);
         return definition;
     }
 
@@ -195,6 +200,7 @@ public sealed class AlarmService(
             return false;
 
         await definitions.DeleteAsync(id, cancellationToken);
+        runtime.MarkDefinitionsChanged();
         var removed=runtime.Remove(KeyFor(id));
         if(removed is not null)
             await events.AddAsync(ToEvent(removed,AlarmEventType.Cleared),cancellationToken);
@@ -203,9 +209,10 @@ public sealed class AlarmService(
 
     public async Task<bool> AcknowledgeAsync(
         string alarmKey,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? acknowledgedBy = null)
     {
-        var snapshot = runtime.Acknowledge(alarmKey);
+        var snapshot = runtime.Acknowledge(alarmKey, acknowledgedBy);
         if (snapshot is null)
             return false;
 
@@ -217,10 +224,10 @@ public sealed class AlarmService(
     }
 
     public async Task<OccurrenceAckResult> AcknowledgeOccurrenceAsync(
-        Guid occurrenceId, CancellationToken cancellationToken=default)
+        Guid occurrenceId, CancellationToken cancellationToken=default, string? acknowledgedBy=null)
     {
         if (occurrenceId==Guid.Empty) return OccurrenceAckResult.NotFound;
-        var current=runtime.AcknowledgeOccurrence(occurrenceId,out var alreadyAcknowledged);
+        var current=runtime.AcknowledgeOccurrence(occurrenceId,acknowledgedBy,out var alreadyAcknowledged);
         if(current is null)
         {
             if(notifications.WasAcknowledgedWithoutNewActivation(occurrenceId))
@@ -257,7 +264,8 @@ public sealed class AlarmService(
                 ? snapshot.ActiveSince
                 : DateTimeOffset.UtcNow,
             BatchId: snapshot.BatchId,
-            OccurrenceId: snapshot.OccurrenceId);
+            OccurrenceId: snapshot.OccurrenceId,
+            AcknowledgedBy: eventType == AlarmEventType.Acknowledged ? snapshot.AcknowledgedBy : null);
 
     private async Task<AlarmDefinition> BuildValidatedAsync(
         Guid id,

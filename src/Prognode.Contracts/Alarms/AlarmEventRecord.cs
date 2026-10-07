@@ -20,5 +20,7 @@ public sealed record AlarmEventRecord(
     AlarmEventType EventType,
     DateTimeOffset Timestamp,
     Guid? BatchId = null,
-    Guid OccurrenceId = default
+    Guid OccurrenceId = default,
+    // Who acknowledged (Acknowledged events only): Core user or paired mobile device.
+    string? AcknowledgedBy = null
 );

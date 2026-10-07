@@ -111,6 +111,7 @@ public sealed class DatabaseInitializer(SqliteDatabaseOptions options)
         await EnsureColumn(connection, "alarm_definitions", "deadband", "REAL NOT NULL DEFAULT 0", ct);
         await EnsureColumn(connection, "alarm_events", "batch_id", "TEXT NULL", ct);
         await EnsureColumn(connection, "alarm_events", "occurrence_id", "TEXT NULL", ct);
+        await EnsureColumn(connection, "alarm_events", "acknowledged_by", "TEXT NULL", ct);
         await EnsureColumn(connection, "trend_tags", "color", "TEXT NOT NULL DEFAULT '#3ed7e8'", ct);
 
         await MigrateHistorianSamplesNullable(connection, ct);
