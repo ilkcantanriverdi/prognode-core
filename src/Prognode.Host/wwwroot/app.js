@@ -1,3 +1,6 @@
+// Mirrors Prognode.Contracts.Alarms.AlarmDefaults.RequiresAcknowledgement (Y6).
+const ALARM_DEFAULT_REQUIRES_ACK = true;
+
 const state = {
   page: "overview",
   devices: [],
@@ -3120,7 +3123,7 @@ function resetAlarmForm() {
   $("alarmNotifyCleared").checked = false;
   $("alarmNotificationMode").value = "NotifyOnce";
   $("alarmRepeatInterval").value = "60";
-  $("alarmRequiresAcknowledgement").checked = false;
+  $("alarmRequiresAcknowledgement").checked = ALARM_DEFAULT_REQUIRES_ACK;
   $("alarmContinueAfterClear").checked = false;
   updateAlarmNotificationPolicyVisibility();
 
@@ -5596,7 +5599,7 @@ function dev3PreviewRow(row, dataset) {
     const notificationMode = ["NotifyOnce","RepeatUntilAcknowledged"].includes(notificationModeRaw) ? notificationModeRaw : null;
     const repeatIntervalSeconds = dev3Number(dev3Cell(row, "RepeatIntervalSeconds", "RepeatSeconds", "RepeatEvery"), 60);
     const continueAfterClearUntilAcknowledged = dev3Bool(dev3Cell(row, "ContinueAfterClearUntilAck", "ContinueAfterClear"), false);
-    const requiresAcknowledgement = dev3Bool(dev3Cell(row, "RequiresAcknowledgement", "RequireAck", "AckRequired"), notificationModeRaw === "RepeatUntilAcknowledged");
+    const requiresAcknowledgement = dev3Bool(dev3Cell(row, "RequiresAcknowledgement", "RequireAck", "AckRequired"), ALARM_DEFAULT_REQUIRES_ACK);
     if (!device) errors.push(`Unknown device: ${deviceNameValue || "(blank)"}`);
     if (!tag) errors.push(`Unknown tag: ${tagNameValue || "(blank)"}`);
     if (tag && !["Bool","Word","UInt16","Int16","UInt32","Int32","Float32"].includes(tag.dataType)) errors.push("Unsupported alarm source datatype");

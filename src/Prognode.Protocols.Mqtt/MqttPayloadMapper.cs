@@ -31,8 +31,7 @@ public static class MqttPayloadMapper
         var quality = now - receivedAt > staleAfter
             ? TagQuality.Stale
             : retained ? TagQuality.Uncertain : TagQuality.Good;
-        var scaled = tag.DataType is TagDataType.Bool or TagDataType.Word
-            ? raw : raw / Math.Pow(10, tag.DecimalPlaces) * tag.Scale + tag.Offset;
+        var scaled = EngineeringValue.From(raw, tag);
         return new TagValueSnapshot(tag.Id, deviceId, raw, scaled, quality, receivedAt, "MQTT",
             quality == TagQuality.Stale ? "No recent MQTT message." :
             quality == TagQuality.Uncertain ? "Retained MQTT value; source freshness is unknown." : null);

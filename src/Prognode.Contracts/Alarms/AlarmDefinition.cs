@@ -43,5 +43,5 @@ public sealed record AlarmDefinition(
     bool Enabled,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
-    bool RequiresAcknowledgement = true
+    bool RequiresAcknowledgement = AlarmDefaults.RequiresAcknowledgement
 );
