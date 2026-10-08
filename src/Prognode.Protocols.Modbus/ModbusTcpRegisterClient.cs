@@ -1,9 +1,26 @@
+using System.Collections.Concurrent;
 using System.Net.Sockets;
 
 namespace Prognode.Protocols.Modbus;
 
-public sealed class ModbusTcpRegisterClient
+/// <summary>A Modbus exception response (e.g. 0x02 illegal data address). The connection stays valid.</summary>
+public sealed class ModbusExceptionResponseException(byte functionCode, byte exceptionCode)
+    : IOException($"Modbus exception 0x{exceptionCode:X2} for function 0x{functionCode:X2}.")
 {
+    public byte ExceptionCode { get; } = exceptionCode;
+}
+
+/// <summary>
+/// Modbus TCP client with one persistent connection per endpoint (review Y3). Many gateways allow
+/// only 4–8 sockets and S7-1200 Modbus servers few connections, so polls reuse the socket instead
+/// of opening one per block. Requests on one endpoint are serialized. Any transport error closes
+/// the socket; the next request reconnects. A request on a reused socket that the peer already
+/// closed is retried once on a fresh connection.
+/// </summary>
+public sealed class ModbusTcpRegisterClient : IAsyncDisposable
+{
+    private static readonly TimeSpan IdleTimeout = TimeSpan.FromMinutes(2);
+    private readonly ConcurrentDictionary<string, Connection> _connections = new(StringComparer.OrdinalIgnoreCase);
     private int _transactionId;
 
     public Task<bool[]> ReadCoilsAsync(
@@ -25,6 +42,13 @@ public sealed class ModbusTcpRegisterClient
         string host, int port, int unitId, int startAddress, int quantity,
         int timeoutMs, CancellationToken cancellationToken) =>
         ReadRegistersAsync(host, port, unitId, 0x03, startAddress, quantity, timeoutMs, cancellationToken);
+
+    /// <summary>True when a poll on this endpoint succeeded within <paramref name="window"/>; lets the
+    /// health probe avoid opening an extra socket while polling is healthy.</summary>
+    public bool HasRecentSuccess(string host, int port, TimeSpan window) =>
+        _connections.TryGetValue(Key(host, port), out var connection) &&
+        connection.LastSuccess is { } last && DateTimeOffset.UtcNow - last <= window &&
+        (connection.LastFailure is null || connection.LastFailure < last);
 
     private async Task<bool[]> ReadBitsAsync(
         string host,
@@ -110,12 +134,59 @@ public sealed class ModbusTcpRegisterClient
         if (timeoutMs < 1)
             throw new ArgumentOutOfRangeException(nameof(timeoutMs));
 
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(timeoutMs);
+        CloseIdleConnections();
+        var connection = _connections.GetOrAdd(Key(host, port), _ => new Connection());
+        await connection.Gate.WaitAsync(cancellationToken);
+        try
+        {
+            for (var attempt = 0; ; attempt++)
+            {
+                var reused = connection.Stream is not null;
+                using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                timeout.CancelAfter(timeoutMs);
+                try
+                {
+                    if (connection.Stream is null)
+                        await connection.ConnectAsync(host, port, timeout.Token);
+                    var pdu = await ExchangeAsync(connection.Stream!, unitId, functionCode,
+                        startAddress, quantity, timeout.Token);
+                    connection.MarkSuccess();
+                    return pdu;
+                }
+                catch (ModbusExceptionResponseException)
+                {
+                    // Protocol-level answer: the socket is still in sync and stays open.
+                    connection.MarkSuccess();
+                    throw;
+                }
+                catch (Exception ex) when (ex is IOException or SocketException or OperationCanceledException or ObjectDisposedException)
+                {
+                    // Timeouts can leave a half-read response on the wire: never reuse that socket.
+                    connection.MarkFailure();
+                    connection.Close();
+                    if (cancellationToken.IsCancellationRequested) throw;
+                    if (reused && attempt == 0 && ex is not OperationCanceledException)
+                        continue;
+                    if (ex is OperationCanceledException)
+                        throw new IOException($"Modbus TCP timeout after {timeoutMs} ms.", ex);
+                    throw;
+                }
+            }
+        }
+        finally
+        {
+            connection.Gate.Release();
+        }
+    }
 
-        using var client = new TcpClient();
-        await client.ConnectAsync(host, port, timeout.Token);
-        var stream = client.GetStream();
+    private async Task<byte[]> ExchangeAsync(
+        NetworkStream stream,
+        int unitId,
+        byte functionCode,
+        int startAddress,
+        int quantity,
+        CancellationToken cancellationToken)
+    {
         var transactionId = unchecked((ushort)Interlocked.Increment(ref _transactionId));
 
         var request = new byte[]
@@ -126,10 +197,10 @@ public sealed class ModbusTcpRegisterClient
             (byte)(quantity >> 8), (byte)(quantity & 0xFF)
         };
 
-        await stream.WriteAsync(request, timeout.Token);
+        await stream.WriteAsync(request, cancellationToken);
 
         var header = new byte[7];
-        await ReadExactlyAsync(stream, header, timeout.Token);
+        await ReadExactlyAsync(stream, header, cancellationToken);
 
         var responseTransactionId = (ushort)((header[0] << 8) | header[1]);
         var protocolId = (ushort)((header[2] << 8) | header[3]);
@@ -147,7 +218,7 @@ public sealed class ModbusTcpRegisterClient
             throw new IOException($"Invalid Modbus response length {length}.");
 
         var pdu = new byte[remaining];
-        await ReadExactlyAsync(stream, pdu, timeout.Token);
+        await ReadExactlyAsync(stream, pdu, cancellationToken);
 
         if (pdu.Length < 1)
             throw new IOException("Empty Modbus PDU.");
@@ -157,7 +228,7 @@ public sealed class ModbusTcpRegisterClient
         {
             if (pdu.Length != 2)
                 throw new IOException("Invalid Modbus exception response.");
-            throw new IOException($"Modbus exception 0x{pdu[1]:X2} for function 0x{functionCode:X2}.");
+            throw new ModbusExceptionResponseException(functionCode, pdu[1]);
         }
 
         if (responseFunction != functionCode)
@@ -182,6 +253,77 @@ public sealed class ModbusTcpRegisterClient
                 throw new IOException("Remote endpoint closed the connection.");
 
             offset += read;
+        }
+    }
+
+    private void CloseIdleConnections()
+    {
+        var now = DateTimeOffset.UtcNow;
+        foreach (var (key, connection) in _connections)
+        {
+            if (now - connection.LastUsed <= IdleTimeout || !connection.Gate.Wait(0)) continue;
+            try
+            {
+                if (now - connection.LastUsed > IdleTimeout)
+                {
+                    connection.Close();
+                    _connections.TryRemove(key, out _);
+                }
+            }
+            finally { connection.Gate.Release(); }
+        }
+    }
+
+    private static string Key(string host, int port) => $"{host.Trim()}:{port}";
+
+    public ValueTask DisposeAsync()
+    {
+        foreach (var connection in _connections.Values) connection.Close();
+        _connections.Clear();
+        return ValueTask.CompletedTask;
+    }
+
+    private sealed class Connection
+    {
+        private TcpClient? _socket;
+        public SemaphoreSlim Gate { get; } = new(1, 1);
+        public NetworkStream? Stream { get; private set; }
+        public DateTimeOffset LastUsed { get; private set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset? LastSuccess { get; private set; }
+        public DateTimeOffset? LastFailure { get; private set; }
+
+        public void MarkFailure() => LastFailure = DateTimeOffset.UtcNow;
+
+        public async Task ConnectAsync(string host, int port, CancellationToken cancellationToken)
+        {
+            Close();
+            var socket = new TcpClient { NoDelay = true };
+            try
+            {
+                await socket.ConnectAsync(host, port, cancellationToken);
+            }
+            catch
+            {
+                socket.Dispose();
+                throw;
+            }
+            _socket = socket;
+            Stream = socket.GetStream();
+        }
+
+        public void MarkSuccess()
+        {
+            LastUsed = DateTimeOffset.UtcNow;
+            LastSuccess = LastUsed;
+        }
+
+        public void Close()
+        {
+            LastUsed = DateTimeOffset.UtcNow;
+            Stream?.Dispose();
+            _socket?.Dispose();
+            Stream = null;
+            _socket = null;
         }
     }
 }
