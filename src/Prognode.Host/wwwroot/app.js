@@ -2902,7 +2902,8 @@ function renderAlarms() {
               a.state === "Acknowledged" || a.requiresAcknowledgement === false
                 ? ""
                 : `<button class="ack-button"
-                     data-ack-alarm="${escapeHtml(a.alarmKey)}">
+                     data-ack-alarm="${escapeHtml(a.alarmKey)}"
+                     data-ack-occurrence="${escapeHtml(a.occurrenceId || "")}">
                      ${t("acknowledge")}
                    </button>`
             }
@@ -2916,18 +2917,25 @@ function renderAlarms() {
       button.addEventListener(
         "click",
         async () => {
-          await api(
-            "/api/alarms/ack",
-            {
-              method:"POST",
-              body:JSON.stringify({
-                alarmKey:
-                  button.dataset.ackAlarm
-              })
-            });
-
-          showToast(t("alarmAcknowledged"));
-          await loadAlarms();
+          // Occurrence-specific ACK (review Y4): never acknowledges a newer activation unseen,
+          // and records the signed-in user. Key-based ACK only for rows without an occurrence.
+          const occurrence = button.dataset.ackOccurrence;
+          const emptyOccurrence = !occurrence || /^0{8}-0{4}-0{4}-0{4}-0{12}$/.test(occurrence);
+          button.disabled = true;
+          try {
+            if (emptyOccurrence)
+              await api("/api/alarms/ack", {
+                method:"POST",
+                body:JSON.stringify({ alarmKey: button.dataset.ackAlarm })
+              });
+            else
+              await api(`/api/alarms/occurrences/${encodeURIComponent(occurrence)}/ack`, { method:"POST" });
+            showToast(t("alarmAcknowledged"));
+          } catch (error) {
+            showToast(error.message);
+          } finally {
+            await loadAlarms();
+          }
         }));
 
   $("alarmDefinitionEmpty").classList.toggle(

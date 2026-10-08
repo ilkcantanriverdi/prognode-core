@@ -13,6 +13,7 @@ public sealed class AlarmEngineHostedService(
     IDeviceRepository devices,
     AlarmEngine engine,
     AlarmRuntimeStore runtime,
+    TagQualityMonitor tagQuality,
     LicenseService license,
     ILogger<AlarmEngineHostedService> logger) : BackgroundService
 {
@@ -79,6 +80,12 @@ public sealed class AlarmEngineHostedService(
                     _definitions,
                     _tagsById,
                     _deviceNamesById,
+                    stoppingToken);
+
+                await tagQuality.EvaluateAsync(
+                    _definitions,
+                    _tagsById,
+                    DateTimeOffset.UtcNow,
                     stoppingToken);
             }
             catch (OperationCanceledException)
