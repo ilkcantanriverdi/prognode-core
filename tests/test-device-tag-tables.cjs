@@ -12,7 +12,7 @@ function section(start,end){const a=source.indexOf(start),b=source.indexOf(end,a
 const elements=new Map();
 function $(id){if(!elements.has(id))elements.set(id,{
   value:'',innerHTML:'',textContent:'',disabled:false,options:[{textContent:''}],
-  classList:{toggle:()=>{},remove:()=>{}},addEventListener:()=>{}
+  classList:{toggle:()=>{},remove:()=>{}},addEventListener:()=>{},querySelectorAll:()=>[],closest:()=>null
 });return elements.get(id)}
 const devices=Array.from({length:30},(_,i)=>({
   id:`d${i+1}`,name:`Device ${String(i+1).padStart(2,'0')}`,
@@ -22,7 +22,7 @@ const devices=Array.from({length:30},(_,i)=>({
 const tags=devices.map((device,i)=>({id:`t${i+1}`,deviceId:device.id,
   name:`Tag ${String(i+1).padStart(2,'0')}`,address:String(40001+i),dataType:i%2?'Word':'Float32',unit:''}));
 const context={state:{language:'en',devices,tags,tagValues:new Map(),devicePage:1,tagPage:1,licenseUsage:{}},
-  $,document:{querySelectorAll:()=>[]},escapeHtml:x=>String(x),statusClass:()=>'',t:x=>x,
+  $,document:{querySelectorAll:()=>[],getElementById:()=>({id:'',className:'',innerHTML:'',classList:{toggle(){}},querySelector:()=>({}),querySelectorAll:()=>[]}),createElement:()=>({id:'',className:'',innerHTML:'',classList:{toggle(){}},querySelector:()=>({}),querySelectorAll:()=>[]})},escapeHtml:x=>String(x),statusClass:()=>'',t:x=>x,
   tagDeviceName:id=>devices.find(d=>d.id===id)?.name||'—',
   tagAddressText:t=>t.address,tagDatatypeText:t=>t.dataType,tagValueText:()=> '—',
   applyAccessMode:()=>{context.accessReapplied=(context.accessReapplied||0)+1}};

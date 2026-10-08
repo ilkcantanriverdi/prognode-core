@@ -10,7 +10,7 @@ assert(source.includes('const MAX_CHARTS=15'));
 assert(source.includes('.slice(0,MAX_CHARTS)'),'saved layout restores up to 15 charts');
 assert(source.includes('const space=MAX_CHARTS-S.charts.length'),'new charts respect the 15-chart limit');
 assert(backup.includes('charts.GetArrayLength()>15'),'Core persists all 15 chart panels');
-assert(source.includes("limit:'En fazla 15 grafik açılabilir'")&&source.includes("limit:'Up to 15 charts can be opened'"));
+assert(source.includes("limit:'Up to 15 charts can be opened'"));
 for(const layout of ['auto','rows','columns','three','four','five'])assert(html.includes(`value="${layout}"`),`missing ${layout} layout`);
 assert(html.includes('id="trend-open-filter"'),'missing open trend filter');
 
@@ -31,7 +31,9 @@ assert.equal(S.charts.length,15,'filter does not delete charts');
 S.chartFilter='';
 for(const [layout,columns] of [['rows',1],['columns',2],['three',3],['four',4],['five',5]]){S.layout=layout;assert.equal(context.effectiveColumns(),columns,layout)}
 width=620;S.layout='five';assert.equal(context.effectiveColumns(),1,'mobile forces one readable column');
-S.charts=[{id:'t1',slot:0}];S.layout='auto';assert.equal(context.slotItems().length,2,'one remaining chart has one add slot');
-assert(source.includes("const compactAfterRemoval=!S.maximized&&n<=1"),'one-chart layout must use compact rows');
+// The empty add slot was removed from the layout; a single remaining chart renders alone and
+// the compact-rows check below keeps it from stretching to a full-screen row.
+S.charts=[{id:'t1',slot:0}];S.layout='auto';assert.equal(context.slotItems().length,1,'one remaining chart renders without an empty slot');
+assert(source.includes("const compactAfterRemoval=!chartsOnly&&!S.maximized&&n<=1"),'one-chart layout must use compact rows (except charts-only fullscreen)');
 assert(source.includes("grid.style.gridAutoRows=compactAfterRemoval?'max-content'"),'add slot must not expand to a full-screen row');
 console.log('PASS: 15 open trends, non-destructive trend filter and 1–5 column layouts');

@@ -1,0 +1,7 @@
+# Source and tests are stored with LF. Node tests slice app.js and other web files as text, so
+# the working copy must be LF on every platform (Windows CI included), not converted to CRLF.
+*.js   text eol=lf
+*.cjs  text eol=lf
+*.html text eol=lf
+*.css  text eol=lf
+*.py   text eol=lf

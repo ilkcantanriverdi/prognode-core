@@ -13,8 +13,8 @@
   window.PrognodeStudio = ui;
   const el = id => document.getElementById(id);
   const safe = value => String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const tr = (a,b) => (typeof state !== 'undefined' && state.language === 'tr') ? a : b;
-  const fmtTime = ms => new Date(ms).toLocaleString(state.language === 'tr'?'tr-TR':'en-US',{month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const tr = (a,b) => b;
+  const fmtTime = ms => new Date(ms).toLocaleString('en-US',{month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
   const ms = p => Date.parse(p?.timestamp || '') || 0;
   const selectedTrend = () => state.trends.find(x=>x.id===state.selectedTrendId);
   const selectedTag = id => state.tags.find(t=>t.id===id);
@@ -27,8 +27,8 @@
   function updateCounts(){
     const saved=state.trends?.length||0, active=ui.selected.filter(id=>canPlot(id)).length;
     if(el('trendCount'))el('trendCount').textContent=String(saved);
-    if(el('studioOpenCount'))el('studioOpenCount').textContent=active+' '+tr('aktif grafik','active chart'+(active===1?'':'s'));
-    if(el('navTrendCount')){el('navTrendCount').textContent=String(active);el('navTrendCount').title=tr('Historian’dan açılan grafik sayısı','Number of active selected charts');}
+    if(el('studioOpenCount'))el('studioOpenCount').textContent=active+' '+'active chart'+(active===1?'':'s');
+    if(el('navTrendCount')){el('navTrendCount').textContent=String(active);el('navTrendCount').title='Number of active selected charts';}
   }
   function syncViewMode(){
     ui.viewMode=ui.compare?'compare':'separate';
@@ -37,7 +37,6 @@
     updateCounts();
   }
   const studioStrings={
-    tr:{signalExplorer:'Sinyaller',searchPlaceholder:'Tag veya cihaz ara...',loading:'Historian Tag’leri yükleniyor…',addHistorian:'＋ Historian’a Tag ekle',compareSignals:'Trendleri karşılaştır',compareHelp:'Ayrı grafikler kalır; seçili sinyaller ek grafikte birleşir.',savedViews:'Kayıtlı görünümler',saveOptional:'İsteğe bağlı: görünümü kaydet',localData:'Veriler yalnızca bu Core’da',clearSelection:'Seçimi temizle',selectSignals:'Grafik görüntülemek için sinyal seçin',historianLocal:'YEREL HISTORIAN',custom:'Özel',from:'Başlangıç',to:'Bitiş',applyRange:'Aralığı uygula',alarmScale:'Y ekseni tanımlı alarm eşiklerini de kapsar',compareTitle:'SEÇİLİ SİNYALLERİN KARŞILAŞTIRMASI',navigator:'ZAMAN GEZGİNİ',navigationHelp:'Sürükle: yakınlaştır · Tekerlek: sayfayı kaydır · Çift tık: sıfırla',statistics:'Sinyal istatistikleri',selectedRange:'SEÇİLEN ARALIK',processContext:'Proses olayları',alarmEvents:'Alarm olayları',alarmFlags:'Grafik bayrakları',alarmThresholds:'Alarm eşikleri',batch:'Batch / Lot',systemAlarms:'Sistem alarmları',lastSample:'Son kayıt',noSamples:'Bu aralıkta kayıt yok',recordedOnly:'Yalnızca Historian’a eklenmiş Tag’ler listelenir.',noHistorian:'Historian’a henüz Tag eklenmemiş.',live:'CANLI · DURDUR',paused:'DURDURULDU · DEVAM ET',pointCount:'çizilen nokta',ready:'CORE BAĞLI',empty:'Grafik için önce Historian’a Tag ekleyin.'},
     en:{signalExplorer:'Signals',searchPlaceholder:'Search tags or devices...',loading:'Loading Historian Tags…',addHistorian:'＋ Add Tag to Historian',compareSignals:'Compare trends',compareHelp:'Keep individual charts and add one overlay for selected signals.',savedViews:'Saved views',saveOptional:'Optional: save this view',localData:'Data stays on this Core',clearSelection:'Clear selection',selectSignals:'Select a signal to see its trend',historianLocal:'LOCAL HISTORIAN',custom:'Custom',from:'From',to:'To',applyRange:'Apply range',alarmScale:'Y axis also includes configured alarm thresholds',compareTitle:'COMPARISON OF SELECTED SIGNALS',navigator:'TIME NAVIGATOR',navigationHelp:'Drag to zoom · Mouse wheel scrolls · Double-click to reset',statistics:'Signal statistics',selectedRange:'SELECTED RANGE',processContext:'Process events',alarmEvents:'Alarm events',alarmFlags:'Chart flags',alarmThresholds:'Alarm thresholds',batch:'Batch / Lot',systemAlarms:'System alarms',lastSample:'Latest sample',noSamples:'No samples in this range',recordedOnly:'Only Tags added to Historian are shown.',noHistorian:'No Tags added to Historian yet.',live:'LIVE · PAUSE',paused:'PAUSED · RESUME',pointCount:'rendered points',ready:'CORE CONNECTED',empty:'First add a Tag to Historian to chart it.'}
   };
   function studioText(key){return (studioStrings[state.language]||studioStrings.en)[key]||studioStrings.en[key]||key;}
@@ -53,7 +52,7 @@
     const tag=selectedTag(id); if(v==null || !Number.isFinite(Number(v))) return '—';
     if(String(tag?.dataType||'').toLowerCase()==='bool') return Number(v)?'ON':'OFF';
     const digits=Math.max(0,Math.min(4,Number(tag?.decimalPlaces ?? 2)));
-    const n=Number(v).toLocaleString(state.language==='tr'?'tr-TR':'en-US',{maximumFractionDigits:digits,minimumFractionDigits:Math.min(1,digits)});
+    const n=Number(v).toLocaleString('en-US',{maximumFractionDigits:digits,minimumFractionDigits:Math.min(1,digits)});
     return n + (withUnit && tag?.unit?' '+tag.unit:'');
   };
   const numericConditions = new Set(['GreaterThan','GreaterThanOrEqual','LessThan','LessThanOrEqual']);
@@ -73,7 +72,7 @@
   }
   function zoneColor(zone,base) {return zone==='HIGH'?'#ff6c82':zone==='LOW'?'#f6af5c':base;}
   function eventKey(e){return String(e.alarmKey||e.definitionId||'alarm')+'|'+String(e.activeAt||'');}
-  const title = () => selectedTrend()?.name || tr('Yeni analiz','New analysis');
+  const title = () => selectedTrend()?.name || 'New analysis';
 
   function setSelectedFromSaved() {
     if(state.selectedTrendId && ui.viewId!==state.selectedTrendId) {
@@ -85,21 +84,21 @@
   }
   function renderTagPool() {
     const pool=el('studioTagPool');if(!pool)return;
-    const search=(el('studioTagSearch')?.value||'').toLocaleLowerCase(state.language==='tr'?'tr-TR':'en-US').trim();
+    const search=(el('studioTagSearch')?.value||'').toLocaleLowerCase('en-US').trim();
     const hist=recordedIds();const key=search+'|'+ui.selected.join(',')+'|'+state.tags.length+'|'+[...hist].sort().join(',')+'|'+state.language;
     if(ui.poolKey===key)return;ui.poolKey=key;
-    const all=state.tags.filter(tag=>hist.has(tag.id)&&[tag.name,state.devices.find(d=>d.id===tag.deviceId)?.name].some(x=>String(x||'').toLocaleLowerCase(state.language==='tr'?'tr-TR':'en-US').includes(search)));
+    const all=state.tags.filter(tag=>hist.has(tag.id)&&[tag.name,state.devices.find(d=>d.id===tag.deviceId)?.name].some(x=>String(x||'').toLocaleLowerCase('en-US').includes(search)));
     const shown=all.slice(0,160);
     pool.innerHTML=shown.length?shown.map(tag=>{
       const checked=ui.selected.includes(tag.id);
       return `<button type="button" class="studio-tag-row ${checked?'selected':''}" data-studio-tag="${safe(tag.id)}" aria-pressed="${String(checked)}" title="${safe(displayName(tag.id))}">
         <span class="studio-tag-indicator">${checked?'✓':''}</span><span class="studio-tag-meta"><strong>${safe(displayName(tag.id))}</strong></span></button>`;
-    }).join('')+(all.length>160?`<div class="studio-muted">${all.length-160} ${tr('sinyal daha var; aramayı daraltın.','more signals; refine your search.')}</div>`:'')
-      :`<div class="studio-muted">${search?tr('Eşleşen kayıtlı Tag yok.','No matching recorded Tags.'):studioText('noHistorian')}</div>`;
+    }).join('')+(all.length>160?`<div class="studio-muted">${all.length-160} ${'more signals; refine your search.'}</div>`:'')
+      :`<div class="studio-muted">${search?'No matching recorded Tags.':studioText('noHistorian')}</div>`;
     pool.querySelectorAll('[data-studio-tag]').forEach(node=>node.addEventListener('click', async ()=>{
       const id=node.dataset.studioTag;if(!canPlot(id))return;
       if(ui.selected.includes(id)) ui.selected=ui.selected.filter(x=>x!==id);
-      else if(ui.selected.length>=8){showToast(tr('En fazla 8 sinyal seçebilirsiniz.','Choose up to 8 signals.'));return;}
+      else if(ui.selected.length>=8){showToast('Choose up to 8 signals.');return;}
       else ui.selected.push(id);
       state.selectedTrendId=null;ui.viewId=null;state.trendPayload=null;ui.navigatorPayload=null;ui.cursors={A:null,B:null};ui.splitKey=null;
       updateCounts();syncViewMode();renderTrendList();renderTagPool();await refreshStudio(true);
@@ -110,13 +109,13 @@
     const cards=el('trendLegend'),stats=el('trendStats');if(!cards||!stats)return;
     const renderKey=ui.requestId+'|'+ui.selected.join(',')+'|'+JSON.stringify(ui.axes)+'|'+[...state.hiddenTrendTags].join(',');
     if(ui.cardKey===renderKey)return;ui.cardKey=renderKey;
-    if(!ui.selected.length){cards.innerHTML='<div class="studio-muted">'+tr('Soldan Tag seçin.','Choose signals on the left.')+'</div>';stats.innerHTML='<div class="studio-muted">No signals selected.</div>';return;}
+    if(!ui.selected.length){cards.innerHTML='<div class="studio-muted">'+'Choose signals on the left.'+'</div>';stats.innerHTML='<div class="studio-muted">No signals selected.</div>';return;}
     cards.innerHTML=ui.selected.map(id=>{
       const tag=selectedTag(id), s=payload?.series.find(x=>x.tagId===id);
       const last=[...(s?.points||[])].reverse().find(good);const hidden=state.hiddenTrendTags.has(id);
       const limits=numericLimits(id),zone=last?valueZone(last.value,limits):'UNKNOWN';
       const limitText=limits.map(d=>d.zone+' '+d.threshold).join(' · ');
-      return `<div class="studio-signal-card ${hidden?'hidden-series':''}"><div class="studio-card-row"><div class="studio-signal-label" data-studio-hide="${safe(id)}" title="Toggle signal"><span class="studio-legend-color" style="background:${safe(color(id))}"></span><span>${safe(displayName(id))}</span></div><select data-studio-axis="${safe(id)}" title="Y axis"><option value="left" ${ui.axes[id]!=='right'?'selected':''}>L axis</option><option value="right" ${ui.axes[id]==='right'?'selected':''}>R axis</option></select></div><strong style="color:${safe(zoneColor(zone,color(id)))}">${safe(valueText(id,last?.value))}</strong><div class="studio-card-foot"><span>${safe(tr('Son kayıt','Last sample'))}</span><span>${s?.sampleCount??0} ${tr('nokta','points')}</span></div>${limits.length?`<div class="studio-alarm-state" data-zone="${zone}"><b>${zone}</b><span title="Configured alarm setpoints">${safe(limitText)}</span></div>`:''}</div>`;
+      return `<div class="studio-signal-card ${hidden?'hidden-series':''}"><div class="studio-card-row"><div class="studio-signal-label" data-studio-hide="${safe(id)}" title="Toggle signal"><span class="studio-legend-color" style="background:${safe(color(id))}"></span><span>${safe(displayName(id))}</span></div><select data-studio-axis="${safe(id)}" title="Y axis"><option value="left" ${ui.axes[id]!=='right'?'selected':''}>L axis</option><option value="right" ${ui.axes[id]==='right'?'selected':''}>R axis</option></select></div><strong style="color:${safe(zoneColor(zone,color(id)))}">${safe(valueText(id,last?.value))}</strong><div class="studio-card-foot"><span>${safe('Last sample')}</span><span>${s?.sampleCount??0} ${'points'}</span></div>${limits.length?`<div class="studio-alarm-state" data-zone="${zone}"><b>${zone}</b><span title="Configured alarm setpoints">${safe(limitText)}</span></div>`:''}</div>`;
     }).join('');
     cards.querySelectorAll('[data-studio-hide]').forEach(node=>node.addEventListener('click',()=>{
       const id=node.dataset.studioHide;if(state.hiddenTrendTags.has(id)) state.hiddenTrendTags.delete(id);else state.hiddenTrendTags.add(id);drawStudio();
@@ -149,26 +148,26 @@
   function renderContext() {
     const box=el('studioEventList'),detail=el('studioEventDetail');if(!box||!detail)return;
     const alarms=el('studioAlarmToggle')?.checked!==false?relevantAlarms(ui.selected):[];
-    if(el('studioContextScope'))el('studioContextScope').textContent=tr('Seçili Tag alarmları','Selected Tag alarms')+' · '+alarms.length;
+    if(el('studioContextScope'))el('studioContextScope').textContent='Selected Tag alarms'+' · '+alarms.length;
     const batches=el('studioBatchToggle')?.checked!==false?ui.events.batches:[];
     const entries=[...alarms.map(a=>({type:'alarm',name:(selectedTag(alarmTagId(a))?.name||a.sourceName||'System')+' · '+(a.text||'Alarm'),time:Date.parse(a.activeAt||''),detail:a.state||'ACTIVE',event:a,key:eventKey(a)})),
       ...batches.map(b=>({type:'batch',name:b.batchNo||'Batch',time:Date.parse(b.startedAt||''),detail:b.state||'RUNNING'}))]
       .sort((a,b)=>b.time-a.time).slice(0,50);
     box.innerHTML=entries.length?entries.map(x=>x.type==='alarm'
-      ?`<button type="button" class="studio-event ${ui.selectedEventKey===x.key?'is-selected':''}" data-studio-event="${safe(x.key)}" title="${safe(tr('Alarm ayrıntısını göster','Show alarm details'))}"><span>⚑</span><span class="studio-event-copy"><strong>${safe(x.name)}</strong><small>${Number.isFinite(x.time)?safe(fmtTime(x.time)):''} · ${safe(x.detail)}</small></span><span class="studio-event-chevron">›</span></button>`
+      ?`<button type="button" class="studio-event ${ui.selectedEventKey===x.key?'is-selected':''}" data-studio-event="${safe(x.key)}" title="${safe('Show alarm details')}"><span>⚑</span><span class="studio-event-copy"><strong>${safe(x.name)}</strong><small>${Number.isFinite(x.time)?safe(fmtTime(x.time)):''} · ${safe(x.detail)}</small></span><span class="studio-event-chevron">›</span></button>`
       :`<div class="studio-event batch"><span>◈</span><span class="studio-event-copy"><strong>${safe(x.name)}</strong><small>${Number.isFinite(x.time)?safe(fmtTime(x.time)):''} · ${safe(x.detail)}</small></span></div>`).join('')
-      :`<div class="studio-muted">${tr('Bu aralıkta olay yok.','No events in this range.')}</div>`;
+      :`<div class="studio-muted">${'No events in this range.'}</div>`;
     box.querySelectorAll('[data-studio-event]').forEach(node=>node.addEventListener('click',()=>selectAlarmEvent(node.dataset.studioEvent)));
     const selected=alarms.find(a=>eventKey(a)===ui.selectedEventKey);
     if(!selected){detail.classList.add('hidden');detail.innerHTML='';return;}
     detail.classList.remove('hidden');
     detail.innerHTML=`<div class="studio-detail-head"><strong>⚑ ${safe(selected.text||'Alarm')}</strong><button type="button" id="studioCloseEvent" aria-label="Close event detail">×</button></div>
-      <div class="studio-detail-grid"><span>${tr('Kaynak','Source')}</span><b>${safe(selected.sourceName||selected.tagId||'System')}</b>
-      <span>${tr('Öncelik','Priority')}</span><b>${safe(selected.priority||'—')}</b>
+      <div class="studio-detail-grid"><span>${'Source'}</span><b>${safe(selected.sourceName||selected.tagId||'System')}</b>
+      <span>${'Priority'}</span><b>${safe(selected.priority||'—')}</b>
       <span>ACTIVE</span><b>${safe(fmtTime(Date.parse(selected.activeAt)))}</b>
       <span>ACK</span><b>${selected.acknowledgedAt?safe(fmtTime(Date.parse(selected.acknowledgedAt))):'—'}</b>
       <span>CLEARED</span><b>${selected.clearedAt?safe(fmtTime(Date.parse(selected.clearedAt))):'—'}</b>
-      <span>${tr('Durum','State')}</span><b>${safe(selected.state||'—')}</b></div>`;
+      <span>${'State'}</span><b>${safe(selected.state||'—')}</b></div>`;
     el('studioCloseEvent')?.addEventListener('click',()=>{ui.selectedEventKey=null;renderContext();drawStudio();});
   }
 
@@ -178,7 +177,7 @@
     if(!ui.selected.length){state.trendPayload=null;updateCounts();drawStudio();return;}
     if(ui.selected.some(id=>!canPlot(id))){
       state.trendPayload=null;el('studioDataStatus').textContent='HISTORIAN CONFIG REQUIRED';
-      if(el('studioSampleHealth'))el('studioSampleHealth').textContent=tr('Önce Historian’a ekleyin','Add selected Tags to Historian first');
+      if(el('studioSampleHealth'))el('studioSampleHealth').textContent='Add selected Tags to Historian first';
       drawStudio();return;
     }
     const now=Date.now();
@@ -217,23 +216,23 @@
   function updateSampleHealth(series,windowEnd) {
     const badge=el('studioSampleHealth');if(!badge)return;
     const samples=series.flatMap(s=>(s.points||[]).filter(good).map(p=>ms(p))).filter(t=>Number.isFinite(t)&&t>0);
-    if(!samples.length){badge.textContent=tr('Kayıt bulunamadı','No recorded samples');badge.dataset.health='empty';return;}
+    if(!samples.length){badge.textContent='No recorded samples';badge.dataset.health='empty';return;}
     const latest=Math.max(...samples),age=Math.max(0,Date.now()-latest);
     // Warning, not a claim about why samples stopped. Core may have slow historian intervals.
     const expected=series.map(s=>state.historianConfigurations?.find?.(c=>c.configuration?.tagId===s.tagId)?.configuration?.sampleIntervalSeconds).filter(x=>Number.isFinite(Number(x))&&Number(x)>0);
     const threshold=expected.length?Math.max(45000,Math.max(...expected)*3000):6*60000;
     const stale=ui.live && age>threshold;
     const secs=Math.round(age/1000),lag=secs<60?secs+'s':Math.round(secs/60)+'m';
-    badge.textContent=(stale?tr('Yeni kayıt yok · ','No new samples · '):tr('Son kayıt · ','Latest sample · '))+fmtTime(latest)+(ui.live?' · '+lag+' ago':'');
+    badge.textContent=(stale?'No new samples · ':'Latest sample · ')+fmtTime(latest)+(ui.live?' · '+lag+' ago':'');
     badge.dataset.health=stale?'stale':'good';
-    badge.title=stale?tr('Grafik durmadı; Core Historian son örneği belirtilen zamanda kaydetmiş. Tag kalitesini ve Historian kayıt ayarını kontrol edin.','Chart is still running, but Core Historian has no newer samples. Check tag quality and recording settings.'):'';
+    badge.title=stale?'Chart is still running, but Core Historian has no newer samples. Check tag quality and recording settings.':'';
   }
 
   function updateModeControls(){
     const custom=el('trendCustomRange');
     if(custom){custom.classList.toggle('hidden',ui.live);custom.querySelectorAll('input,button').forEach(n=>n.disabled=ui.live);}
     const apply=el('trendApplyRange');if(apply)apply.disabled=ui.live;
-    const navigator=el('studioNavigator');if(navigator){navigator.style.cursor=ui.live?'default':'ew-resize';navigator.title=ui.live?tr('Geçmiş aralık seçmek için LIVE düğmesine basıp durdurun.','Pause LIVE to browse historical ranges.'):'';}
+    const navigator=el('studioNavigator');if(navigator){navigator.style.cursor=ui.live?'default':'ew-resize';navigator.title=ui.live?'Pause LIVE to browse historical ranges.':'';}
   }
 
   function buildAxes(payload,w,h) {
@@ -381,7 +380,7 @@
       }
       for(let i=0;i<=4;i++){
         const x=pl.x+pl.w*i/4;line(ctx,x,pl.y,x,pl.y+pl.h);
-        ctx.textAlign='center';ctx.fillText(new Date(m.from+(m.to-m.from)*i/4).toLocaleTimeString(state.language==='tr'?'tr-TR':'en-US',{hour:'2-digit',minute:'2-digit'}),x,height-11);
+        ctx.textAlign='center';ctx.fillText(new Date(m.from+(m.to-m.from)*i/4).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),x,height-11);
       }ctx.restore();
       ctx.save();ctx.beginPath();ctx.rect(pl.x,pl.y,pl.w,pl.h);ctx.clip();
       if(el('studioBatchToggle')?.checked)for(const b of ui.events.batches){
@@ -427,7 +426,7 @@
       const related=el('studioAlarmToggle')?.checked?relevantAlarms([id]):[];
       if(eventBox){const eventKeyNow=ui.requestId+'|'+ui.selectedEventKey+'|'+related.length+'|'+String(el('studioSystemAlarmToggle')?.checked)+'|'+String(el('studioAlarmToggle')?.checked);
         if(eventBox.dataset.renderKey!==eventKeyNow){eventBox.dataset.renderKey=eventKeyNow;
-          eventBox.innerHTML=related.length?related.slice(0,8).map(a=>`<button type="button" class="studio-lane-event ${ui.selectedEventKey===eventKey(a)?'selected':''}" data-event-key="${safe(eventKey(a))}">⚑ ${safe(a.text||'Alarm')} · ${safe(fmtTime(Date.parse(a.activeAt)))}</button>`).join(''):`<span>${tr('Bu Tag için aralıkta alarm yok.','No alarm events for this Tag in the range.')}</span>`;
+          eventBox.innerHTML=related.length?related.slice(0,8).map(a=>`<button type="button" class="studio-lane-event ${ui.selectedEventKey===eventKey(a)?'selected':''}" data-event-key="${safe(eventKey(a))}">⚑ ${safe(a.text||'Alarm')} · ${safe(fmtTime(Date.parse(a.activeAt)))}</button>`).join(''):`<span>${'No alarm events for this Tag in the range.'}</span>`;
           eventBox.querySelectorAll('button[data-event-key]').forEach(b=>b.addEventListener('click',()=>selectAlarmEvent(b.dataset.eventKey)));
         }
       }
@@ -451,7 +450,7 @@
     const visible=payload?.series?.filter(s=>ui.selected.includes(s.tagId)&&!state.hiddenTrendTags.has(s.tagId))||[];
     const hasPoints=visible.some(s=>s.points?.length);
     el('trendChartEmpty').classList.toggle('hidden',!!hasPoints);
-    if(!payload||!hasPoints){ui.splitKey=null;ui.laneModels.clear();if(el('studioSplitCharts'))el('studioSplitCharts').innerHTML='';ui.flagHits=[];const badge=el('studioSampleHealth');if(badge){badge.textContent=studioText('noSamples');badge.dataset.health='empty';}state.trendChartModel=null;el('studioPointCount').textContent='0 '+studioText('pointCount');el('studioTimeText').textContent=ui.selected.length?tr('Bu zaman aralığında henüz Historian kaydı yok.','No Historian samples yet in this time window.'):tr('Historian’dan Tag seçin veya kayıtlı görünüm açın.','Select a recorded Tag or open a saved view.');updateCursorResult();drawNavigator();return;}
+    if(!payload||!hasPoints){ui.splitKey=null;ui.laneModels.clear();if(el('studioSplitCharts'))el('studioSplitCharts').innerHTML='';ui.flagHits=[];const badge=el('studioSampleHealth');if(badge){badge.textContent=studioText('noSamples');badge.dataset.health='empty';}state.trendChartModel=null;el('studioPointCount').textContent='0 '+studioText('pointCount');el('studioTimeText').textContent=ui.selected.length?'No Historian samples yet in this time window.':'Select a recorded Tag or open a saved view.';updateCursorResult();drawNavigator();return;}
     const fromMs=Date.parse(payload.from),toMs=Date.parse(payload.to);
     const count=visible.reduce((n,s)=>n+(s.points?.length||0),0);
     drawSeparateCharts(payload,visible);
@@ -462,8 +461,8 @@
     const {ctx,width,height}=pack||{};
     const m=compare?buildAxes(payload,width,height):null,p=m?.plot;
     if(compare)state.trendChartModel={left:p.x,top:p.y,plotW:p.w,plotH:p.h,fromMs:m.from,toMs:m.to,min:m.axis.left.min,max:m.axis.left.max};
-    el('studioTimeText').textContent=fmtTime(fromMs)+'  →  '+fmtTime(toMs)+'  ·  '+(ui.live?tr('● CANLI · kayan zaman penceresi','● LIVE · rolling window'):tr('Ⅱ DURDURULDU · sabit aralık','Ⅱ PAUSED · fixed range'));
-    el('studioPointCount').textContent=count.toLocaleString(state.language==='tr'?'tr-TR':'en-US')+' '+studioText('pointCount');
+    el('studioTimeText').textContent=fmtTime(fromMs)+'  →  '+fmtTime(toMs)+'  ·  '+(ui.live?'● LIVE · rolling window':'Ⅱ PAUSED · fixed range');
+    el('studioPointCount').textContent=count.toLocaleString('en-US')+' '+studioText('pointCount');
     updateSampleHealth(visible,toMs);
     if(!compare){updateCursorResult();drawNavigator();return;}
     ctx.fillStyle=state.theme==='light'?'#517182':'#728fa2';ctx.font='11px Segoe UI, sans-serif';
@@ -476,7 +475,7 @@
     }
     for(let i=0;i<=5;i++){
       const x=p.x+p.w*i/5;line(ctx,x,p.y,x,p.y+p.h);
-      ctx.textAlign='center';const stamp=m.from+(m.to-m.from)*i/5;ctx.fillText(new Date(stamp).toLocaleString(state.language==='tr'?'tr-TR':'en-US',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),x,height-12);
+      ctx.textAlign='center';const stamp=m.from+(m.to-m.from)*i/5;ctx.fillText(new Date(stamp).toLocaleString('en-US',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),x,height-12);
     }
     ctx.restore();
     ctx.save();ctx.beginPath();ctx.rect(p.x,p.y,p.w,p.h);ctx.clip();
@@ -549,10 +548,10 @@
   function updateCursorResult() {
     const box=el('studioCursorResult'),bar=el('studioCompareBar');if(!box||!bar)return;
     const A=ui.cursors.A,B=ui.cursors.B;
-    const heading=`<div class="studio-compare-title"><b>${tr('A / B Karşılaştırma','A / B comparison')}</b><button class="studioResetCursors" type="button">${tr('İmleçleri temizle','Clear cursors')} ×</button></div>`;
+    const heading=`<div class="studio-compare-title"><b>${'A / B comparison'}</b><button class="studioResetCursors" type="button">${'Clear cursors'} ×</button></div>`;
     if(A==null&&B==null){
-      const hint=ui.activeCursor?tr(ui.activeCursor+' seçili: yerleştirmek için grafiğe tıkla.',ui.activeCursor+' selected: click the chart to place it.')
-        :tr('Önce A’ya tıkla ve grafiğe yerleştir. Ardından B’yi yerleştir; zaman ve değer farkları burada görünür.','Click A and place it on the chart, then place B. Time and value differences appear here.');
+      const hint=ui.activeCursor?ui.activeCursor+' selected: click the chart to place it.'
+        :'Click A and place it on the chart, then place B. Time and value differences appear here.';
       box.textContent=hint;bar.classList.toggle('hidden',!ui.activeCursor);if(ui.activeCursor)bar.innerHTML=heading+'<p>'+safe(hint)+'</p>';
       bar.querySelector('.studioResetCursors')?.addEventListener('click',clearCursors);return;
     }
@@ -566,7 +565,7 @@
         html+=`<div class="studio-ab-row"><span>${safe(selectedTag(s.tagId)?.name||s.tagId)}</span><span>${safe(good(a)?valueText(s.tagId,a.value):'—')}</span><span>${safe(good(b)?valueText(s.tagId,b.value):'—')}</span><strong>${safe(delta==null?'—':(delta>=0?'+':'')+valueText(s.tagId,delta))}</strong></div>`;
       }
       html+='</div>';
-    }else html+=`<p>${tr('Diğer imleci de seçip grafiğe tıkla.','Choose the other cursor and click the chart.')}</p>`;
+    }else html+=`<p>${'Choose the other cursor and click the chart.'}</p>`;
     box.innerHTML=html;bar.innerHTML=html;bar.classList.remove('hidden');
     [box,bar].forEach(area=>area.querySelector('.studioResetCursors')?.addEventListener('click',clearCursors));
   }
@@ -623,13 +622,13 @@
     const rows=['Timestamp UTC;Tag;Value;Quality;Export detail'];
     for(const s of payload.series||[]){const tag=selectedTag(s.tagId);for(const p of s.points||[]){const q=x=>'"'+String(x??'').replaceAll('"','""')+'"';rows.push([q(new Date(p.timestamp).toISOString().slice(0,19).replace('T',' ')),q(tag?.name||s.tagId),p.value??'',q(p.quality),q('displayed points (downsampled)')].join(';'));}}
     saveBlob(new Blob(['\ufeffsep=;\r\n'+rows.join('\r\n')],{type:'text/csv;charset=utf-8'}),'PROGNODE_TrendStudio_VISIBLE.csv');
-    showToast(tr('Kaydedilmemiş görünüm: grafikteki örnekler dışa aktarıldı.','Ad-hoc view: exported plotted samples, not full raw historian.'));
+    showToast('Ad-hoc view: exported plotted samples, not full raw historian.');
   }
   function saveBlob(blob,filename){const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
   function exportPng(event){event?.preventDefault();event?.stopImmediatePropagation();
-    if(!state.trendPayload){showToast(tr('Önce bir sinyal seçin.','Select a signal first.'));return;}
+    if(!state.trendPayload){showToast('Select a signal first.');return;}
     const charts=Array.from(document.querySelectorAll('#studioSplitCharts canvas[data-studio-lane]'));
-    if(!charts.length){showToast(tr('Dışa aktarılacak grafik yok.','No chart to export.'));return;}
+    if(!charts.length){showToast('No chart to export.');return;}
     const width=Math.max(...charts.map(c=>c.width)),height=charts.reduce((n,c)=>n+c.height+35,28),cv=document.createElement('canvas');
     cv.width=width;cv.height=height;const ctx=cv.getContext('2d');if(!ctx)return;
     ctx.fillStyle=state.theme==='light'?'#fff':'#0b1d2d';ctx.fillRect(0,0,width,height);ctx.font='bold 20px Segoe UI';ctx.fillStyle=state.theme==='light'?'#173f53':'#dceef7';ctx.fillText('PROGNODE Trend Studio',22,27);let y=35;
@@ -647,7 +646,7 @@
     el('studioTagSearch')?.addEventListener('input',renderTagPool);
     el('studioCompareCheck')?.addEventListener('change',event=>{
       ui.compare=Boolean(event.target.checked);ui.hover=null;syncViewMode();drawStudio();
-      if(ui.compare&&ui.selected.length<2)showToast(tr('Karşılaştırmak için iki veya daha fazla Tag seçin.','Choose two or more Tags to compare.'));
+      if(ui.compare&&ui.selected.length<2)showToast('Choose two or more Tags to compare.');
     });
     el('studioGoHistorian')?.addEventListener('click',()=>navigate('historian'));
     window.addEventListener('prognode:languagechange',applyStudioLanguage);
@@ -705,7 +704,7 @@
       e.preventDefault();e.stopImmediatePropagation();
       const chosen=button.dataset.rangeValue;
       if(chosen==='custom'){
-        if(ui.live){showToast(tr('Önce LIVE düğmesiyle durdurun.','Pause LIVE before selecting custom dates.'));return;}
+        if(ui.live){showToast('Pause LIVE before selecting custom dates.');return;}
         el('trendRange').value='custom';el('trendRange').dataset.userChanged='1';
         if(ui.range){el('trendFrom').value=dateToLocalInput(new Date(ui.range.from));el('trendTo').value=dateToLocalInput(new Date(ui.range.to));}
         syncUi();syncTrendRangePills();return;
@@ -715,7 +714,7 @@
     el('trendRange')?.addEventListener('change',e=>{
       e.stopImmediatePropagation();const value=e.target.value;
       if(value==='custom'){
-        if(ui.live){showToast(tr('Önce LIVE’ı durdurun.','Pause LIVE first.'));el('trendRange').value=String(ui.liveWindowMinutes);return;}
+        if(ui.live){showToast('Pause LIVE first.');el('trendRange').value=String(ui.liveWindowMinutes);return;}
         syncUi();syncTrendRangePills();return;
       }
       applyPreset(Number(value));
@@ -723,7 +722,7 @@
     el('trendApplyRange')?.addEventListener('click',e=>{
       e.preventDefault();e.stopImmediatePropagation();if(ui.live)return;
       const from=new Date(el('trendFrom').value).getTime(),to=new Date(el('trendTo').value).getTime();
-      if(!Number.isFinite(from)||!Number.isFinite(to)||to-from<1500){showToast(tr('Geçerli tarih aralığı seçin.','Choose a valid date range.'));return;}
+      if(!Number.isFinite(from)||!Number.isFinite(to)||to-from<1500){showToast('Choose a valid date range.');return;}
       setExplicitRange(from,to);
     },true);
     const chart=el('trendCanvas');
@@ -757,7 +756,7 @@
       if(base)setExplicitRange(Date.parse(base.from),Date.parse(base.to));else if(ui.live){ui.liveWindowMinutes=60;el('trendRange').value='60';syncUi();void refreshStudio(true);}
     });
     el('studioNavigator')?.addEventListener('click',e=>{
-      if(ui.live){showToast(tr('Önce trendi durdurun.','Pause LIVE to navigate historical time.'));return;}
+      if(ui.live){showToast('Pause LIVE to navigate historical time.');return;}
       const base=ui.navigatorPayload||state.trendPayload;if(!base)return;
       const canvas=e.currentTarget,rect=canvas.getBoundingClientRect(),ratio=Math.max(0,Math.min(1,(e.clientX-rect.left)/Math.max(1,rect.width)));
       const start=Date.parse(base.from),end=Date.parse(base.to),span=ui.range?ui.range.to-ui.range.from:(end-start)*.33;

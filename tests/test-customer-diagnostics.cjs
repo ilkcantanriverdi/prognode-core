@@ -19,7 +19,7 @@ const state={page:'diagnostics',language:'tr',health:{status:'Running',coreVersi
  historianStats:{totalSamples:123,databaseBytes:4096}};
 const ctx={state,$:lookup,Date,Number,String,formatBytes:()=> '4 KB',escapeHtml:s=>String(s)};
 vm.createContext(ctx);vm.runInContext(source.slice(begin,end),ctx);ctx.renderDiagnostics();
-assert.equal(lookup('diagnosticsCoreStatus').textContent,'Çalışıyor');
+assert.equal(lookup('diagnosticsCoreStatus').textContent,'Running');
 assert.equal(lookup('diagnosticsTagQuality').textContent,'1 / 2');
 assert(lookup('diagnosticsDeviceRows').innerHTML.includes('1 / 1 / 0'));
 assert(lookup('diagnosticsDeviceRows').innerHTML.includes('PLC read timeout'));

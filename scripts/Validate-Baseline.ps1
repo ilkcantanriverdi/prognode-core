@@ -8,7 +8,7 @@ try {
         'tests/BackupContract/BackupContract.csproj',
         'tests/QrPairingCoreContract/QrPairingCoreContract.csproj',
         'tests/ManualPairingContract/ManualPairingContract.csproj',
-        'tests/MobileDeviceAckContract/MobileDeviceAckContract.csproj'
+        'tests/MobileDeviceAckContract/MobileDeviceAckContract.csproj',
         'tests/CapacityContract/CapacityContract.csproj',
         'tests/ProtocolContract/ProtocolContract.csproj'
     )
