@@ -24,26 +24,41 @@ public sealed class LicenseSignatureVerifier(LicenseVerificationOptions options)
         "formatVersion", "keyId", "signatureAlgorithm", "canonicalization", "payload", "signature"
     };
 
-    public PgnLicenseFileV2 Verify(ReadOnlySpan<byte> licenseBytes)
+    public PgnLicenseFileV2 Verify(ReadOnlySpan<byte> licenseBytes) =>
+        VerifyEnvelope(licenseBytes, "License", (envelope, payload) => new PgnLicenseFileV2(
+            envelope.FormatVersion, envelope.KeyId, envelope.SignatureAlgorithm, envelope.Canonicalization,
+            ParseVerifiedPayload(payload)));
+
+    /// <summary>
+    /// Verifies a PROGNODE activation certificate (.pgnact) with exactly the same envelope, canonical
+    /// JSON and trusted-key rules as a license. Claims are parsed only after the signature verifies.
+    /// </summary>
+    public ActivationCertificateV1 VerifyActivation(ReadOnlySpan<byte> certificateBytes) =>
+        VerifyEnvelope(certificateBytes, "Activation", (envelope, payload) => ParseVerifiedActivation(payload, envelope.KeyId));
+
+    private readonly record struct EnvelopeInfo(string FormatVersion, string KeyId, string SignatureAlgorithm, string Canonicalization);
+
+    private T VerifyEnvelope<T>(ReadOnlySpan<byte> bytes, string kind, Func<EnvelopeInfo, JsonElement, T> parse)
     {
-        if (licenseBytes.IsEmpty)
-            throw new InvalidOperationException("License file is empty.");
+        var lower = kind.ToLowerInvariant();
+        if (bytes.IsEmpty)
+            throw new InvalidOperationException($"{kind} file is empty.");
 
         JsonDocument document;
         try
         {
-            document = JsonDocument.Parse(licenseBytes.ToArray());
+            document = JsonDocument.Parse(bytes.ToArray());
         }
         catch (JsonException ex)
         {
-            throw new InvalidOperationException("License file is not valid JSON.", ex);
+            throw new InvalidOperationException($"{kind} file is not valid JSON.", ex);
         }
 
         using (document)
         {
             var root = document.RootElement;
             if (root.ValueKind != JsonValueKind.Object)
-                throw new InvalidOperationException("License file must contain a JSON object.");
+                throw new InvalidOperationException($"{kind} file must contain a JSON object.");
 
             ValidateNoDuplicateProperties(root);
             ValidateNoUnexpectedEnvelopeFields(root);
@@ -55,14 +70,14 @@ public sealed class LicenseSignatureVerifier(LicenseVerificationOptions options)
             var signatureText = RequiredExactString(root, "signature");
 
             if (!string.Equals(formatVersion, ExpectedFormatVersion, StringComparison.Ordinal))
-                throw new InvalidOperationException($"Unsupported license formatVersion '{formatVersion}'.");
+                throw new InvalidOperationException($"Unsupported {lower} formatVersion '{formatVersion}'.");
             if (!string.Equals(signatureAlgorithm, ExpectedSignatureAlgorithm, StringComparison.Ordinal))
-                throw new InvalidOperationException($"Unsupported license signatureAlgorithm '{signatureAlgorithm}'.");
+                throw new InvalidOperationException($"Unsupported {lower} signatureAlgorithm '{signatureAlgorithm}'.");
             if (!string.Equals(canonicalization, ExpectedCanonicalization, StringComparison.Ordinal))
-                throw new InvalidOperationException($"Unsupported license canonicalization '{canonicalization}'.");
+                throw new InvalidOperationException($"Unsupported {lower} canonicalization '{canonicalization}'.");
 
             if (!root.TryGetProperty("payload", out var payloadElement) || payloadElement.ValueKind != JsonValueKind.Object)
-                throw new InvalidOperationException("License payload must be a JSON object.");
+                throw new InvalidOperationException($"{kind} payload must be a JSON object.");
 
             var publicKey = LoadTrustedPublicKey(keyId);
             var signatureBytes = Base64UrlNoPadding.Decode(signatureText, "signature");
@@ -73,12 +88,38 @@ public sealed class LicenseSignatureVerifier(LicenseVerificationOptions options)
             // formatVersion, keyId, signatureAlgorithm, canonicalization, payload.
             var signedBytes = PgnCanonicalJsonV1.CanonicalizeSignedEnvelope(root);
             if (!Ed25519.Verify(publicKey, signedBytes, signatureBytes))
-                throw new InvalidOperationException("PROGNODE license Ed25519 signature is invalid.");
+                throw new InvalidOperationException($"PROGNODE {lower} Ed25519 signature is invalid.");
 
             // Nothing below this line is trusted until the signature has verified.
-            var payload = ParseVerifiedPayload(payloadElement);
-            return new PgnLicenseFileV2(formatVersion, keyId, signatureAlgorithm, canonicalization, payload);
+            return parse(new EnvelopeInfo(formatVersion, keyId, signatureAlgorithm, canonicalization), payloadElement);
         }
+    }
+
+    private static ActivationCertificateV1 ParseVerifiedActivation(JsonElement payload, string keyId)
+    {
+        var schema = RequiredExactString(payload, "schema");
+        if (!string.Equals(schema, ActivationCertificateV1.Schema, StringComparison.Ordinal))
+            throw new InvalidOperationException($"Unsupported activation payload schema '{schema}'.");
+        var issuer = RequiredExactString(payload, "issuer");
+        if (!string.Equals(issuer, "PROGNODE", StringComparison.Ordinal))
+            throw new InvalidOperationException($"Unsupported activation issuer '{issuer}'.");
+
+        var serverIdText = RequiredExactString(payload, "serverId");
+        if (!Guid.TryParse(serverIdText, out var serverId) || serverId == Guid.Empty)
+            throw new InvalidOperationException("Activation serverId must be a non-empty GUID.");
+        var fingerprint = RequiredExactString(payload, "machineFingerprint");
+        if (!MachineFingerprint.IsWellFormed(fingerprint))
+            throw new InvalidOperationException("Activation machineFingerprint must be 64 lowercase hex characters.");
+
+        return new ActivationCertificateV1(
+            keyId,
+            RequiredExactString(payload, "licenseId"),
+            RequiredExactString(payload, "licenseKey"),
+            RequiredExactString(payload, "installationId"),
+            serverId,
+            fingerprint,
+            RequiredUtcTimestamp(payload, "activatedAtUtc"),
+            RequiredUtcTimestamp(payload, "issuedAtUtc"));
     }
 
     private PublicKey LoadTrustedPublicKey(string keyId)

@@ -1663,6 +1663,20 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
           </div>
         </section>
 
+        <section class="account-license-import account-activation hidden" id="accountActivationSection">
+          <div class="account-license-import-copy">
+            <span class="panel-kicker">ACTIVATION</span>
+            <strong id="accountActivationState">Activating this PROGNODE Core…</strong>
+            <small id="accountActivationHint">Connecting to PROGNODE Account. This takes a few seconds when the PC has internet access.</small>
+          </div>
+          <div class="account-license-import-actions account-activation-actions">
+            <a class="secondary" id="accountActivationRequest" href="/api/license/activation/request" download>1. Download activation request</a>
+            <small class="account-activation-step">2. At account.prognode.io › Installations, choose <b>Activate offline</b> and upload the request.</small>
+            <input id="accountActivationFile" type="file" accept=".pgnact,application/json" />
+            <button class="secondary" id="accountImportActivation">3. Import activation file</button>
+          </div>
+        </section>
+
         <section class="account-signed-license hidden" id="accountSignedLicense">
           <div>
             <span data-i18n="license">LICENSE</span>

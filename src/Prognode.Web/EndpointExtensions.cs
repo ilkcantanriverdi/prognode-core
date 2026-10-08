@@ -522,6 +522,66 @@ public static class EndpointExtensions
                 return RemoteOperationResult(await remoteAccess.RevokeClientAsync(clientId, ct));
             });
 
+        // --- Activation (allowed while signed out: a license cannot be used until activated) -------
+        endpoints.MapGet(
+            "/api/license/activation",
+            (FileBackedLicenseProvider provider, CoreCloudLicenseStateStore cloudState) =>
+            {
+                var activation = provider.GetActivation();
+                if (activation is null)
+                    return Results.Ok(new { licenseInstalled = false, activated = false });
+                var cloud = cloudState.Load(configured: true);
+                return Results.Ok(new
+                {
+                    licenseInstalled = true,
+                    activated = activation.Activated,
+                    reason = activation.Reason,
+                    activatedAtUtc = activation.Activated ? activation.Certificate?.ActivatedAtUtc : null,
+                    lastError = activation.Activated ? null : cloud.LastError,
+                });
+            });
+
+        endpoints.MapGet(
+            "/api/license/activation/request",
+            (FileBackedLicenseProvider provider, ServerAccessService server) =>
+            {
+                try
+                {
+                    var request = provider.CreateActivationRequest(server.Identity.DisplayName, CoreVersionInfo.Current);
+                    return Results.File(LicenseActivationService.SerializeRequest(request), "application/json",
+                        $"prognode-activation-request-{request.ServerId:N}.pgnreq");
+                }
+                catch (InvalidOperationException ex)
+                {
+                    return Results.BadRequest(new { message = ex.Message });
+                }
+            });
+
+        endpoints.MapPost(
+            "/api/license/activation/import",
+            async (HttpRequest request, FileBackedLicenseProvider provider, CoreCloudLicenseStateStore cloudState, CancellationToken ct) =>
+            {
+                try
+                {
+                    var form = await request.ReadFormAsync(ct);
+                    var file = form.Files.GetFile("activation") ?? form.Files.FirstOrDefault();
+                    if (file is null || file.Length == 0)
+                        return Results.BadRequest(new { message = "Choose a .pgnact activation file." });
+                    if (file.Length > 64 * 1024)
+                        return Results.BadRequest(new { message = "The activation file is too large." });
+                    await using var stream = new MemoryStream();
+                    await file.CopyToAsync(stream, ct);
+                    var certificate = provider.ImportActivation(stream.ToArray());
+                    var previous = cloudState.Load(configured: true);
+                    cloudState.Save(previous with { LastError = null });
+                    return Results.Ok(new { activated = true, activatedAtUtc = certificate.ActivatedAtUtc });
+                }
+                catch (InvalidOperationException ex)
+                {
+                    return Results.BadRequest(new { message = ex.Message });
+                }
+            });
+
         endpoints.MapPost(
             "/api/license/import",
             async (

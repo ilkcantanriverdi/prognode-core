@@ -528,6 +528,19 @@ function renderAccount() {
   $("accountButton")?.classList.toggle('signed-in', authenticated);
   $("accountButton")?.classList.toggle('signed-out', !authenticated);
 
+  // Activation step: a signed license runs only after this Core/PC is activated.
+  const needsActivation = activationRequired();
+  $("accountActivationSection")?.classList.toggle('hidden', !needsActivation);
+  if (needsActivation) {
+    const error = state.activation?.lastError;
+    if ($("accountActivationState")) $("accountActivationState").textContent = error
+      ? 'Activation needs attention'
+      : 'Activating this PROGNODE Core…';
+    if ($("accountActivationHint")) $("accountActivationHint").textContent = error
+      ? error
+      : 'This takes a few seconds when the PC has internet access. Without internet, use the three steps below.';
+  }
+
   // Compact access modal: before login show only import + credentials. After login show
   // only the signed-in state and remaining license time.
   // Once a valid license is imported/installed, remove the import step from this access popup.
@@ -564,7 +577,9 @@ function renderAccount() {
         ? (owner
             ? `${owner} • ${'sign in to continue'}`
             : ('License ready • sign in to continue'))
-        : ('Import a valid .pgnlicense to continue');
+        : needsActivation
+          ? 'Activate this PROGNODE Core to continue'
+          : ('Import a valid .pgnlicense to continue');
     $("accountSessionState").classList.toggle('authenticated', authenticated);
   }
   // Never deadlock the login UI on a duplicated frontend license check. If no usable
@@ -1006,6 +1021,43 @@ async function refreshLicenseForSession() {
   }
 }
 
+async function loadActivationStatus() {
+  try { state.activation = await api('/api/license/activation'); }
+  catch { state.activation = null; }
+}
+
+function activationRequired() {
+  return Boolean(state.activation?.licenseInstalled && !state.activation?.activated);
+}
+
+// After a license import, poll briefly so automatic (online) activation shows up without a reload.
+async function waitForActivation(timeoutMs = 45000) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    await loadActivationStatus();
+    renderAccount();
+    if (!activationRequired() || state.activation?.lastError) return;
+    await new Promise(resolve => setTimeout(resolve, 3000));
+  }
+}
+
+async function importActivationFromFile(file) {
+  if (!file) {
+    showToast("Choose the .pgnact activation file from PROGNODE Account.");
+    return;
+  }
+  const form = new FormData();
+  form.append("activation", file);
+  const response = await fetch("/api/license/activation/import", { method:"POST", body:form });
+  const body = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(body?.message || `Activation import failed (${response.status})`);
+  if ($("accountActivationFile")) $("accountActivationFile").value = '';
+  await loadActivationStatus();
+  await refreshLicenseForSession();
+  renderAccount();
+  showToast("PROGNODE Core activated. Sign in with your password.");
+}
+
 async function loadHealthAndLicense() {
   const [health, license, licenseUsage] =
     await Promise.all([
@@ -1017,6 +1069,7 @@ async function loadHealthAndLicense() {
   state.health = health;
   state.license = license;
   state.licenseUsage = licenseUsage;
+  await loadActivationStatus();
 
   $("sidebarVersion").textContent = `v${health.coreVersion}`;
   $("metricCoreVersion").textContent = `PROGNODE ${health.coreVersion}`;
@@ -5779,7 +5832,14 @@ function wireEvents() {
       try {
         await importLicenseFromFile($("accountLicenseFile")?.files?.[0]);
         renderAccount();
+        await waitForActivation();
       } catch (error) { showToast(error.message); }
+    });
+
+  $("accountImportActivation")
+    ?.addEventListener("click", async () => {
+      try { await importActivationFromFile($("accountActivationFile")?.files?.[0]); }
+      catch (error) { showToast(error.message); }
     });
 
   $("accountSignIn")

@@ -1,0 +1,5 @@
+{
+  "keyId": "interop-test-key",
+  "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAcwzSKu7vqrNgg9FJHiN4Kwq07l806U2MTgU0epEQch8=\n-----END PUBLIC KEY-----\n",
+  "certificate": "{\"formatVersion\":\"2.0\",\"keyId\":\"interop-test-key\",\"signatureAlgorithm\":\"Ed25519\",\"canonicalization\":\"PGN_CANONICAL_JSON_1\",\"payload\":{\"schema\":\"prognode.activation/v1\",\"issuer\":\"PROGNODE\",\"licenseId\":\"lic-interop\",\"licenseKey\":\"PGN-L_INTEROP\",\"installationId\":\"3f1c0e2a-9b7d-4c5e-8a1b-2c3d4e5f6a7b\",\"serverId\":\"8f0b6f1e-2c3d-4e5f-8a9b-0c1d2e3f4a5b\",\"machineFingerprint\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"activatedAtUtc\":\"2026-10-08T10:00:00.000Z\",\"issuedAtUtc\":\"2026-10-08T10:05:00.000Z\"},\"signature\":\"a8QBb-oYYyUDszt2oTWUzRksRc6GbSpaL60HBVlY62H5dIihEBhjObBez36ZWyuEyTwm8ofGg7bXIUB0wM_KCA\"}"
+}
