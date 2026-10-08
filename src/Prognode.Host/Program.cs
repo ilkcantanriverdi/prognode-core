@@ -183,6 +183,7 @@ builder.Services.AddSingleton<AlarmBatchLinkService>();
 builder.Services.AddSingleton<AlarmService>();
 builder.Services.AddSingleton<AlarmEngine>();
 builder.Services.AddSingleton<DeviceCommunicationMonitor>();
+builder.Services.AddSingleton<TagQualityMonitor>();
 
 builder.Services.AddSingleton<ITrendRepository, SqliteTrendRepository>();
 builder.Services.AddSingleton<TrendService>();

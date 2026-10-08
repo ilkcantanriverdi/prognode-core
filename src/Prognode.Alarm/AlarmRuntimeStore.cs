@@ -12,6 +12,12 @@ public sealed class AlarmRuntimeStore
     private readonly object _occurrenceGate = new();
     private readonly ConcurrentDictionary<string, AlarmRuntimeSnapshot> _pendingAcknowledgement = new();
     private readonly string _connectionString;
+    private long _definitionVersion;
+
+    /// <summary>Bumped whenever alarm definitions change, so cached engine definitions are refreshed.</summary>
+    public long DefinitionVersion => Interlocked.Read(ref _definitionVersion);
+
+    public void MarkDefinitionsChanged() => Interlocked.Increment(ref _definitionVersion);
 
     public AlarmRuntimeStore(string databasePath)
     {
@@ -90,9 +96,15 @@ public sealed class AlarmRuntimeStore
             ? value
             : null;
 
-    public void ApplyDefinitionUpdate(AlarmDefinition definition, TagDefinition tag)
+    /// <summary>
+    /// Applies an edited definition to its runtime occurrence. Returns the cleared occurrence that
+    /// was still awaiting ACK when acknowledgement is switched off, so the caller can record that
+    /// the requirement was waived instead of the occurrence silently disappearing.
+    /// </summary>
+    public AlarmRuntimeSnapshot? ApplyDefinitionUpdate(AlarmDefinition definition, TagDefinition tag)
     {
         var alarmKey = AlarmService.KeyFor(definition.Id);
+        MarkDefinitionsChanged();
         lock (_occurrenceGate)
         {
             if (_active.TryGetValue(alarmKey, out var active))
@@ -100,22 +112,40 @@ public sealed class AlarmRuntimeStore
                 var updated = WithDefinition(active, definition, tag);
                 _active[alarmKey] = updated;
                 Persist(updated, "ACTIVE");
-                return;
+                return null;
             }
 
             if (!_pendingAcknowledgement.TryGetValue(alarmKey, out var pending))
-                return;
+                return null;
 
             if (!definition.RequiresAcknowledgement)
             {
                 _pendingAcknowledgement.TryRemove(alarmKey, out _);
                 DeletePersisted(alarmKey);
-                return;
+                return pending;
             }
 
             var updatedPending = WithDefinition(pending, definition, tag);
             _pendingAcknowledgement[alarmKey] = updatedPending;
             Persist(updatedPending, "PENDING");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Brings the ACK requirement of an active occurrence in line with its definition. Only that
+    /// field changes, under the occurrence lock, so a concurrent ACK is never overwritten.
+    /// </summary>
+    public void SyncRequiresAcknowledgement(string alarmKey, bool requiresAcknowledgement)
+    {
+        lock (_occurrenceGate)
+        {
+            if (!_active.TryGetValue(alarmKey, out var current) ||
+                current.RequiresAcknowledgement == requiresAcknowledgement)
+                return;
+            var updated = current with { RequiresAcknowledgement = requiresAcknowledgement };
+            _active[alarmKey] = updated;
+            Persist(updated, "ACTIVE");
         }
     }
 
@@ -142,12 +172,12 @@ public sealed class AlarmRuntimeStore
             .ThenBy(x => x.ActiveSince)
             .ToArray();
 
-    public AlarmRuntimeSnapshot? Acknowledge(string alarmKey)
+    public AlarmRuntimeSnapshot? Acknowledge(string alarmKey, string? acknowledgedBy = null)
     {
-        lock (_occurrenceGate) return AcknowledgeLegacyCore(alarmKey);
+        lock (_occurrenceGate) return AcknowledgeLegacyCore(alarmKey, acknowledgedBy);
     }
 
-    private AlarmRuntimeSnapshot? AcknowledgeLegacyCore(string alarmKey)
+    private AlarmRuntimeSnapshot? AcknowledgeLegacyCore(string alarmKey, string? acknowledgedBy)
     {
         while (_active.TryGetValue(alarmKey, out var current))
         {
@@ -156,10 +186,13 @@ public sealed class AlarmRuntimeStore
             if (current.State == AlarmRuntimeState.Acknowledged)
                 return current;
 
+            var now = DateTimeOffset.UtcNow;
             var updated = current with
             {
                 State = AlarmRuntimeState.Acknowledged,
-                LastChangedAt = DateTimeOffset.UtcNow
+                LastChangedAt = now,
+                AcknowledgedAt = now,
+                AcknowledgedBy = acknowledgedBy
             };
 
             if (_active.TryUpdate(alarmKey, updated, current))
@@ -172,10 +205,13 @@ public sealed class AlarmRuntimeStore
         if (_pendingAcknowledgement.TryRemove(alarmKey, out var pending))
         {
             DeletePersisted(alarmKey);
+            var now = DateTimeOffset.UtcNow;
             return pending with
             {
                 State = AlarmRuntimeState.Acknowledged,
-                LastChangedAt = DateTimeOffset.UtcNow
+                LastChangedAt = now,
+                AcknowledgedAt = now,
+                AcknowledgedBy = acknowledgedBy
             };
         }
 
@@ -220,7 +256,10 @@ public sealed class AlarmRuntimeStore
             : null;
     }
     /// <summary>Atomic, occurrence-specific ACK. NEVER resolves a newer cycle by alarmKey alone.</summary>
-    public AlarmRuntimeSnapshot? AcknowledgeOccurrence(Guid occurrenceId, out bool alreadyAcknowledged)
+    public AlarmRuntimeSnapshot? AcknowledgeOccurrence(Guid occurrenceId, out bool alreadyAcknowledged) =>
+        AcknowledgeOccurrence(occurrenceId, null, out alreadyAcknowledged);
+
+    public AlarmRuntimeSnapshot? AcknowledgeOccurrence(Guid occurrenceId, string? acknowledgedBy, out bool alreadyAcknowledged)
     {
         alreadyAcknowledged = false;
         if (occurrenceId == Guid.Empty) return null;
@@ -237,8 +276,10 @@ public sealed class AlarmRuntimeStore
                     alreadyAcknowledged = true;
                     return current;
                 }
+                var now=DateTimeOffset.UtcNow;
                 var updated=current with
-                { State=AlarmRuntimeState.Acknowledged,LastChangedAt=DateTimeOffset.UtcNow };
+                { State=AlarmRuntimeState.Acknowledged,LastChangedAt=now,
+                  AcknowledgedAt=now,AcknowledgedBy=acknowledgedBy };
                 if (_active.TryUpdate(pair.Key,updated,current))
                 {
                     Persist(updated,"ACTIVE");
@@ -252,8 +293,9 @@ public sealed class AlarmRuntimeStore
                 if (_pendingAcknowledgement.TryRemove(pair.Key,out var pending))
                 {
                     DeletePersisted(pair.Key);
+                    var now=DateTimeOffset.UtcNow;
                     return pending with { State=AlarmRuntimeState.Acknowledged,
-                        LastChangedAt=DateTimeOffset.UtcNow };
+                        LastChangedAt=now, AcknowledgedAt=now, AcknowledgedBy=acknowledgedBy };
                 }
             }
             return null;

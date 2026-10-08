@@ -58,8 +58,8 @@ public sealed class NotificationEventStore
                     alarmInsert.CommandText = """
                       INSERT INTO alarm_events
                       (alarm_key,definition_id,tag_id,device_id,is_system,
-                       source_name,alarm_text,priority,event_type,event_time,batch_id,occurrence_id)
-                      VALUES($key,$def,$tag,$device,$system,$source,$text,$priority,$type,$at,$batch,$occ);
+                       source_name,alarm_text,priority,event_type,event_time,batch_id,occurrence_id,acknowledged_by)
+                      VALUES($key,$def,$tag,$device,$system,$source,$text,$priority,$type,$at,$batch,$occ,$ackBy);
                       """;
                     alarmInsert.Parameters.AddWithValue("$key",alarmEvent.AlarmKey);
                     alarmInsert.Parameters.AddWithValue("$def",alarmEvent.DefinitionId.HasValue?alarmEvent.DefinitionId.Value.ToString("D"):DBNull.Value);
@@ -73,6 +73,7 @@ public sealed class NotificationEventStore
                     alarmInsert.Parameters.AddWithValue("$at",alarmEvent.Timestamp.ToString("O"));
                     alarmInsert.Parameters.AddWithValue("$batch",alarmEvent.BatchId.HasValue?alarmEvent.BatchId.Value.ToString("D"):DBNull.Value);
                     alarmInsert.Parameters.AddWithValue("$occ",alarmEvent.OccurrenceId==Guid.Empty?DBNull.Value:alarmEvent.OccurrenceId.ToString("D"));
+                    alarmInsert.Parameters.AddWithValue("$ackBy",(object?)alarmEvent.AcknowledgedBy??DBNull.Value);
                     alarmInsert.ExecuteNonQuery();
                 }
                 using var insert = connection.CreateCommand();

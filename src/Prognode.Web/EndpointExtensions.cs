@@ -1316,11 +1316,38 @@ public static class EndpointExtensions
                     ? Results.NoContent()
                     : Results.NotFound());
 
+        // Core UI ACK (review Y4): occurrence-specific, so a newer activation is never acknowledged
+        // unseen, and attributed to the signed-in Core user. The session gate is the mutation
+        // middleware in Program.cs.
+        endpoints.MapPost(
+            "/api/alarms/occurrences/{occurrenceId:guid}/ack",
+            async (
+                HttpContext context,
+                Guid occurrenceId,
+                AlarmService alarms,
+                LocalAccessSessionService sessions,
+                CancellationToken ct) =>
+            {
+                var actor = CoreUserActor(sessions, context);
+                var result = await alarms.AcknowledgeOccurrenceAsync(occurrenceId, ct, actor);
+                return result switch
+                {
+                    OccurrenceAckResult.Acknowledged => Results.Ok(new { acknowledged = true, occurrenceId }),
+                    OccurrenceAckResult.StaleOccurrence => Results.Json(
+                        new { code = "STALE_OCCURRENCE", message = "This alarm was activated again. Review the new activation before acknowledging it." },
+                        statusCode: 409),
+                    _ => Results.NotFound(new { code = "OCCURRENCE_NOT_FOUND", message = "This alarm occurrence is no longer awaiting acknowledgement." })
+                };
+            });
+
+        // Legacy key-based ACK, kept for older clients only. The Core UI uses the occurrence route.
         endpoints.MapPost(
             "/api/alarms/ack",
             async (
+                HttpContext context,
                 AcknowledgeAlarmRequest request,
                 AlarmService alarms,
+                LocalAccessSessionService sessions,
                 CancellationToken ct) =>
             {
                 if (string.IsNullOrWhiteSpace(
@@ -1336,7 +1363,8 @@ public static class EndpointExtensions
 
                 return await alarms.AcknowledgeAsync(
                     request.AlarmKey,
-                    ct)
+                    ct,
+                    CoreUserActor(sessions, context))
                     ? Results.Ok(
                         new { acknowledged = true })
                     : Results.NotFound();
@@ -2172,10 +2200,13 @@ public static class EndpointExtensions
             }
             else principal="DEVICE:"+device.ClientId.ToString("D");
 
-            var result=await alarms.AcknowledgeOccurrenceAsync(occurrenceId,ct);
             var actorDisplayName=userAllowed
                 ? (string.IsNullOrWhiteSpace(session.UserName)?session.UserEmail:session.UserName)
                 : device is null ? null : server.GetClient(device.ClientId)?.Name;
+            var historyActor=userAllowed
+                ? actorDisplayName
+                : $"Mobile device: {actorDisplayName ?? device?.ClientId.ToString("D")}";
+            var result=await alarms.AcknowledgeOccurrenceAsync(occurrenceId,ct,historyActor);
             audit.Record(server.Identity.ServerId,occurrenceId,device?.ClientId,principal,
                 result.ToString().ToUpperInvariant(),actorDisplayName);
             return result switch {
@@ -2646,6 +2677,13 @@ public static class EndpointExtensions
 
     private static string ExportUtcSeconds(DateTimeOffset value) =>
         value.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+
+    private static string? CoreUserActor(LocalAccessSessionService sessions, HttpContext context)
+    {
+        var session = sessions.GetStatus(context.Request.Headers["X-PROGNODE-Session"].ToString());
+        if (!session.Authenticated) return null;
+        return string.IsNullOrWhiteSpace(session.UserName) ? session.UserEmail : session.UserName;
+    }
 
     private static string Csv(string value) =>
         "\"" + value.Replace("\"", "\"\"") + "\"";

@@ -65,7 +65,8 @@ public sealed class RemoteAckCommandHostedService(
         }
         else
         {
-            var result=await alarms.AcknowledgeOccurrenceAsync(command.OccurrenceId!.Value,cancellationToken);
+            var result=await alarms.AcknowledgeOccurrenceAsync(command.OccurrenceId!.Value,cancellationToken,
+                $"Remote access user {command.UserId}");
             success=result==OccurrenceAckResult.Acknowledged;
             resultCode=result switch {
                 OccurrenceAckResult.Acknowledged => "ACKNOWLEDGED",

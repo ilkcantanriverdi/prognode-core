@@ -12,6 +12,8 @@ public sealed class AlarmEngineHostedService(
     ITagRepository tags,
     IDeviceRepository devices,
     AlarmEngine engine,
+    AlarmRuntimeStore runtime,
+    TagQualityMonitor tagQuality,
     LicenseService license,
     ILogger<AlarmEngineHostedService> logger) : BackgroundService
 {
@@ -25,6 +27,8 @@ public sealed class AlarmEngineHostedService(
 
     private DateTimeOffset _nextRefresh =
         DateTimeOffset.MinValue;
+
+    private long _loadedDefinitionVersion = -1;
 
     protected override async Task ExecuteAsync(
         CancellationToken stoppingToken)
@@ -41,8 +45,12 @@ public sealed class AlarmEngineHostedService(
 
                 var now = DateTimeOffset.UtcNow;
 
-                if (now >= _nextRefresh)
+                // Reload immediately after a definition edit so the engine never acts on a
+                // definition older than the runtime snapshot (O1).
+                var version = runtime.DefinitionVersion;
+                if (now >= _nextRefresh || version != _loadedDefinitionVersion)
                 {
+                    _loadedDefinitionVersion = version;
                     _definitions =
                         await repository.GetAllAsync(
                             stoppingToken);
@@ -72,6 +80,12 @@ public sealed class AlarmEngineHostedService(
                     _definitions,
                     _tagsById,
                     _deviceNamesById,
+                    stoppingToken);
+
+                await tagQuality.EvaluateAsync(
+                    _definitions,
+                    _tagsById,
+                    DateTimeOffset.UtcNow,
                     stoppingToken);
             }
             catch (OperationCanceledException)

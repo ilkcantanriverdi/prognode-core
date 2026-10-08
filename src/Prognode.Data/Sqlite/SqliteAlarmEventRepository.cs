@@ -9,7 +9,8 @@ public sealed class SqliteAlarmEventRepository(
 {
     private const string SelectColumns = """
         id, alarm_key, definition_id, tag_id, device_id, is_system,
-        source_name, alarm_text, priority, event_type, event_time, batch_id, occurrence_id
+        source_name, alarm_text, priority, event_type, event_time, batch_id, occurrence_id,
+        acknowledged_by
         """;
     private const string OccurrenceFilter = """
         ($priority='' OR a.priority=$priority COLLATE NOCASE) AND
@@ -31,10 +32,12 @@ public sealed class SqliteAlarmEventRepository(
         command.CommandText = """
         INSERT INTO alarm_events (
             alarm_key, definition_id, tag_id, device_id, is_system,
-            source_name, alarm_text, priority, event_type, event_time, batch_id, occurrence_id)
+            source_name, alarm_text, priority, event_type, event_time, batch_id, occurrence_id,
+            acknowledged_by)
         VALUES (
             $alarmKey, $definitionId, $tagId, $deviceId, $isSystem,
-            $sourceName, $text, $priority, $eventType, $eventTime, $batchId, $occurrenceId);
+            $sourceName, $text, $priority, $eventType, $eventTime, $batchId, $occurrenceId,
+            $acknowledgedBy);
         """;
 
         command.Parameters.AddWithValue("$alarmKey", item.AlarmKey);
@@ -49,6 +52,7 @@ public sealed class SqliteAlarmEventRepository(
         command.Parameters.AddWithValue("$eventTime", item.Timestamp.ToString("O"));
         command.Parameters.AddWithValue("$batchId", (object?)item.BatchId?.ToString() ?? DBNull.Value);
         command.Parameters.AddWithValue("$occurrenceId", item.OccurrenceId == Guid.Empty ? DBNull.Value : item.OccurrenceId.ToString("D"));
+        command.Parameters.AddWithValue("$acknowledgedBy", (object?)item.AcknowledgedBy ?? DBNull.Value);
 
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
@@ -230,7 +234,8 @@ public sealed class SqliteAlarmEventRepository(
                     }
                     pending[groupKey] = acknowledged with
                     {
-                        AcknowledgedAt = acknowledged.AcknowledgedAt ?? item.Timestamp
+                        AcknowledgedAt = acknowledged.AcknowledgedAt ?? item.Timestamp,
+                        AcknowledgedBy = acknowledged.AcknowledgedBy ?? item.AcknowledgedBy
                     };
                     break;
 
@@ -254,7 +259,8 @@ public sealed class SqliteAlarmEventRepository(
                                 ? "Acknowledged"
                                 : "Active",
                         BatchId: forcedBatchId ?? item.BatchId,
-                        OccurrenceId: item.OccurrenceId));
+                        OccurrenceId: item.OccurrenceId,
+                        AcknowledgedBy: newer?.AcknowledgedBy));
 
                     pending.Remove(groupKey);
                     if (result.Count >= limit)
@@ -295,7 +301,8 @@ public sealed class SqliteAlarmEventRepository(
             EventType: eventType,
             Timestamp: DateTimeOffset.Parse(reader.GetString(10)),
             BatchId: reader.IsDBNull(11) ? null : Guid.Parse(reader.GetString(11)),
-            OccurrenceId: reader.IsDBNull(12) ? Guid.Empty : Guid.Parse(reader.GetString(12)));
+            OccurrenceId: reader.IsDBNull(12) ? Guid.Empty : Guid.Parse(reader.GetString(12)),
+            AcknowledgedBy: reader.IsDBNull(13) ? null : reader.GetString(13));
     }
 
     private async Task<SqliteConnection> OpenAsync(CancellationToken cancellationToken)
@@ -310,7 +317,8 @@ public sealed class SqliteAlarmEventRepository(
 
     private sealed record PendingOccurrence(
         DateTimeOffset? AcknowledgedAt,
-        DateTimeOffset? ClearedAt)
+        DateTimeOffset? ClearedAt,
+        string? AcknowledgedBy = null)
     {
         public static PendingOccurrence From(AlarmEventRecord _) => new(null, null);
     }

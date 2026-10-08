@@ -94,11 +94,9 @@ public sealed class AlarmEngine(
                         };
                     });
 
-            var runtimeSnapshot = runtime.Get(AlarmService.KeyFor(definition.Id));
-            if (runtimeSnapshot is not null &&
-                runtimeSnapshot.RequiresAcknowledgement != definition.RequiresAcknowledgement)
-                runtime.SetActive(runtimeSnapshot with
-                { RequiresAcknowledgement = definition.RequiresAcknowledgement });
+            // Locked, single-field sync: never rewrites State, so a concurrent ACK survives (O1).
+            runtime.SyncRequiresAcknowledgement(
+                AlarmService.KeyFor(definition.Id), definition.RequiresAcknowledgement);
 
             var condition =
                 EvaluateCondition(

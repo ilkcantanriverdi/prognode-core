@@ -264,6 +264,101 @@ internal static class ProcessDataContract
             "Alarm history pagination lost or merged old repeated occurrences.");
         Console.WriteLine("PASS alarm active → Bad-quality hold → restart → clear and persisted occurrence");
 
+        // Y4: occurrence ACK is attributed to the acknowledging user in runtime and history.
+        var attributedRule = await restartedAlarms.CreateAsync(tag.Id, "Attributed ACK",
+            AlarmPriority.High, null, true, AlarmCondition.GreaterThanOrEqual, 80, 0, 0, 0,
+            false, false, AlarmNotificationMode.NotifyOnce, 60, false,
+            cancellationToken: CancellationToken.None, requiresAcknowledgement: true);
+        currentValues.Set(Snapshot(tag, 95, TagQuality.Good));
+        await restartedEngine.EvaluateAsync([attributedRule], tagMap, deviceNames, CancellationToken.None);
+        var attributed = restartedAlarms.GetActive().Single(x => x.DefinitionId == attributedRule.Id);
+        Check(await restartedAlarms.AcknowledgeOccurrenceAsync(attributed.OccurrenceId, CancellationToken.None, "Operator One")
+                == OccurrenceAckResult.Acknowledged,
+            "Attributed occurrence ACK failed.");
+        var acknowledgedRuntime = restartedRuntime.Get(AlarmService.KeyFor(attributedRule.Id))!;
+        Check(acknowledgedRuntime.AcknowledgedBy == "Operator One" && acknowledgedRuntime.AcknowledgedAt is not null,
+            "Runtime occurrence did not record who acknowledged it.");
+        var attributedHistory = (await restartedAlarms.GetHistoryPageAsync(0, 20, "Attributed ACK"))
+            .Single(x => x.OccurrenceId == attributed.OccurrenceId);
+        Check(attributedHistory.AcknowledgedBy == "Operator One",
+            "Alarm history did not record who acknowledged the occurrence.");
+
+        // O1: a definition edit bumps the version the engine host uses to reload definitions,
+        // and the ACK-requirement sync never rewrites the acknowledged state.
+        var versionBefore = restartedRuntime.DefinitionVersion;
+        restartedRuntime.SyncRequiresAcknowledgement(AlarmService.KeyFor(attributedRule.Id), true);
+        Check(restartedRuntime.Get(AlarmService.KeyFor(attributedRule.Id))!.State == AlarmRuntimeState.Acknowledged,
+            "Requirement sync overwrote an acknowledged occurrence.");
+
+        // O3: switching ACK off for a cleared occurrence still awaiting ACK records the waiver.
+        var waiverRule = await restartedAlarms.CreateAsync(tag.Id, "Waived ACK",
+            AlarmPriority.High, null, true, AlarmCondition.GreaterThanOrEqual, 80, 0, 0, 0,
+            true, false, AlarmNotificationMode.RepeatUntilAcknowledged, 60, true,
+            cancellationToken: CancellationToken.None, requiresAcknowledgement: true);
+        currentValues.Set(Snapshot(tag, 95, TagQuality.Good));
+        await restartedEngine.EvaluateAsync([waiverRule], tagMap, deviceNames, CancellationToken.None);
+        var waiverOccurrence = restartedAlarms.GetActive().Single(x => x.DefinitionId == waiverRule.Id).OccurrenceId;
+        currentValues.Set(Snapshot(tag, 10, TagQuality.Good));
+        await restartedEngine.EvaluateAsync([waiverRule], tagMap, deviceNames, CancellationToken.None);
+        Check(restartedRuntime.GetPendingAcknowledgement(AlarmService.KeyFor(waiverRule.Id)) is not null,
+            "Cleared occurrence was not kept awaiting ACK.");
+        await restartedAlarms.UpdateAsync(waiverRule.Id, tag.Id, waiverRule.Text, waiverRule.Priority,
+            waiverRule.BitIndex, waiverRule.TriggerValue, waiverRule.Condition, waiverRule.Threshold,
+            waiverRule.Deadband, waiverRule.DelayOnMs, waiverRule.DelayOffMs, waiverRule.NotifyOnActive,
+            waiverRule.NotifyOnCleared, waiverRule.NotificationMode, waiverRule.RepeatIntervalSeconds,
+            waiverRule.ContinueAfterClearUntilAcknowledged,
+            cancellationToken: CancellationToken.None, requiresAcknowledgement: false);
+        Check(restartedRuntime.DefinitionVersion > versionBefore,
+            "Definition edit did not invalidate cached engine definitions.");
+        var waived = (await restartedAlarms.GetHistoryPageAsync(0, 20, "Waived ACK"))
+            .Single(x => x.OccurrenceId == waiverOccurrence);
+        Check(restartedRuntime.GetPendingAcknowledgement(AlarmService.KeyFor(waiverRule.Id)) is null &&
+              waived.AcknowledgedAt is not null &&
+              waived.AcknowledgedBy is { } waivedBy && waivedBy.Contains("ACK requirement removed"),
+            "Waiving ACK silently dropped the pending occurrence instead of recording it.");
+        Console.WriteLine("PASS ACK attribution, locked requirement sync, definition refresh and waived-ACK history");
+
+        // K2: an alarmed Tag that stays non-Good raises its own system alarm, suppressed while
+        // the whole device is in Communication lost, and clears when the value is Good again.
+        var qualityMonitor = new TagQualityMonitor(currentValues, restartedRuntime, notifications,
+            new BatchService(new SqliteBatchRepository(options)));
+        var qualityKey = TagQualityMonitor.KeyFor(tag.Id);
+        var t0 = DateTimeOffset.UtcNow;
+        var watchedRules = new[] { attributedRule };
+        currentValues.Set(Snapshot(tag, null, TagQuality.Bad));
+        await qualityMonitor.EvaluateAsync(watchedRules, tagMap, t0, CancellationToken.None);
+        await qualityMonitor.EvaluateAsync(watchedRules, tagMap, t0.AddSeconds(29), CancellationToken.None);
+        Check(restartedRuntime.Get(qualityKey) is null, "Signal quality alarm fired before its delay.");
+        await qualityMonitor.EvaluateAsync(watchedRules, tagMap, t0.AddSeconds(31), CancellationToken.None);
+        var qualityAlarm = restartedRuntime.Get(qualityKey);
+        Check(qualityAlarm is { IsSystem: true, RequiresAcknowledgement: false } &&
+              qualityAlarm.TagId == tag.Id && qualityAlarm.Text.Contains("BAD"),
+            "Sustained BAD quality did not raise a Tag signal-quality system alarm.");
+        currentValues.Set(Snapshot(tag, 50, TagQuality.Good));
+        await qualityMonitor.EvaluateAsync(watchedRules, tagMap, t0.AddSeconds(32), CancellationToken.None);
+        Check(restartedRuntime.Get(qualityKey) is null &&
+              (await restartedAlarms.GetHistoryPageAsync(0, 20)).Any(x =>
+                  x.OccurrenceId == qualityAlarm!.OccurrenceId && x.ClearedAt is not null),
+            "Signal quality alarm did not clear into history when the value returned Good.");
+
+        var commKey = DeviceCommunicationMonitor.KeyFor(device.Id);
+        restartedRuntime.SetActive(new AlarmRuntimeSnapshot(commKey, null, null, device.Id, true,
+            device.Name, "Communication lost", AlarmPriority.Critical, AlarmRuntimeState.Active,
+            t0, t0, OccurrenceId: Guid.NewGuid()));
+        currentValues.Set(Snapshot(tag, null, TagQuality.Stale));
+        await qualityMonitor.EvaluateAsync(watchedRules, tagMap, t0.AddSeconds(40), CancellationToken.None);
+        await qualityMonitor.EvaluateAsync(watchedRules, tagMap, t0.AddSeconds(80), CancellationToken.None);
+        Check(restartedRuntime.Get(qualityKey) is null,
+            "Signal quality alarm duplicated an active Communication lost alarm.");
+        restartedRuntime.Remove(commKey);
+        await qualityMonitor.EvaluateAsync(watchedRules, tagMap, t0.AddSeconds(81), CancellationToken.None);
+        Check(restartedRuntime.Get(qualityKey) is not null,
+            "Signal quality alarm did not fire once Communication lost cleared.");
+        await qualityMonitor.EvaluateAsync([], tagMap, t0.AddSeconds(82), CancellationToken.None);
+        Check(restartedRuntime.Get(qualityKey) is null,
+            "Signal quality alarm stayed active after its Tag stopped being alarmed.");
+        Console.WriteLine("PASS Tag signal-quality system alarm: delay, communication suppression, clear and prune");
+
         var entitlements = new LicenseEntitlements(CapacityLimit.Unlimited,
             CapacityLimit.Limited(100), CapacityLimit.Unlimited, CapacityLimit.Unlimited,
             true, false, false, new HashSet<string>(),
