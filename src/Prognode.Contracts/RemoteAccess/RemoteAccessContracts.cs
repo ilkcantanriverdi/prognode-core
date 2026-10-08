@@ -33,4 +33,7 @@ public sealed record RemoteAccessOperationResult(
     bool Success,
     string Code,
     string Message,
-    RemoteAccessStatusSnapshot Status);
+    RemoteAccessStatusSnapshot Status,
+    Guid? RemoteClientId = null,
+    string? RemoteClientToken = null,
+    DateTimeOffset? RemoteClientTokenExpiresAtUtc = null);

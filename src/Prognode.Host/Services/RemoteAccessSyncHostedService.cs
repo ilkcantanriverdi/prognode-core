@@ -16,8 +16,14 @@ public sealed class RemoteAccessSyncHostedService(
             try
             {
                 var status = remoteAccess.GetStatus();
-                if (status.Entitled && status.CloudConfigured && status.ServerBound)
+                if (status.Entitled && status.CloudConfigured)
+                {
+                    // A licensed, activated Core binds itself to its Remote Access subscription.
+                    // Binding is idempotent, so a re-imported license or a replacement PC re-binds.
+                    if (!status.ServerBound)
+                        await remoteAccess.BindServerAsync(stoppingToken);
                     await remoteAccess.SyncAsync(stoppingToken);
+                }
             }
             catch (Exception ex)
             {

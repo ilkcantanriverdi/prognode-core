@@ -489,6 +489,27 @@ public static class EndpointExtensions
                 return RemoteOperationResult(await remoteAccess.SyncAsync(ct));
             });
 
+        // Remote registration is done by the paired device itself: it signs the challenge with its own
+        // key and receives its off-site token, so both steps require the device's LAN pairing.
+        endpoints.MapPost(
+            "/api/remote-access/clients/challenge",
+            async (HttpContext context, RemoteAccessService remoteAccess, CancellationToken ct) =>
+            {
+                if (!TryGetPairedClientId(context, out var clientId))
+                    return Results.BadRequest(new { code = "PAIRED_CLIENT_REQUIRED", message = "Only a paired device can enable Remote Access for itself." });
+                var (result, challenge) = await remoteAccess.CreateRegistrationChallengeAsync(clientId, ct);
+                if (challenge is null)
+                    return RemoteOperationResult(result);
+                return Results.Ok(new
+                {
+                    success = true,
+                    code = result.Code,
+                    challengeId = challenge.ChallengeId,
+                    challenge = challenge.Challenge,
+                    expiresAtUtc = challenge.ExpiresAtUtc,
+                });
+            });
+
         endpoints.MapPost(
             "/api/remote-access/clients/register",
             async (
@@ -497,20 +518,17 @@ public static class EndpointExtensions
                 RemoteAccessService remoteAccess,
                 CancellationToken ct) =>
             {
-                Guid? localClientId = null;
-                if (context.Items.TryGetValue("PROGNODE_CLIENT_ID", out var paired) && paired is Guid pairedId)
-                    localClientId = pairedId;
-                else if (request.ClientId is Guid requestedId)
-                    localClientId = requestedId;
-
-                if (localClientId is null)
-                    return Results.BadRequest(new { message = "A paired client is required before Remote Access can be enabled." });
-
-                return RemoteOperationResult(await remoteAccess.RegisterClientAsync(
-                    localClientId.Value,
+                if (!TryGetPairedClientId(context, out var clientId))
+                    return Results.BadRequest(new { code = "PAIRED_CLIENT_REQUIRED", message = "Only a paired device can enable Remote Access for itself." });
+                var result = await remoteAccess.RegisterClientAsync(
+                    clientId,
                     request.DevicePublicKey,
                     request.Platform,
-                    ct));
+                    request.ChallengeId ?? Guid.Empty,
+                    request.DeviceSignature,
+                    ct);
+                context.Response.Headers.CacheControl = "no-store";
+                return RemoteOperationResult(result);
             });
 
         endpoints.MapDelete(
@@ -2292,8 +2310,14 @@ public static class EndpointExtensions
             if(!TryGetPairedClientId(context,out var clientId)) return Results.Unauthorized();
             if(!sessions.Validate(context.Request.Headers["X-PROGNODE-Session"].ToString()))
                 return Results.Unauthorized();
-            var result=await remote.RegisterPushTokenAsync(clientId,input.Platform,input.PushToken,ct);
-            return RemoteOperationResult(result);
+            // Push tokens are held by PROGNODE Cloud: the device registers its token there with its
+            // Remote Access token (POST /api/remote-access/clients/push-token). Core never sends push.
+            return Results.Json(new
+            {
+                success=false,
+                code="PUSH_TOKEN_CLOUD",
+                message="Register the push token with PROGNODE Cloud using the device Remote Access token."
+            },statusCode:StatusCodes.Status410Gone);
         });
 
         endpoints.MapPost("/api/mobile/v2/notifications/receipt",(
@@ -2771,7 +2795,9 @@ public sealed record PairClientRequest(
 public sealed record RemoteClientRegistrationRequest(
     Guid? ClientId,
     string? DevicePublicKey,
-    string? Platform);
+    string? Platform,
+    Guid? ChallengeId = null,
+    string? DeviceSignature = null);
 
 public sealed record LanProbeRequest(int InterfaceIndex);
 public sealed record LanAgentClaimRequest(string RequestId);

@@ -279,11 +279,11 @@ public sealed class LicenseSignatureVerifier(LicenseVerificationOptions options)
             throw new InvalidOperationException($"Unsupported account.portalRole '{portalRole}'.");
 
         var offlineAuth = ParseOfflineAuth(RequiredObject(payload, "offlineAuth"));
-        // Annual-only commercial Remote Access policy for NEW licenses. Older signed
-        // documents remain verifiable: they cannot be silently changed/re-signed.
-        var annualRemoteRequired = !legacyV17 && !customMaxTagsAllowed &&
+        // Remote Access is sold as its own MONTHLY or YEARLY subscription. New commercial licenses
+        // must state which one; older signed documents remain verifiable as issued.
+        var remoteBillingRequired = !legacyV17 && !customMaxTagsAllowed &&
             issuedAtUtc >= new DateTimeOffset(2026,9,26,19,0,0,TimeSpan.Zero);
-        var remoteAccessAddon = ParseRemoteAccessAddon(payload, legacyV17, annualRemoteRequired);
+        var remoteAccessAddon = ParseRemoteAccessAddon(payload, legacyV17, remoteBillingRequired);
         var entitlements = ParseEntitlements(
             RequiredObject(payload, "entitlements"),
             legacyV17,
@@ -359,7 +359,7 @@ public sealed class LicenseSignatureVerifier(LicenseVerificationOptions options)
         bool UnlimitedClients,
         DateTimeOffset? ExpiresAtUtc);
 
-    private static ParsedRemoteAccessAddon ParseRemoteAccessAddon(JsonElement payload, bool legacyV17, bool annualRequired)
+    private static ParsedRemoteAccessAddon ParseRemoteAccessAddon(JsonElement payload, bool legacyV17, bool billingRequired)
     {
         if (!payload.TryGetProperty("addons", out var addonsElement) || addonsElement.ValueKind == JsonValueKind.Null)
             return new ParsedRemoteAccessAddon(false, false, null, false, null);
@@ -402,8 +402,8 @@ public sealed class LicenseSignatureVerifier(LicenseVerificationOptions options)
             throw new InvalidOperationException("Remote Access add-on maxClients must be 5, 10 or 25.");
 
         var billingPeriod = OptionalExactString(remoteElement, "billingPeriod");
-        if(enabled && annualRequired && billingPeriod != "YEARLY")
-            throw new InvalidOperationException("New commercial Remote Access licenses require YEARLY billingPeriod; 5, 10 or 25 clients.");
+        if(enabled && billingRequired && billingPeriod is not ("MONTHLY" or "YEARLY"))
+            throw new InvalidOperationException("New commercial Remote Access licenses require a MONTHLY or YEARLY billingPeriod; 5, 10 or 25 clients.");
         if (billingPeriod is not null &&
             billingPeriod is not ("MONTHLY" or "YEARLY") &&
             !(legacyV17 && billingPeriod == "SIX_MONTHS"))

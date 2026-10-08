@@ -1,4 +1,3 @@
-using System.Text;
 using Prognode.Contracts.RemoteAccess;
 using Prognode.Core.Connectivity;
 using Prognode.Licensing;
@@ -7,12 +6,15 @@ namespace Prognode.RemoteAccess;
 
 public sealed class RemoteAccessService(
     LicenseService license,
-    LocalLicenseStore localLicenseStore,
     ServerAccessService serverAccess,
     RemoteAccessCloudClient cloud,
-    RemoteAccessStateStore store)
+    RemoteAccessStateStore store,
+    CoreCloudLicenseStateStore cloudLicense)
 {
     private readonly SemaphoreSlim _syncGate = new(1, 1);
+
+    /// <summary>Core authenticates to the Remote Access relay with its license activation token.</summary>
+    private string? CloudToken() => cloudLicense.Load(configured: true).ActivationToken;
 
     public RemoteAccessStatusSnapshot GetStatus()
     {
@@ -44,7 +46,7 @@ public sealed class RemoteAccessService(
             return new RemoteAccessStatusSnapshot(
                 Entitled: true,
                 CloudConfigured: cloud.IsConfigured,
-                ServerBound: cache.ServerBound && !string.IsNullOrWhiteSpace(cache.ServerAccessToken),
+                ServerBound: cache.ServerBound && !string.IsNullOrWhiteSpace(CloudToken()),
                 BindingStatus: cache.ServerBound ? cache.BindingStatus : "NOT_BOUND",
                 SubscriptionStatus: "EXPIRED",
                 UnlimitedClients: entitlement.RemoteAccessUnlimited,
@@ -71,7 +73,7 @@ public sealed class RemoteAccessService(
         return new RemoteAccessStatusSnapshot(
             Entitled: true,
             CloudConfigured: cloud.IsConfigured,
-            ServerBound: cache.ServerBound && !string.IsNullOrWhiteSpace(cache.ServerAccessToken),
+            ServerBound: cache.ServerBound && !string.IsNullOrWhiteSpace(CloudToken()),
             BindingStatus: cloud.IsConfigured ? cache.BindingStatus : "CLOUD_NOT_CONFIGURED",
             SubscriptionStatus: cloud.IsConfigured ? cache.SubscriptionStatus : "PENDING_CLOUD",
             UnlimitedClients: unlimited,
@@ -124,17 +126,10 @@ public sealed class RemoteAccessService(
             if (preflight is not null)
                 return preflight;
 
-            var cache = store.Load();
-            if (string.IsNullOrWhiteSpace(cache.ServerAccessToken))
-                return Failure("SERVER_NOT_BOUND", "Bind this PROGNODE Server to the Remote Access subscription first.");
-
             try
             {
-                var remote = await cloud.GetStatusAsync(
-                    cache.ServerAccessToken,
-                    serverAccess.Identity.ServerId,
-                    cancellationToken);
-                SaveCloudStatus(remote, null, cache.ServerAccessToken);
+                var remote = await cloud.GetStatusAsync(CloudToken()!, cancellationToken);
+                SaveCloudStatus(remote, null);
                 return Success("SYNCED", "Remote Access status synchronized.");
             }
             catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or TaskCanceledException)
@@ -154,44 +149,16 @@ public sealed class RemoteAccessService(
         var preflight = Preflight(requireCloud: true);
         if (preflight is not null)
             return preflight;
-
-        var current = license.Current;
         try
         {
-            var signedLicense = Encoding.UTF8.GetString(localLicenseStore.ReadAllBytes());
-            var result = await cloud.BindServerAsync(
-                current.LicenseId,
-                signedLicense,
-                serverAccess.Identity.ServerId,
-                serverAccess.Identity.DisplayName,
-                cancellationToken);
-
+            var result = await cloud.BindServerAsync(CloudToken()!, cancellationToken);
             if (!result.Success)
             {
-                if (result.Status is not null)
-                    SaveCloudStatus(result.Status, result.Message, null);
-                else
-                    SaveError(result.Message);
+                SaveError(result.Message);
                 return Failure(result.Code, result.Message);
             }
-
-            if (string.IsNullOrWhiteSpace(result.ServerAccessToken))
-                return Failure("INVALID_CLOUD_CONTRACT", "Cloud binding succeeded without a server access token.");
-
             if (result.Status is not null)
-                SaveCloudStatus(result.Status, null, result.ServerAccessToken);
-            else
-            {
-                var cache = store.Load();
-                cache.ServerBound = true;
-                cache.ServerAccessToken = result.ServerAccessToken;
-                cache.BindingStatus = "BOUND";
-                cache.SubscriptionStatus = "UNKNOWN";
-                cache.LastSyncedAtUtc = DateTimeOffset.UtcNow;
-                cache.LastError = null;
-                store.Save(cache);
-            }
-
+                SaveCloudStatus(result.Status, null);
             return Success(result.Code, string.IsNullOrWhiteSpace(result.Message)
                 ? "Remote Access subscription is bound to this PROGNODE Server."
                 : result.Message);
@@ -203,78 +170,105 @@ public sealed class RemoteAccessService(
         }
     }
 
+    /// <summary>
+    /// Step 1 of device registration: a one-time challenge from PROGNODE Cloud that the paired device
+    /// signs with its Ed25519 key, proving it holds the key being registered.
+    /// </summary>
+    public async Task<(RemoteAccessOperationResult Result, RemoteAccessChallenge? Challenge)> CreateRegistrationChallengeAsync(
+        Guid localClientId,
+        CancellationToken cancellationToken = default)
+    {
+        var ready = RegistrationReady(localClientId, out _);
+        if (ready is not null)
+            return (ready, null);
+        try
+        {
+            var challenge = await cloud.CreateChallengeAsync(CloudToken()!, cancellationToken);
+            return (Success("CHALLENGE_ISSUED", "Sign the challenge with the device key to finish Remote Access registration."), challenge);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or TaskCanceledException)
+        {
+            SaveError(ex.Message);
+            return (Failure("CLOUD_UNAVAILABLE", ex.Message), null);
+        }
+    }
+
+    /// <summary>
+    /// Step 2: registers the paired device with its signed challenge. The returned device token lets
+    /// the device reach PROGNODE Cloud off-site and is handed only to the paired device itself.
+    /// Registering the same device key again issues a fresh token (for example after reinstalling).
+    /// </summary>
     public async Task<RemoteAccessOperationResult> RegisterClientAsync(
         Guid localClientId,
         string? devicePublicKey,
         string? platform,
+        Guid challengeId,
+        string? deviceSignature,
         CancellationToken cancellationToken = default)
     {
-        var preflight = Preflight(requireCloud: true);
-        if (preflight is not null)
-            return preflight;
-
-        var local = serverAccess.GetClient(localClientId);
-        if (local is null)
-            return Failure("CLIENT_NOT_FOUND", "The paired LAN client was not found.");
-
-        if (local.RemoteEnabled && local.RemoteClientId is not null)
-            return Success("ALREADY_REGISTERED", "This client already has Remote Access enabled.");
-
-        var status = GetStatus();
-        if (!status.ServerBound)
-            return Failure("SERVER_NOT_BOUND", "Bind this PROGNODE Server to Remote Access before enabling a remote client.");
-        if (status.CloudConfigured && status.SubscriptionStatus is not ("ACTIVE" or "PENDING_CLOUD" or "UNKNOWN"))
-            return Failure("REMOTE_ACCESS_INACTIVE", $"Remote Access cloud status is {status.SubscriptionStatus}.");
-        if (!status.UnlimitedClients && status.RemainingClients is <= 0)
-            return Failure("REMOTE_CLIENT_LIMIT_REACHED", "Remote client limit reached.");
-
-        var key = string.IsNullOrWhiteSpace(devicePublicKey) ? local.DevicePublicKey : devicePublicKey.Trim();
-        var clientPlatform = string.IsNullOrWhiteSpace(platform) ? local.Platform : platform.Trim();
+        var ready = RegistrationReady(localClientId, out var local);
+        if (ready is not null)
+            return ready;
+        var key = string.IsNullOrWhiteSpace(devicePublicKey) ? local!.DevicePublicKey : devicePublicKey.Trim();
+        var clientPlatform = string.IsNullOrWhiteSpace(platform) ? local!.Platform : platform.Trim();
         if (string.IsNullOrWhiteSpace(key))
             return Failure("DEVICE_IDENTITY_REQUIRED", "A device public key is required before Remote Access can be enabled.");
+        if (challengeId == Guid.Empty || string.IsNullOrWhiteSpace(deviceSignature))
+            return Failure("DEVICE_PROOF_REQUIRED", "Sign the Remote Access challenge with the device key.");
 
-        var cache = store.Load();
-        if (string.IsNullOrWhiteSpace(cache.ServerAccessToken))
-            return Failure("SERVER_NOT_BOUND", "Remote Access server credential is missing. Bind the Server again.");
-
-        var current = license.Current;
         try
         {
             var result = await cloud.RegisterClientAsync(
-                cache.ServerAccessToken,
-                serverAccess.Identity.ServerId,
-                local.ClientId,
-                local.Name,
+                CloudToken()!,
+                local!.Name,
                 clientPlatform,
                 key,
-                current.AssignedUserId,
-                current.AssignedUserName,
+                challengeId,
+                deviceSignature.Trim(),
+                license.Current.AssignedUserId,
                 cancellationToken);
-
             if (!result.Success || result.RemoteClientId is null)
             {
-                if (result.Status is not null)
-                    SaveCloudStatus(result.Status, result.Message, cache.ServerAccessToken);
-                else
-                    SaveError(result.Message);
+                SaveError(result.Message);
                 return Failure(result.Code, result.Message);
             }
 
             serverAccess.SetRemoteRegistration(local.ClientId, result.RemoteClientId.Value, key, clientPlatform);
-            if (result.Status is not null)
-                SaveCloudStatus(result.Status, null, cache.ServerAccessToken);
-            else
-                await SyncAsync(cancellationToken);
-
+            await SyncAsync(cancellationToken);
             return Success(result.Code, string.IsNullOrWhiteSpace(result.Message)
-                ? "Remote Access enabled for this client. One remote seat is now in use."
-                : result.Message);
+                ? "Remote Access enabled for this device. One remote seat is now in use."
+                : result.Message) with
+            {
+                RemoteClientId = result.RemoteClientId,
+                RemoteClientToken = result.RemoteClientToken,
+                RemoteClientTokenExpiresAtUtc = result.RemoteClientTokenExpiresAtUtc,
+            };
         }
         catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or TaskCanceledException)
         {
             SaveError(ex.Message);
             return Failure("CLOUD_UNAVAILABLE", ex.Message);
         }
+    }
+
+    private RemoteAccessOperationResult? RegistrationReady(Guid localClientId, out PairedClientSnapshot? local)
+    {
+        local = null;
+        var preflight = Preflight(requireCloud: true);
+        if (preflight is not null)
+            return preflight;
+        local = serverAccess.GetClient(localClientId);
+        if (local is null)
+            return Failure("CLIENT_NOT_FOUND", "The paired LAN client was not found.");
+        var status = GetStatus();
+        if (!status.ServerBound)
+            return Failure("SERVER_NOT_BOUND", "Remote Access is not bound to this PROGNODE Server yet. It binds automatically shortly after activation.");
+        if (!string.Equals(status.SubscriptionStatus, "ACTIVE", StringComparison.OrdinalIgnoreCase))
+            return Failure("REMOTE_ACCESS_INACTIVE", $"Remote Access cloud status is {status.SubscriptionStatus}.");
+        // A device that already holds a seat may re-register (new token) without needing a free seat.
+        if (!local.RemoteEnabled && !status.UnlimitedClients && status.RemainingClients is <= 0)
+            return Failure("REMOTE_CLIENT_LIMIT_REACHED", "All Remote Access seats are in use. Revoke a device or upgrade the add-on.");
+        return null;
     }
 
     public async Task<RemoteAccessOperationResult> RevokeClientAsync(
@@ -294,33 +288,21 @@ public sealed class RemoteAccessService(
         if (!cloud.IsConfigured)
             return Failure("CLOUD_NOT_CONFIGURED", "PROGNODE Remote Access cloud endpoint is not configured. The remote seat was not released.");
 
-        var cache = store.Load();
-        if (string.IsNullOrWhiteSpace(cache.ServerAccessToken))
-            return Failure("SERVER_NOT_BOUND", "Remote Access server credential is missing. The remote seat was not released.");
+        var token = CloudToken();
+        if (string.IsNullOrWhiteSpace(token))
+            return Failure("CORE_NOT_ACTIVATED", "This PROGNODE Core is not activated with PROGNODE Cloud. The remote seat was not released.");
 
         try
         {
-            var result = await cloud.RevokeClientAsync(
-                cache.ServerAccessToken,
-                serverAccess.Identity.ServerId,
-                local.RemoteClientId.Value,
-                cancellationToken);
-
+            var result = await cloud.RevokeClientAsync(token, local.RemoteClientId.Value, cancellationToken);
             if (!result.Success)
             {
-                if (result.Status is not null)
-                    SaveCloudStatus(result.Status, result.Message, cache.ServerAccessToken);
-                else
-                    SaveError(result.Message);
+                SaveError(result.Message);
                 return Failure(result.Code, result.Message);
             }
 
             serverAccess.ClearRemoteRegistration(local.ClientId);
-            if (result.Status is not null)
-                SaveCloudStatus(result.Status, null, cache.ServerAccessToken);
-            else
-                await SyncAsync(cancellationToken);
-
+            await SyncAsync(cancellationToken);
             return Success(result.Code, string.IsNullOrWhiteSpace(result.Message)
                 ? "Remote Access revoked and the seat was released. LAN pairing remains available."
                 : result.Message);
@@ -332,33 +314,6 @@ public sealed class RemoteAccessService(
         }
     }
 
-    public async Task<RemoteAccessOperationResult> RegisterPushTokenAsync(
-        Guid localClientId,string platform,string pushToken,CancellationToken cancellationToken=default)
-    {
-        var preflight=Preflight(requireCloud:true);
-        if(preflight is not null) return preflight;
-        var status=GetStatus();
-        if(!status.ServerBound || !string.Equals(status.SubscriptionStatus,"ACTIVE",StringComparison.OrdinalIgnoreCase))
-            return Failure("REMOTE_ACCESS_INACTIVE","Remote Access is not active or the server is not bound.");
-        var local=serverAccess.GetClient(localClientId);
-        if(local is null || !local.RemoteEnabled || local.RemoteClientId is null)
-            return Failure("REMOTE_SEAT_REQUIRED","Enable remote access for this paired device first.");
-        if(platform is not ("ANDROID_FCM" or "IOS_APNS") ||
-            string.IsNullOrWhiteSpace(pushToken) || pushToken.Length is < 32 or > 4096)
-            return Failure("INVALID_PUSH_TOKEN","Platform or push token is invalid.");
-        var token=store.Load().ServerAccessToken;
-        if(string.IsNullOrWhiteSpace(token)) return Failure("SERVER_NOT_BOUND","Server credentials not available.");
-        try
-        {
-            var result=await cloud.RegisterPushTokenAsync(token,serverAccess.Identity.ServerId,
-                localClientId,local.RemoteClientId.Value,platform,pushToken,cancellationToken);
-            return result.Success ? Success("PUSH_TOKEN_REGISTERED","Push token sent to relay.") :
-                Failure(result.Code,result.Message);
-        }
-        catch(Exception ex) when(ex is HttpRequestException or InvalidOperationException or TaskCanceledException)
-        { SaveError(ex.Message);return Failure("CLOUD_UNAVAILABLE",ex.Message); }
-    }
-
     public async Task<bool> TryPublishNotificationAsync(
         Prognode.Contracts.Notifications.NotificationEvent notification,
         CancellationToken cancellationToken = default)
@@ -368,17 +323,13 @@ public sealed class RemoteAccessService(
             !string.Equals(status.SubscriptionStatus, "ACTIVE", StringComparison.OrdinalIgnoreCase))
             return false;
 
-        var token = store.Load().ServerAccessToken;
+        var token = CloudToken();
         if (string.IsNullOrWhiteSpace(token))
             return false;
 
         try
         {
-            return await cloud.PublishNotificationAsync(
-                token,
-                serverAccess.Identity.ServerId,
-                notification,
-                cancellationToken);
+            return await cloud.PublishNotificationAsync(token, notification, cancellationToken);
         }
         catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or TaskCanceledException)
         {
@@ -395,13 +346,13 @@ public sealed class RemoteAccessService(
             !string.Equals(status.SubscriptionStatus, "ACTIVE", StringComparison.OrdinalIgnoreCase))
             return [];
 
-        var token = store.Load().ServerAccessToken;
+        var token = CloudToken();
         if (string.IsNullOrWhiteSpace(token))
             return [];
 
         try
         {
-            return await cloud.GetCommandsAsync(token, serverAccess.Identity.ServerId, cancellationToken);
+            return await cloud.GetCommandsAsync(token, cancellationToken);
         }
         catch
         {
@@ -423,7 +374,7 @@ public sealed class RemoteAccessService(
         string resultCode,
         CancellationToken cancellationToken = default)
     {
-        var token = store.Load().ServerAccessToken;
+        var token = CloudToken();
         if (string.IsNullOrWhiteSpace(token) || !cloud.IsConfigured)
             return false;
 
@@ -431,7 +382,6 @@ public sealed class RemoteAccessService(
         {
             return await cloud.CompleteCommandAsync(
                 token,
-                serverAccess.Identity.ServerId,
                 commandId,
                 success,
                 resultCode,
@@ -455,13 +405,14 @@ public sealed class RemoteAccessService(
             return Failure("REMOTE_ACCESS_EXPIRED", "Remote Access has expired. Base-license grace does not extend the Remote Access add-on.");
         if (requireCloud && !cloud.IsConfigured)
             return Failure("CLOUD_NOT_CONFIGURED", "PROGNODE Remote Access cloud endpoint is not configured yet.");
+        if (requireCloud && string.IsNullOrWhiteSpace(CloudToken()))
+            return Failure("CORE_NOT_ACTIVATED", "This PROGNODE Core is not activated with PROGNODE Cloud yet.");
         return null;
     }
 
     private void SaveCloudStatus(
         RemoteAccessCloudStatusResponse remote,
-        string? error,
-        string? serverAccessToken)
+        string? error)
     {
         var current = license.Current;
         var unlimited = current.Entitlements.RemoteAccessUnlimited;
@@ -476,13 +427,10 @@ public sealed class RemoteAccessService(
                     ? signedMax
                     : Math.Min(signedMax.Value, cloudMax.Value);
 
-        var existing = store.Load();
         store.Save(new RemoteAccessCacheDocument
         {
             ServerBound = remote.ServerBound,
-            ServerAccessToken = string.IsNullOrWhiteSpace(serverAccessToken)
-                ? existing.ServerAccessToken
-                : serverAccessToken,
+            ServerAccessToken = null, // the relay is reached with the license activation token
             BindingStatus = remote.BindingStatus,
             SubscriptionStatus = remote.SubscriptionStatus,
             UnlimitedClients = unlimited && remote.UnlimitedClients,

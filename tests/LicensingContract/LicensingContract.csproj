@@ -2,6 +2,7 @@
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/Prognode.Licensing/Prognode.Licensing.csproj" />
+    <ProjectReference Include="../../src/Prognode.RemoteAccess/Prognode.RemoteAccess.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fixtures/**" CopyToOutputDirectory="PreserveNewest" />
