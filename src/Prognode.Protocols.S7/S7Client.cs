@@ -2,10 +2,25 @@ using System.Buffers.Binary;
 using System.Net.Sockets;
 namespace Prognode.Protocols.S7;
 
+/// <summary>The PLC answered ReadVar for one item with an error code (e.g. 0x05 address out of range,
+/// 0x0A object does not exist). The session itself stays valid.</summary>
+public sealed class S7ItemRejectedException(byte code)
+    : IOException($"S7 ReadVar rejected by PLC (0x{code:X2}); check DB access and optimized block setting.")
+{
+    public byte Code { get; } = code;
+}
+
 // ISO-on-TCP (RFC1006), COTP, S7comm SetupCommunication + ReadVar.
 // Strictly READ-ONLY: no WriteVar or PLC control endpoints.
 public sealed class S7Client : IAsyncDisposable
 {
+    public bool IsConnected => stream is not null;
+
+    /// <summary>Negotiated PDU size; a ReadVar item may carry at most PduSize - 18 data bytes.</summary>
+    public int PduSize => pduSize;
+
+    public int MaxReadBytes => pduSize - 18;
+
     private TcpClient? socket;
     private NetworkStream? stream;
     private ushort reference = 1;
@@ -37,12 +52,21 @@ public sealed class S7Client : IAsyncDisposable
         } catch { await DisposeAsync(); throw; }
     }
 
-    public async Task<byte[]> ReadAsync(S7Address address, CancellationToken ct)
+    public Task<byte[]> ReadAsync(S7Address address, CancellationToken ct) =>
+        ReadCoreAsync(address, address.Length == 1, ct);
+
+    /// <summary>Reads a contiguous DB byte range with BYTE transport, also for a single byte.</summary>
+    public Task<byte[]> ReadBytesAsync(int db, int startByte, int length, CancellationToken ct)
+    {
+        if (length < 1) throw new ArgumentOutOfRangeException(nameof(length));
+        return ReadCoreAsync(new S7Address(db, startByte, 0, length), false, ct);
+    }
+
+    private async Task<byte[]> ReadCoreAsync(S7Address address, bool bitAccess, CancellationToken ct)
     {
         if (stream is null) throw new InvalidOperationException("S7 session not connected.");
         if (address.Length + 18 > pduSize) throw new ArgumentException("S7 read exceeds PLC negotiated PDU.");
         var refId = ++reference;
-        var bitAccess = address.Length == 1;
         var count = bitAccess ? 1 : address.Length;
         var bitAddress = address.ByteOffset * 8 + (bitAccess ? address.Bit : 0);
         byte[] packet = [3,0,0,31, 2,0xf0,0x80, 0x32,1,0,0,(byte)(refId>>8),(byte)refId,0,14,0,0,
@@ -57,10 +81,13 @@ public sealed class S7Client : IAsyncDisposable
         var paramStart = 7 + hdr;
         var paramLength = BinaryPrimitives.ReadUInt16BigEndian(response.AsSpan(13,2));
         var dataStart = paramStart + paramLength;
+        // A rejected item carries its return code with transport size 0, so check the code first.
+        if (response.Length < dataStart+1)
+            throw new IOException("S7 ReadVar data truncated.");
+        var code = response[dataStart];
+        if (code != 0xff) throw new S7ItemRejectedException(code);
         if (response.Length < dataStart+4 || response[dataStart+1] is not (0x03 or 0x04 or 0x09))
             throw new IOException("S7 ReadVar data truncated or unexpected transport size.");
-        var code = response[dataStart];
-        if (code != 0xff) throw new IOException($"S7 ReadVar rejected by PLC (0x{code:X2}); check DB access and optimized block setting.");
         var declaredBits = BinaryPrimitives.ReadUInt16BigEndian(response.AsSpan(dataStart+2,2));
         if (declaredBits != (bitAccess ? 1 : address.Length * 8))
             throw new IOException("S7 ReadVar response bit length mismatch.");

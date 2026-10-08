@@ -15,6 +15,7 @@ internal static class IndustrialProtocolContract
     public static async Task RunAsync()
     {
         await CheckModbusAsync();
+        await CheckModbusPersistentAndIsolatedAsync();
         await CheckS7Async();
     }
 
@@ -79,6 +80,74 @@ internal static class IndustrialProtocolContract
         }
     }
 
+    private static async Task CheckModbusPersistentAndIsolatedAsync()
+    {
+        // Holding registers 0..4 exist; 5 and above answer exception 0x02 (illegal data address).
+        var now = DateTimeOffset.UtcNow;
+        var id = Guid.NewGuid();
+        var tags = new[]
+        {
+            Tag(id, "R1", "40001", TagDataType.Word, now),
+            Tag(id, "R2", "40002", TagDataType.Word, now),
+            Tag(id, "R5", "40005", TagDataType.Word, now),
+            Tag(id, "Missing", "40006", TagDataType.Word, now),
+            Tag(id, "Far", "40010", TagDataType.Word, now)
+        };
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+        var accepted = 0;
+        var server = Task.Run(async () =>
+        {
+            try
+            {
+                while (!timeout.IsCancellationRequested)
+                {
+                    using var peer = await listener.AcceptTcpClientAsync(timeout.Token);
+                    Interlocked.Increment(ref accepted);
+                    var stream = peer.GetStream();
+                    var request = new byte[12];
+                    while (true)
+                    {
+                        try { await stream.ReadExactlyAsync(request, timeout.Token); }
+                        catch (EndOfStreamException) { break; }
+                        var start = (request[8] << 8) | request[9];
+                        var quantity = (request[10] << 8) | request[11];
+                        byte[] pdu = start + quantity > 5
+                            ? [(byte)(request[7] | 0x80), 0x02]
+                            : [request[7], (byte)(quantity * 2), .. Enumerable.Range(start, quantity)
+                                .SelectMany(r => new byte[] { 0, (byte)(10 + r) })];
+                        byte[] response = [request[0], request[1], 0, 0, 0, (byte)(1 + pdu.Length), request[6], .. pdu];
+                        await stream.WriteAsync(response, timeout.Token);
+                    }
+                }
+            }
+            catch (OperationCanceledException) { }
+        });
+
+        var client = new ModbusTcpRegisterClient();
+        var reader = new ModbusTagReader(client);
+        var device = Device(id, "Modbus TCP", port, now);
+        var first = await reader.ReadAsync(device, tags, timeout.Token);
+        var second = await reader.ReadAsync(device, tags, timeout.Token);
+        var healthy = client.HasRecentSuccess("127.0.0.1", port, TimeSpan.FromSeconds(30));
+        timeout.Cancel();
+        await server;
+        await client.DisposeAsync();
+
+        var byName = second.ToDictionary(v => tags.Single(t => t.Id == v.TagId).Name);
+        Check(first.Count == 5 && byName.Count == 5, "Modbus reader dropped Tags.");
+        Check(byName["R1"].Quality == TagQuality.Good && byName["R1"].Value == 10 &&
+              byName["R2"].Value == 11 && byName["R5"].Quality == TagQuality.Good && byName["R5"].Value == 14,
+            "A rejected neighbour made valid Modbus Tags BAD.");
+        Check(byName["Missing"].Quality == TagQuality.Bad && byName["Missing"].Error!.Contains("0x02") &&
+              byName["Far"].Quality == TagQuality.Bad,
+            "Illegal Modbus addresses were not isolated to their own Tags.");
+        Check(accepted == 1, $"Modbus polls opened {accepted} connections instead of reusing one.");
+        Check(healthy, "Health probe cannot see the healthy polling connection.");
+    }
+
     private static async Task CheckS7Async()
     {
         var now = DateTimeOffset.UtcNow;
@@ -86,7 +155,11 @@ internal static class IndustrialProtocolContract
         var tags = new[]
         {
             Tag(id, "Bit", "DB1.DBX0.0", TagDataType.Bool, now),
-            Tag(id, "Word", "DB1.DBW2", TagDataType.Word, now)
+            Tag(id, "Bit3", "DB1.DBX0.3", TagDataType.Bool, now),
+            Tag(id, "Word", "DB1.DBW2", TagDataType.Word, now),
+            Tag(id, "Word6", "DB1.DBW6", TagDataType.Word, now),
+            Tag(id, "Outside", "DB1.DBW9", TagDataType.Word, now),
+            Tag(id, "OtherDb", "DB2.DBW0", TagDataType.Word, now)
         };
         var validator = new S7TagValidator();
         foreach (var tag in tags) validator.Validate(tag, tags.Where(x => x.Id != tag.Id).ToArray());
@@ -103,51 +176,82 @@ internal static class IndustrialProtocolContract
         listener.Start();
         var port = ((IPEndPoint)listener.LocalEndpoint).Port;
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(8));
-        var server = ServeS7Async(listener, timeout.Token);
+        var stats = new S7ServerStats();
+        // DB1 is 10 bytes; DB2 does not exist.
+        byte[] db1 = [0b0000_1001, 0, 0, 42, 0, 0, 0, 7, 0, 0];
+        var server = ServeS7Async(listener, db1, stats, timeout.Token);
+        var pool = new S7SessionPool();
+        var reader = new S7TagReader(pool);
+        var device = Device(id, "Siemens S7 TCP", port, now);
         IReadOnlyList<TagValueSnapshot> values;
+        bool healthy;
         try
         {
-            values = await new S7TagReader().ReadAsync(
-                Device(id, "Siemens S7 TCP", port, now), tags, timeout.Token);
+            await reader.ReadAsync(device, tags, timeout.Token);
+            values = await reader.ReadAsync(device, tags, timeout.Token);
+            healthy = pool.HasRecentSuccess(id, TimeSpan.FromSeconds(30));
         }
-        catch
+        finally
         {
+            await pool.DisposeAsync();
+            timeout.Cancel();
             await server;
-            throw;
         }
-        await server;
         var byName = values.ToDictionary(v => tags.Single(t => t.Id == v.TagId).Name);
-        Check(byName.Count == 2 && byName.Values.All(v => v.Quality == TagQuality.Good) &&
-              byName["Bit"].Value == 1 && byName["Word"].Value == 42,
-            "S7 COTP/setup/ReadVar or Tag mapping failed.");
+        Check(byName.Count == 6 && byName["Bit"].Value == 1 && byName["Bit3"].Value == 1 &&
+              byName["Word"].Value == 42 && byName["Word6"].Value == 7 &&
+              new[] { "Bit", "Bit3", "Word", "Word6" }.All(n => byName[n].Quality == TagQuality.Good),
+            "S7 range read, fallback or Tag mapping failed.");
+        Check(byName["Outside"].Quality == TagQuality.Bad && byName["OtherDb"].Quality == TagQuality.Bad,
+            "Rejected S7 addresses were not isolated to their own Tags.");
+        Check(stats.Connections == 1, $"S7 polls opened {stats.Connections} sessions instead of reusing one.");
+        Check(stats.Reads < 2 * tags.Length, $"S7 issued {stats.Reads} ReadVar requests; ranges were not merged.");
+        Check(healthy, "S7 health probe cannot see the healthy polling session.");
     }
 
-    private static async Task ServeS7Async(TcpListener listener, CancellationToken ct)
+    private sealed class S7ServerStats { public int Connections; public int Reads; }
+
+    private static async Task ServeS7Async(TcpListener listener, byte[] db1, S7ServerStats stats, CancellationToken ct)
     {
-        using var client = await listener.AcceptTcpClientAsync(ct);
-        var stream = client.GetStream();
-        var connect = await ReadFrameAsync(stream, ct);
-        Check(connect.Length == 22 && connect[5] == 0xe0 && connect[18] == 0x01,
-            "Unexpected S7 COTP connection request.");
-        await stream.WriteAsync(new byte[] { 3, 0, 0, 11, 6, 0xd0, 0, 0, 0, 1, 0 }, ct);
-
-        var setup = await ReadFrameAsync(stream, ct);
-        Check(setup.Length == 25 && setup[17] == 0xf0, "Unexpected S7 setup request.");
-        await stream.WriteAsync(S7Ack(1,
-            [0xf0, 0, 0, 1, 0, 1, 0, 0xf0], []), ct);
-
-        foreach (var (reference, transport, bitLength, data) in new (ushort Reference, byte Transport, ushort Bits, byte[] Data)[]
+        try
         {
-            (2, 0x03, 1, [1]),
-            (3, 0x04, 16, [0, 42])
-        })
-        {
-            var read = await ReadFrameAsync(stream, ct);
-            Check(read.Length == 31 && read[17] == 4 && read[25] == 0 && read[26] == 1,
-                "Unexpected S7 ReadVar request.");
-            byte[] item = [0xff, transport, (byte)(bitLength >> 8), (byte)bitLength, .. data];
-            await stream.WriteAsync(S7Ack(reference, [4, 1], item), ct);
+            using var peer = await listener.AcceptTcpClientAsync(ct);
+            Interlocked.Increment(ref stats.Connections);
+            var stream = peer.GetStream();
+            var connect = await ReadFrameAsync(stream, ct);
+            Check(connect.Length == 22 && connect[5] == 0xe0 && connect[18] == 0x01,
+                "Unexpected S7 COTP connection request.");
+            await stream.WriteAsync(new byte[] { 3, 0, 0, 11, 6, 0xd0, 0, 0, 0, 1, 0 }, ct);
+
+            var setup = await ReadFrameAsync(stream, ct);
+            Check(setup.Length == 25 && setup[17] == 0xf0, "Unexpected S7 setup request.");
+            await stream.WriteAsync(S7Ack(1, [0xf0, 0, 0, 1, 0, 1, 0, 0xf0], []), ct);
+
+            while (!ct.IsCancellationRequested)
+            {
+                var read = await ReadFrameAsync(stream, ct);
+                Interlocked.Increment(ref stats.Reads);
+                Check(read.Length == 31 && read[17] == 4 && read[27] == 0x84, "Unexpected S7 ReadVar request.");
+                var reference = (ushort)((read[11] << 8) | read[12]);
+                var transport = read[22];
+                var count = (read[23] << 8) | read[24];
+                var db = (read[25] << 8) | read[26];
+                var bitAddress = (read[28] << 16) | (read[29] << 8) | read[30];
+                var start = bitAddress / 8;
+                var length = transport == 1 ? 1 : count;
+                byte[] item;
+                if (db != 1 || start + length > db1.Length)
+                    item = [0x05, 0x00, 0, 0];
+                else if (transport == 1)
+                    item = [0xff, 0x03, 0, 1, (byte)((db1[start] >> (bitAddress % 8)) & 1)];
+                else
+                    item = [0xff, 0x04, (byte)((length * 8) >> 8), (byte)(length * 8), .. db1.AsSpan(start, length).ToArray()];
+                await stream.WriteAsync(S7Ack(reference, [4, 1], item), ct);
+            }
         }
+        catch (OperationCanceledException) { }
+        catch (EndOfStreamException) { }
+        catch (IOException) { }
     }
 
     private static byte[] S7Ack(ushort reference, byte[] parameters, byte[] data)

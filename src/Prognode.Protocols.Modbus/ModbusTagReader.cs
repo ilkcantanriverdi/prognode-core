@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Collections.Concurrent;
 using Prognode.Contracts.Devices;
 using Prognode.Contracts.Tags;
 using Prognode.Protocols.Abstractions;
@@ -9,8 +10,15 @@ public sealed class ModbusTagReader(
     ModbusTcpRegisterClient client) : ITagReader
 {
     private const int DefaultTimeoutMs = 2000;
-    private const int MaxGapRegisters = 8;
-    private const int MaxGapBits = 32;
+    // Only merge strictly contiguous addresses (review Y2): reading an undefined gap address makes
+    // the PLC answer exception 0x02 for the whole block and every Tag in it.
+    private const int MaxGapRegisters = 0;
+    private const int MaxGapBits = 0;
+
+    /// <summary>A Tag the PLC rejected is read on its own for this long, so one bad address does
+    /// not fail its block and force a Tag-by-Tag re-read on every poll.</summary>
+    private static readonly TimeSpan RejectedQuarantine = TimeSpan.FromSeconds(60);
+    private readonly ConcurrentDictionary<Guid, DateTimeOffset> _rejectedUntil = new();
 
     public bool CanHandle(DeviceDefinition device) =>
         string.Equals(
@@ -49,69 +57,96 @@ public sealed class ModbusTagReader(
             .ThenBy(x => x.Address.ZeroBasedOffset)
             .ToArray();
 
-        var blocks = PlanBlocks(planned);
+        var now = DateTimeOffset.UtcNow;
+        var quarantined = planned
+            .Where(x => _rejectedUntil.TryGetValue(x.Tag.Id, out var until) && until > now)
+            .ToArray();
+        var blocks = PlanBlocks(planned.Except(quarantined).ToArray())
+            .Concat(quarantined.Select(x => new ReadBlock(x.Address.Area, x.Address.FunctionCode,
+                x.Address.ZeroBasedOffset, x.Address.Width, [x])))
+            .ToArray();
         var values = new List<TagValueSnapshot>(enabled.Length);
 
         foreach (var block in blocks)
         {
-            if (block.Area is ModbusArea.Coil or ModbusArea.DiscreteInput)
+            try
             {
-                var bits = block.Area == ModbusArea.Coil
-                    ? await client.ReadCoilsAsync(
-                        device.Host,
-                        device.Port.Value,
-                        device.UnitId.Value,
-                        block.Start,
-                        block.Quantity,
-                        DefaultTimeoutMs,
-                        cancellationToken)
-                    : await client.ReadDiscreteInputsAsync(
-                        device.Host,
-                        device.Port.Value,
-                        device.UnitId.Value,
-                        block.Start,
-                        block.Quantity,
-                        DefaultTimeoutMs,
-                        cancellationToken);
-
+                values.AddRange(await ReadBlockAsync(device, block, cancellationToken));
+            }
+            catch (ModbusExceptionResponseException) when (block.Tags.Count > 1)
+            {
+                // The PLC rejected the block (e.g. 0x02 for one undefined address). Re-read Tag by
+                // Tag so only the offending addresses go BAD (review Y2).
                 foreach (var item in block.Tags)
                 {
-                    var relative = item.Address.ZeroBasedOffset - block.Start;
-                    var raw = bits[relative] ? 1.0 : 0.0;
-                    values.Add(Snapshot(device, item.Tag, raw));
+                    var single = new ReadBlock(block.Area, block.FunctionCode,
+                        item.Address.ZeroBasedOffset, item.Address.Width, [item]);
+                    try
+                    {
+                        values.AddRange(await ReadBlockAsync(device, single, cancellationToken));
+                    }
+                    catch (ModbusExceptionResponseException ex)
+                    {
+                        _rejectedUntil[item.Tag.Id] = DateTimeOffset.UtcNow + RejectedQuarantine;
+                        values.Add(BadSnapshot(device, item.Tag, ex.Message));
+                    }
                 }
-
-                continue;
             }
-
-            var registers = block.Area == ModbusArea.InputRegister
-                ? await client.ReadInputRegistersAsync(
-                    device.Host,
-                    device.Port.Value,
-                    device.UnitId.Value,
-                    block.Start,
-                    block.Quantity,
-                    DefaultTimeoutMs,
-                    cancellationToken)
-                : await client.ReadHoldingRegistersAsync(
-                    device.Host,
-                    device.Port.Value,
-                    device.UnitId.Value,
-                    block.Start,
-                    block.Quantity,
-                    DefaultTimeoutMs,
-                    cancellationToken);
-
-            foreach (var item in block.Tags)
+            catch (ModbusExceptionResponseException ex)
             {
-                var relative = item.Address.ZeroBasedOffset - block.Start;
-                var raw = Decode(registers, relative, item.Tag);
-                values.Add(Snapshot(device, item.Tag, raw));
+                _rejectedUntil[block.Tags[0].Tag.Id] = DateTimeOffset.UtcNow + RejectedQuarantine;
+                values.Add(BadSnapshot(device, block.Tags[0].Tag, ex.Message));
             }
         }
 
         return values;
     }
+
+    private async Task<IReadOnlyList<TagValueSnapshot>> ReadBlockAsync(
+        DeviceDefinition device,
+        ReadBlock block,
+        CancellationToken cancellationToken)
+    {
+        var host = device.Host!;
+        var port = device.Port!.Value;
+        var unitId = device.UnitId!.Value;
+        var result = new List<TagValueSnapshot>(block.Tags.Count);
+        foreach (var item in block.Tags) _rejectedUntil.TryRemove(item.Tag.Id, out _);
+
+        if (block.Area is ModbusArea.Coil or ModbusArea.DiscreteInput)
+        {
+            var bits = block.Area == ModbusArea.Coil
+                ? await client.ReadCoilsAsync(host, port, unitId, block.Start, block.Quantity,
+                    DefaultTimeoutMs, cancellationToken)
+                : await client.ReadDiscreteInputsAsync(host, port, unitId, block.Start, block.Quantity,
+                    DefaultTimeoutMs, cancellationToken);
+
+            foreach (var item in block.Tags)
+            {
+                var relative = item.Address.ZeroBasedOffset - block.Start;
+                result.Add(Snapshot(device, item.Tag, bits[relative] ? 1.0 : 0.0));
+            }
+
+            return result;
+        }
+
+        var registers = block.Area == ModbusArea.InputRegister
+            ? await client.ReadInputRegistersAsync(host, port, unitId, block.Start, block.Quantity,
+                DefaultTimeoutMs, cancellationToken)
+            : await client.ReadHoldingRegistersAsync(host, port, unitId, block.Start, block.Quantity,
+                DefaultTimeoutMs, cancellationToken);
+
+        foreach (var item in block.Tags)
+        {
+            var relative = item.Address.ZeroBasedOffset - block.Start;
+            result.Add(Snapshot(device, item.Tag, Decode(registers, relative, item.Tag)));
+        }
+
+        return result;
+    }
+
+    private static TagValueSnapshot BadSnapshot(DeviceDefinition device, TagDefinition tag, string error) =>
+        new(tag.Id, device.Id, null, null, TagQuality.Bad, DateTimeOffset.UtcNow, "Modbus TCP", error);
 
     private static TagValueSnapshot Snapshot(
         DeviceDefinition device,

@@ -4,9 +4,17 @@ using Prognode.Core.Tags;
 using Prognode.Protocols.Abstractions;
 using Prognode.Protocols.Mqtt;
 using Prognode.Protocols.OpcUa;
+using Prognode.Protocols.S7;
 
 namespace Prognode.Host.Services;
 
+/// <summary>
+/// Polls every device on its own schedule. Each device read runs independently (review Y2): a
+/// slow or unreachable device no longer delays the others, and a device whose previous read is
+/// still running is skipped instead of queued. When a device produces no fresh values for
+/// 3 × its poll interval (at least 10 s), its last Good values are marked STALE so alarms,
+/// the signal-quality monitor and the historian never treat old data as current.
+/// </summary>
 public sealed class TagPollingHostedService(
     IDeviceRepository devices,
     ITagRepository tags,
@@ -14,10 +22,18 @@ public sealed class TagPollingHostedService(
     IEnumerable<ITagReader> readers,
     MqttTagReader mqttReader,
     OpcUaTagReader opcUaReader,
+    S7SessionPool s7Sessions,
     ILogger<TagPollingHostedService> logger) : BackgroundService
 {
+    private static readonly TimeSpan DeviceListRefresh = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan MinimumStaleAfter = TimeSpan.FromSeconds(10);
+
     private readonly Dictionary<Guid, DateTimeOffset> _nextDue = [];
-    private readonly Dictionary<Guid, Task> _opcInFlight = [];
+    private readonly Dictionary<Guid, Task> _inFlight = [];
+    private readonly Dictionary<Guid, DateTimeOffset> _lastCompleted = [];
+    private readonly object _completedGate = new();
+    private IReadOnlyList<Prognode.Contracts.Devices.DeviceDefinition> _devices = [];
+    private DateTimeOffset _devicesLoadedAt = DateTimeOffset.MinValue;
 
     protected override async Task ExecuteAsync(
         CancellationToken stoppingToken)
@@ -50,29 +66,42 @@ public sealed class TagPollingHostedService(
                 break;
             }
         }
+
+        try { await Task.WhenAll(_inFlight.Values); } catch { /* shutting down */ }
     }
 
     private async Task PollDueDevicesAsync(
         CancellationToken cancellationToken)
     {
-        var allDevices =
-            await devices.GetAllAsync(cancellationToken);
-        mqttReader.PruneExcept(allDevices.Select(device => device.Id).ToHashSet());
-        opcUaReader.PruneExcept(allDevices.Select(device => device.Id).ToHashSet());
-        foreach (var id in _opcInFlight.Keys.Except(allDevices.Select(device => device.Id)).ToArray())
-            _opcInFlight.Remove(id);
-
         var now = DateTimeOffset.UtcNow;
 
-        foreach (var device in allDevices)
+        if (now - _devicesLoadedAt >= DeviceListRefresh)
         {
-            if (_nextDue.TryGetValue(
-                device.Id,
-                out var next) &&
-                next > now)
+            _devices = await devices.GetAllAsync(cancellationToken);
+            _devicesLoadedAt = now;
+            var ids = _devices.Select(device => device.Id).ToHashSet();
+            mqttReader.PruneExcept(ids);
+            opcUaReader.PruneExcept(ids);
+            s7Sessions.PruneExcept(ids);
+            foreach (var id in _inFlight.Keys.Where(id => !ids.Contains(id)).ToArray())
+                _inFlight.Remove(id);
+            foreach (var id in _nextDue.Keys.Where(id => !ids.Contains(id)).ToArray())
+                _nextDue.Remove(id);
+            lock (_completedGate)
+                foreach (var id in _lastCompleted.Keys.Where(id => !ids.Contains(id)).ToArray())
+                    _lastCompleted.Remove(id);
+        }
+
+        foreach (var device in _devices)
+        {
+            if (_inFlight.TryGetValue(device.Id, out var running) && !running.IsCompleted)
             {
+                MarkStaleIfOverdue(device, now);
                 continue;
             }
+
+            if (_nextDue.TryGetValue(device.Id, out var next) && next > now)
+                continue;
 
             _nextDue[device.Id] =
                 now.AddMilliseconds(
@@ -96,22 +125,15 @@ public sealed class TagPollingHostedService(
 
             if (reader is null)
             {
-                SetBad(
+                SetQuality(
                     deviceTags,
                     device.Id,
+                    TagQuality.Bad,
                     "No protocol reader is available.");
                 continue;
             }
 
-            // A first secure OPC UA handshake can take a minute on an S7-1200.
-            // Keep other protocol devices polling while that handshake is pending.
-            if (ReferenceEquals(reader, opcUaReader))
-            {
-                if (!_opcInFlight.TryGetValue(device.Id, out var pending) || pending.IsCompleted)
-                    _opcInFlight[device.Id] = ReadDeviceAsync(reader, device, deviceTags, cancellationToken);
-            }
-            else
-                await ReadDeviceAsync(reader, device, deviceTags, cancellationToken);
+            _inFlight[device.Id] = ReadDeviceAsync(reader, device, deviceTags, cancellationToken);
         }
     }
 
@@ -124,17 +146,46 @@ public sealed class TagPollingHostedService(
             var values = await reader.ReadAsync(device, deviceTags, cancellationToken);
             currentValues.SetMany(values);
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return; }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Tag poll failed for device {DeviceName}.", device.Name);
-            SetBad(deviceTags, device.Id, ex.Message);
+            SetQuality(deviceTags, device.Id, TagQuality.Bad, ex.Message);
         }
+
+        lock (_completedGate)
+            _lastCompleted[device.Id] = DateTimeOffset.UtcNow;
     }
 
-    private void SetBad(
+    /// <summary>
+    /// A read that is still running after 3 × poll interval (≥ 10 s) means no fresh data: mark the
+    /// device's Good values STALE (once) rather than letting them look current.
+    /// </summary>
+    private void MarkStaleIfOverdue(Prognode.Contracts.Devices.DeviceDefinition device, DateTimeOffset now)
+    {
+        var staleAfter = TimeSpan.FromMilliseconds(Math.Max(100, device.PollIntervalMs) * 3);
+        if (staleAfter < MinimumStaleAfter) staleAfter = MinimumStaleAfter;
+
+        DateTimeOffset last;
+        lock (_completedGate)
+            if (!_lastCompleted.TryGetValue(device.Id, out last)) return;
+        if (now - last < staleAfter) return;
+
+        var stale = currentValues.GetAll()
+            .Where(value => value.DeviceId == device.Id && value.Quality == TagQuality.Good)
+            .Select(value => value with
+            {
+                Quality = TagQuality.Stale,
+                Error = $"No fresh value for {(int)(now - last).TotalSeconds} s; the device read has not completed."
+            })
+            .ToArray();
+        if (stale.Length > 0) currentValues.SetMany(stale);
+    }
+
+    private void SetQuality(
         IReadOnlyList<TagDefinition> definitions,
         Guid deviceId,
+        TagQuality quality,
         string error)
     {
         var now = DateTimeOffset.UtcNow;
@@ -147,7 +198,7 @@ public sealed class TagPollingHostedService(
                         DeviceId: deviceId,
                         RawValue: null,
                         Value: null,
-                        Quality: TagQuality.Bad,
+                        Quality: quality,
                         Timestamp: now,
                         Source: "Runtime",
                         Error: error

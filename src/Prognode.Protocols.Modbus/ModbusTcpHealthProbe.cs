@@ -5,9 +5,10 @@ using Prognode.Protocols.Abstractions;
 
 namespace Prognode.Protocols.Modbus;
 
-public sealed class ModbusTcpHealthProbe : IDeviceHealthProbe
+public sealed class ModbusTcpHealthProbe(ModbusTcpRegisterClient client) : IDeviceHealthProbe
 {
     private const int TimeoutMs = 1500;
+    private static readonly TimeSpan PollWindow = TimeSpan.FromSeconds(30);
 
     public bool CanHandle(DeviceDefinition device) =>
         string.Equals(
@@ -26,6 +27,11 @@ public sealed class ModbusTcpHealthProbe : IDeviceHealthProbe
                 "Device TCP configuration is incomplete.",
                 0);
         }
+
+        // A recent successful poll on the persistent connection proves the link; opening a second
+        // socket every 10 s would consume one of the few connections gateways allow (review Y3).
+        if (client.HasRecentSuccess(device.Host, device.Port.Value, PollWindow))
+            return new DeviceHealthResult(true, "Polling connection is healthy.", 0);
 
         var stopwatch = Stopwatch.StartNew();
 
