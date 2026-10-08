@@ -6,10 +6,7 @@ const path = require('node:path');
 
 // Tests that describe behaviour not present in the current source. Each needs an owner decision;
 // they are reported on every run so they cannot be forgotten.
-const pendingDecision = {
-  'test-overview-historian-previews.cjs':
-    'Overview "three configurable Historian previews" (overviewSparkline, #overviewTrendCards) is not in the source restored in 537c74a: restore the feature or delete the test.',
-};
+const pendingDecision = {};
 
 const dir = __dirname;
 const files = fs.readdirSync(dir).filter(f => f.endsWith('.cjs') && f !== path.basename(__filename)).sort();
