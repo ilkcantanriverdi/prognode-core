@@ -265,6 +265,7 @@ var cloudLicenseOptions = new CoreCloudLicenseOptions
 };
 builder.Services.AddSingleton(cloudLicenseOptions);
 builder.Services.AddSingleton<CoreCloudLicenseClient>();
+builder.Services.AddSingleton<ILicenseRefreshSource, CloudLicenseRefreshSource>();
 builder.Services.AddSingleton(new CoreCloudLicenseStateStore(dataRoot));
 builder.Services.AddHostedService<CoreCloudLicenseHostedService>();
 
