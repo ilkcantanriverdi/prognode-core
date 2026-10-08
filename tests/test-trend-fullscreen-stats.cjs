@@ -23,13 +23,13 @@ store.series.set(tag.id, {points:[{timestamp:new Date().toISOString(), value:nul
   quality:'Bad'}], sampleCount:1, minimum:null, maximum:null, average:null});
 const badOnly = chartMarkup(tag);
 assert(badOnly.includes('NO DATA'), 'bad-only series has no valid value');
-assert(!badOnly.includes('Seçili aralığın ham kayıt istatistikleri'),
+assert(!badOnly.includes('Recorded sample statistics for selected range'),
   'null statistics must not appear as zero');
 
 store.series.set(tag.id, {points:[{timestamp:new Date().toISOString(), value:0,
   quality:'Good'}], sampleCount:1, minimum:0, maximum:0, average:0});
 const realZero = chartMarkup(tag);
-assert(realZero.includes('Seçili aralığın ham kayıt istatistikleri'),
+assert(realZero.includes('Recorded sample statistics for selected range'),
   'a genuine zero-value statistic must remain visible');
-assert(realZero.includes('Ort <b>0.0</b>'), 'a genuine zero average must remain visible');
+assert(realZero.includes('Avg <b>0.0</b>'), 'a genuine zero average must remain visible');
 console.log('PASS: fullscreen trend distinguishes null statistics from genuine zero');

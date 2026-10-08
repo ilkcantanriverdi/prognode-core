@@ -10,7 +10,7 @@ assert(source.includes('const MAX_CHARTS=15'));
 assert(source.includes('.slice(0,MAX_CHARTS)'),'saved layout restores up to 15 charts');
 assert(source.includes('const space=MAX_CHARTS-S.charts.length'),'new charts respect the 15-chart limit');
 assert(backup.includes('charts.GetArrayLength()>15'),'Core persists all 15 chart panels');
-assert(source.includes("limit:'En fazla 15 grafik açılabilir'")&&source.includes("limit:'Up to 15 charts can be opened'"));
+assert(source.includes("limit:'Up to 15 charts can be opened'"));
 for(const layout of ['auto','rows','columns','three','four','five'])assert(html.includes(`value="${layout}"`),`missing ${layout} layout`);
 assert(html.includes('id="trend-open-filter"'),'missing open trend filter');
 

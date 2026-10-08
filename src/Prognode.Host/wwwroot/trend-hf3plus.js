@@ -2,7 +2,7 @@
 (() => {
 'use strict';
 const byId=id=>document.getElementById(id), $=s=>document.querySelector(s);
-const T={tr:{industrial:'Endüstriyel İzleme',operations:'OPERASYON',overview:'Genel Bakış',devices:'Cihazlar',tags:'Taglar',alarms:'Alarmlar',historian:'Geçmiş Veri',notifications:'Bildirimler',license:'Lisans',settings:'Ayarlar',demo:'Tasarım önizlemesi · Örnek veri',prototype:'PROGNODE · TREND STUDIO',add:'+ Historian’dan ekle',compare:'⇄ Karşılaştır',reset:'↺ Tümünü sıfırla',zoomhint:'Sol sürükle: yakınlaştır · Sağ tık: geri',charts:'grafik',independent:'Her grafiğin zoom’u ve ayarları bağımsız',selected:'seçili',showCompare:'Karşılaştırmayı aç',multiLayout:'Otomatik yerleşim',selectSignals:'Historian sinyalleri',dragGuide:'Tekli veya çoklu seç, ekle ya da sinyalleri grafik alanına sürükle. Yalnız Historian’da aktif Tag’ler listelenir.',selectAll:'Tümünü seç',addSelected:'Seçilenleri ekle',search:'Tag veya cihaz ara...',overlayTitle:'Sinyal karşılaştırma',normalized:'Normalize yüzde · farklı birimler yan yana',maximize:'Büyüt',restore:'Çoklu ekrana dön',settingsChart:'Grafik ayarları',remove:'Kaldır',last:'Son kayıt',samples:'nokta',flags:'Alarm bayrakları',threshold:'Alarm eşikleri',points:'Kayıt noktaları',batch:'Batch / Lot alanı',smooth:'Yumuşak eğri',freeze:'Bu grafiği dondur',resetChart:'Bu grafiğin zoom’unu sıfırla',emptyTitle:'Henüz trend açılmadı',emptyDesc:'Historian’dan tekli veya çoklu Tag ekle. Sürükleyip bırakabilirsin.',normal:'NORMAL',high:'YÜKSEK',low:'DÜŞÜK',drawHint:'Bir grafiğin üstünde sol tuşu basılı tutup aralık seç',chooseTwo:'Karşılaştırmak için en az iki trend seç',limit:'En fazla 15 grafik açılabilir',already:'Bu sinyaller zaten açık',added:'Sinyaller eklendi',undo:'Önceki yakınlaştırmaya dönüldü',noUndo:'Bu grafik zaten tam aralıkta',mock:'Bu yalnız etkileşimli örnek veri önizlemesidir.',helpTitle:'Trend Studio kullanım kılavuzu',linked:'Ortak imleç',saveLayout:'▣ Düzeni kaydet',restoreDefault:'↺ Varsayılan',colWidth:'Sol sütun',left:'Sol',held:'DURAKLATILDI',follow:'CANLI',wide:'İki sütun genişliği',reorder:'Paneli taşı',maxSpan:'Geniş panel',highDetail:'Yakınlaşınca gerçek kayıt',downsample:'Görsel örnek azaltma',layoutSaved:'Düzen kaydedildi',layoutReset:'Varsayılan düzen geri yüklendi'},en:{industrial:'Industrial Monitoring',operations:'OPERATIONS',overview:'Overview',devices:'Devices',tags:'Tags',alarms:'Alarms',historian:'Historian',notifications:'Notifications',license:'License',settings:'Settings',demo:'Design preview · Sample data',prototype:'PROGNODE · TREND STUDIO',add:'+ Add from Historian',compare:'⇄ Compare',reset:'↺ Reset all',zoomhint:'Left drag: zoom · Right-click: back',charts:'charts',independent:'Independent zoom and settings for each chart',selected:'selected',showCompare:'Open comparison',multiLayout:'Auto layout',selectSignals:'Historian signals',dragGuide:'Select one or multiple signals, add them or drag directly into the chart grid. Only Historian-enabled Tags are listed.',selectAll:'Select all',addSelected:'Add selected',search:'Search tags or devices...',overlayTitle:'Signal comparison',normalized:'Normalized % · different units together',maximize:'Maximize',restore:'Back to grid',settingsChart:'Chart settings',remove:'Remove',last:'Last sample',samples:'samples',flags:'Alarm flags',threshold:'Alarm thresholds',points:'Recorded sample points',batch:'Batch / Lot band',smooth:'Smooth curve',freeze:'Freeze this chart',resetChart:'Reset this chart zoom',emptyTitle:'No trends open',emptyDesc:'Add one or more Historian Tags. You can drag and drop.',normal:'NORMAL',high:'HIGH',low:'LOW',drawHint:'Hold the left mouse button and drag a range on a chart',chooseTwo:'Select at least two trends to compare',limit:'Up to 15 charts can be opened',already:'Those signals are already open',added:'Signals added',undo:'Previous zoom restored',noUndo:'This chart already shows its full range',mock:'This is an interactive preview using illustrative data.',helpTitle:'Trend Studio guide',linked:'Linked cursor',saveLayout:'▣ Save layout',restoreDefault:'↺ Defaults',colWidth:'Left column',left:'Left',held:'PAUSED',follow:'LIVE',wide:'Span two columns',reorder:'Move panel',maxSpan:'Wide panel',highDetail:'Raw samples on zoom',downsample:'Visual downsampling',layoutSaved:'Layout saved',layoutReset:'Default layout restored'}};
+const T={en:{industrial:'Industrial Monitoring',operations:'OPERATIONS',overview:'Overview',devices:'Devices',tags:'Tags',alarms:'Alarms',historian:'Historian',notifications:'Notifications',license:'License',settings:'Settings',demo:'Design preview · Sample data',prototype:'PROGNODE · TREND STUDIO',add:'+ Add from Historian',compare:'⇄ Compare',reset:'↺ Reset all',zoomhint:'Left drag: zoom · Right-click: back',charts:'charts',independent:'Independent zoom and settings for each chart',selected:'selected',showCompare:'Open comparison',multiLayout:'Auto layout',selectSignals:'Historian signals',dragGuide:'Select one or multiple signals, add them or drag directly into the chart grid. Only Historian-enabled Tags are listed.',selectAll:'Select all',addSelected:'Add selected',search:'Search tags or devices...',overlayTitle:'Signal comparison',normalized:'Normalized % · different units together',maximize:'Maximize',restore:'Back to grid',settingsChart:'Chart settings',remove:'Remove',last:'Last sample',samples:'samples',flags:'Alarm flags',threshold:'Alarm thresholds',points:'Recorded sample points',batch:'Batch / Lot band',smooth:'Smooth curve',freeze:'Freeze this chart',resetChart:'Reset this chart zoom',emptyTitle:'No trends open',emptyDesc:'Add one or more Historian Tags. You can drag and drop.',normal:'NORMAL',high:'HIGH',low:'LOW',drawHint:'Hold the left mouse button and drag a range on a chart',chooseTwo:'Select at least two trends to compare',limit:'Up to 15 charts can be opened',already:'Those signals are already open',added:'Signals added',undo:'Previous zoom restored',noUndo:'This chart already shows its full range',mock:'This is an interactive preview using illustrative data.',helpTitle:'Trend Studio guide',linked:'Linked cursor',saveLayout:'▣ Save layout',restoreDefault:'↺ Defaults',colWidth:'Left column',left:'Left',held:'PAUSED',follow:'LIVE',wide:'Span two columns',reorder:'Move panel',maxSpan:'Wide panel',highDetail:'Raw samples on zoom',downsample:'Visual downsampling',layoutSaved:'Layout saved',layoutReset:'Default layout restored'}};
 let signalDefs=[];
 const MAX_CHARTS=15;
 const palette=['#27c8e0','#c392f5','#76d0a3','#f2ad72','#e88fb9','#79b8ff','#d1cc74','#78cbd3'];
@@ -18,7 +18,7 @@ let authPromise=null;
 let pendingHistorianPromise=null;
 function requireTrendEdit(){
  if(Core.authenticated && !Core.authPending)return true;
- toast(S.lang==='tr'?'Trend düzenlemek için lisanslı hesabınızla giriş yapın.':'Sign in with the licensed account to edit Trend Studio.');
+ toast('Sign in with the licensed account to edit Trend Studio.');
  return false;
 }
 async function refreshTrendAuth(){
@@ -41,15 +41,13 @@ async function refreshTrendAuth(){
 function applyTrendPermissions(){
  const editable=Core.authenticated&&!Core.authPending;
  const controlled=['add','hf61-explorer-add','select-all','add-selected','save-layout','reset-layout','hf62-layout-select','col-width'];
- for(const id of controlled){const el=byId(id);if(el){el.disabled=!editable;el.title=editable?'':(S.lang==='tr'?'Düzenlemek için giriş yapın':'Sign in to edit');}}
+ for(const id of controlled){const el=byId(id);if(el){el.disabled=!editable;el.title=editable?'':('Sign in to edit');}}
  document.querySelectorAll('.hf61-signal,.move-handle,.hf62-slot,[data-action="remove"],[data-action="settings"],[data-setting],[data-chart-type],.sig').forEach(el=>{
   if(el.matches('button,input,select'))el.disabled=!editable;
   if(el.hasAttribute('draggable'))el.draggable=editable;
   el.classList.toggle('hf63-readonly-control',!editable);
  });
- const warning=byId('hf63-access-hint');if(warning){warning.hidden=editable;warning.textContent=S.lang==='tr'
- ?'Salt görüntüleme: sinyalleri, panel yerleşimini ve grafik ayarlarını değiştirmek için giriş yapın.'
- :'View only: sign in to add signals or change chart panels, layout and settings.';}
+ const warning=byId('hf63-access-hint');if(warning){warning.hidden=editable;warning.textContent='View only: sign in to add signals or change chart panels, layout and settings.';}
 }
 
 const STORE_KEY='PROGNODE_HF3_PLUS_CORE_LAYOUT_V1';
@@ -95,11 +93,11 @@ async function loadCatalog(){
   if(!Core.ready)await restoreLayout();
   if(S.activeId&&!allowed.has(S.activeId))S.activeId=S.charts[0]?.id||null;
   Core.ready=true;Core.error='';Core.lastCatalogAt=Date.now();
-  const source=byId('hf61-source');if(source)source.textContent=S.lang==='tr'?`${signalDefs.length} HISTORIAN SİNYALİ`:`${signalDefs.length} HISTORIAN SIGNALS`;
+  const source=byId('hf61-source');if(source)source.textContent=`${signalDefs.length} HISTORIAN SIGNALS`;
   renderLayout();renderDrawer();applyTrendPermissions();
   void consumePendingHistorianTag();
   for(const c of S.charts)void fetchSeries(c,true);
-  if(previous.size!==signalDefs.length)toast(S.lang==='tr'?`${signalDefs.length} etkin Historian sinyali hazır`:`${signalDefs.length} enabled Historian signals`);
+  if(previous.size!==signalDefs.length)toast(`${signalDefs.length} enabled Historian signals`);
  }catch(error){Core.error=String(error.message||error);Core.ready=false;renderDrawer();renderLayout();console.warn('PROGNODE Trend Studio catalog:',Core.error)}
  })().finally(()=>{catalogPromise=null});
  return catalogPromise;
@@ -113,11 +111,11 @@ async function consumePendingHistorianTagOnce(){
  let id='';try{id=sessionStorage.getItem('prognode.pendingHistorianTrendTag')||''}catch{}
  if(!id||!Core.ready)return;
  await refreshTrendAuth();
- if(!Core.authenticated){toast(S.lang==='tr'?'Trend grafiği eklemek için giriş yapın.':'Sign in to add a Trend chart.');return}
+ if(!Core.authenticated){toast('Sign in to add a Trend chart.');return}
  try{id=sessionStorage.getItem('prognode.pendingHistorianTrendTag')||''}catch{}
  if(!id)return;
  try{sessionStorage.removeItem('prognode.pendingHistorianTrendTag')}catch{}
- if(!signalDefs.some(d=>d.id===id)){toast(S.lang==='tr'?'Bu Tag için etkin Historian kaydı bulunamadı.':'No enabled Historian recording for this Tag.');return}
+ if(!signalDefs.some(d=>d.id===id)){toast('No enabled Historian recording for this Tag.');return}
  S.chartFilter='';byId('trend-open-filter').value='';S.maximized=null;
  if(S.charts.some(c=>c.id===id)){S.activeId=id;renderLayout();return}
  appendSignals([id]);
@@ -153,7 +151,7 @@ async function refreshFullscreenAlarmIndicator(){
   const indicator=byId('fullscreen-alarm-indicator');
   indicator.hidden=activeAlarmCount===0;
   byId('fullscreen-alarm-count').textContent=String(activeAlarmCount);
-  indicator.setAttribute('aria-label',S.lang==='tr'?`${activeAlarmCount} aktif alarm; Alarm sayfasını aç`:`${activeAlarmCount} active alarms; open Alarms`);
+  indicator.setAttribute('aria-label',`${activeAlarmCount} active alarms; open Alarms`);
  }catch(error){console.warn('Trend active alarms:',error)}
 }
 byId('fullscreen-alarm-indicator').addEventListener('click',()=>{
@@ -217,8 +215,8 @@ function makeChart(id){return {id,windowMin:15,range:[S.now-15*60000,S.now],hist
 
 const name=d=>`${d.device} · ${d.tag}`;
 const val=(v,d)=>Number(v).toFixed(d.decimals??2);
-function fmtTime(t,full=false){if(!Number.isFinite(t))return '–';return new Date(t).toLocaleTimeString(S.lang==='tr'?'tr-TR':'en-GB',full?{hour:'2-digit',minute:'2-digit',second:'2-digit'}:{hour:'2-digit',minute:'2-digit'})}
-function fmtTick(t,span){if(span>=120*86400000)return new Date(t).toLocaleDateString(S.lang==='tr'?'tr-TR':'en-GB',{month:'short',year:'numeric'});if(span>=3*86400000)return new Date(t).toLocaleDateString(S.lang==='tr'?'tr-TR':'en-GB',{day:'2-digit',month:'short'});if(span>=86400000)return new Date(t).toLocaleDateString(S.lang==='tr'?'tr-TR':'en-GB',{day:'2-digit',month:'short'})+' '+fmtTime(t);return fmtTime(t)}
+function fmtTime(t,full=false){if(!Number.isFinite(t))return '–';return new Date(t).toLocaleTimeString('en-GB',full?{hour:'2-digit',minute:'2-digit',second:'2-digit'}:{hour:'2-digit',minute:'2-digit'})}
+function fmtTick(t,span){if(span>=120*86400000)return new Date(t).toLocaleDateString('en-GB',{month:'short',year:'numeric'});if(span>=3*86400000)return new Date(t).toLocaleDateString('en-GB',{day:'2-digit',month:'short'});if(span>=86400000)return new Date(t).toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' '+fmtTime(t);return fmtTime(t)}
 function setLang(){S.lang='en';document.documentElement.lang='en';document.querySelectorAll('[data-i18n]').forEach(e=>e.textContent=tx(e.dataset.i18n));document.querySelectorAll('[data-ph]').forEach(e=>e.placeholder=tx(e.dataset.ph));document.querySelectorAll('[data-lang]').forEach(e=>e.classList.toggle('active',e.dataset.lang==='en'));renderLayout();renderDrawer();renderProcessEvents();}
 function toast(message){const el=byId('toast');el.textContent=message;el.classList.remove('hidden');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.add('hidden'),2700)}
 
@@ -226,23 +224,23 @@ function toast(message){const el=byId('toast');el.textContent=message;el.classLi
 function hf61Translate(){
  document.querySelectorAll('[data-hf61-tr]').forEach(el=>{el.textContent=el.getAttribute('data-hf61-'+S.lang)||el.textContent});
  document.querySelectorAll('[data-hf61-placeholder-tr]').forEach(el=>{el.placeholder=el.getAttribute('data-hf61-placeholder-'+S.lang)||el.placeholder});
- const e=byId('hf62-layout-select');if(e)e.value=S.layout;const more=byId('hf62-more-toggle');if(more)more.textContent=byId('hf62-advanced')?.hidden?(S.lang==='tr'?'Diğer araçlar ↓':'More tools ↓'):(S.lang==='tr'?'Diğer araçları kapat ↑':'Close tools ↑');
+ const e=byId('hf62-layout-select');if(e)e.value=S.layout;const more=byId('hf62-more-toggle');if(more)more.textContent=byId('hf62-advanced')?.hidden?('More tools ↓'):('Close tools ↑');
 }
 function renderExplorer(){
  const el=byId('hf61-explorer-list');if(!el)return;
- const filter=(byId('hf61-explorer-search')?.value||'').toLocaleLowerCase(S.lang==='tr'?'tr-TR':'en-US');
- const filtered=signalDefs.filter(d=>(d.device+' '+d.tag+' '+d.unit).toLocaleLowerCase(S.lang==='tr'?'tr-TR':'en-US').includes(filter));
- if(!filtered.length){el.innerHTML='<p class="hf61-muted">'+(Core.error?esc(Core.error):signalDefs.length?(S.lang==='tr'?'Sinyal bulunamadı.':'No matching signals.'):(S.lang==='tr'?'Henüz etkin Historian sinyali yok.':'No enabled Historian signals yet.'))+'</p>';return;}
- el.innerHTML=filtered.map(d=>{const selected=S.charts.some(c=>c.id===d.id);return `<button type="button" class="hf61-signal ${selected?'is-selected':''}" data-signal-id="${esc(d.id)}" draggable="true" title="${S.lang==='tr'?'Bu sinyali seçilen grafik hücresine sürükleyin':'Drag to a chart slot'}" aria-pressed="${selected?'true':'false'}"><span class="hf61-series-dot" style="--hf61-series:${d.color}"></span><span class="hf61-signal-copy"><strong>${esc(d.tag)}</strong><small>${esc(d.device)}${d.unit?' · '+esc(d.unit):''}</small></span><span class="hf61-signal-state" aria-hidden="true">${selected?'✓':'+'}</span></button>`}).join('');
+ const filter=(byId('hf61-explorer-search')?.value||'').toLocaleLowerCase('en-US');
+ const filtered=signalDefs.filter(d=>(d.device+' '+d.tag+' '+d.unit).toLocaleLowerCase('en-US').includes(filter));
+ if(!filtered.length){el.innerHTML='<p class="hf61-muted">'+(Core.error?esc(Core.error):signalDefs.length?('No matching signals.'):('No enabled Historian signals yet.'))+'</p>';return;}
+ el.innerHTML=filtered.map(d=>{const selected=S.charts.some(c=>c.id===d.id);return `<button type="button" class="hf61-signal ${selected?'is-selected':''}" data-signal-id="${esc(d.id)}" draggable="true" title="${'Drag to a chart slot'}" aria-pressed="${selected?'true':'false'}"><span class="hf61-series-dot" style="--hf61-series:${d.color}"></span><span class="hf61-signal-copy"><strong>${esc(d.tag)}</strong><small>${esc(d.device)}${d.unit?' · '+esc(d.unit):''}</small></span><span class="hf61-signal-state" aria-hidden="true">${selected?'✓':'+'}</span></button>`}).join('');
 }
 function renderProcessEvents(){
  const tbody=byId('hf61-events-body');if(!tbody)return;
  const events=[];
  for(const a of alarmEvents){const t=Date.parse(a.activeAt||a.activatedAt||'');if(!Number.isFinite(t))continue;const d=signalDefs.find(d=>d.id===a.tagId);events.push({t,text:String(a.text||'Alarm'),source:d?.tag||a.sourceName||'—',state:String(a.state||'ACTIVE')});}
- for(const b of batches){const t=Date.parse(b.startedAt||'');if(!Number.isFinite(t))continue;events.push({t,text:(S.lang==='tr'?'Parti başladı: ':'Batch started: ')+String(b.batchNo||'—'),source:b.recipeName||b.batchNo||'—',state:String(b.state===0?'RUNNING':b.state===1?'COMPLETED':b.state===2?'ABORTED':b.state||'RECORDED')});}
+ for(const b of batches){const t=Date.parse(b.startedAt||'');if(!Number.isFinite(t))continue;events.push({t,text:('Batch started: ')+String(b.batchNo||'—'),source:b.recipeName||b.batchNo||'—',state:String(b.state===0?'RUNNING':b.state===1?'COMPLETED':b.state===2?'ABORTED':b.state||'RECORDED')});}
  events.sort((a,b)=>b.t-a.t);
  const latest=events.slice(0,12);
- if(!latest.length){tbody.innerHTML=`<tr><td colspan="4" class="hf61-events-empty">${Core.error?esc(Core.error):S.lang==='tr'?'Henüz kaydedilmiş proses olayı bulunmuyor.':'No recorded process events yet.'}</td></tr>`;return;}
+ if(!latest.length){tbody.innerHTML=`<tr><td colspan="4" class="hf61-events-empty">${Core.error?esc(Core.error):'No recorded process events yet.'}</td></tr>`;return;}
  tbody.innerHTML=latest.map(e=>`<tr><td>${esc(fmtTime(e.t,true))}</td><td>${esc(e.text)}</td><td>${esc(e.source)}</td><td><span class="hf61-event-status">${esc(e.state)}</span></td></tr>`).join('');
 }
 
@@ -258,7 +256,7 @@ function effectiveColumns(){
  const n=filteredCharts().length;
  return n>=13&&width>=1500?5:n>=9&&width>=1350?4:n>=5&&width>=1100?3:n>=2&&width>=690?2:1;
 }
-function filteredCharts(){const q=String(S.chartFilter||'').trim().toLocaleLowerCase(S.lang==='tr'?'tr-TR':'en-US');if(!q)return S.charts;return S.charts.filter(c=>{const d=signalDefs.find(x=>x.id===c.id);return d&&(d.device+' '+d.tag+' '+d.unit).toLocaleLowerCase(S.lang==='tr'?'tr-TR':'en-US').includes(q)})}
+function filteredCharts(){const q=String(S.chartFilter||'').trim().toLocaleLowerCase('en-US');if(!q)return S.charts;return S.charts.filter(c=>{const d=signalDefs.find(x=>x.id===c.id);return d&&(d.device+' '+d.tag+' '+d.unit).toLocaleLowerCase('en-US').includes(q)})}
 function normalizeSlots(){
  const used=new Set();
  for(const c of S.charts){if(!Number.isInteger(c.slot)||c.slot<0||c.slot>=MAX_CHARTS||used.has(c.slot))c.slot=null;else used.add(c.slot)}
@@ -286,28 +284,28 @@ function resizeLayout(){const grid=byId('grid'),n=filteredCharts().length;
  grid.style.overflowY=compactAfterRemoval||!S.maximized&&rows>3?'auto':'hidden';
  hf61Translate();
  const width=byId('col-width');if(width){width.value=S.leftPercent;width.disabled=cols!==2||!!S.maximized;byId('col-width-value').textContent=S.leftPercent+'%';}
- const label=S.layout==='auto'?(S.lang==='tr'?'Otomatik':'Auto'):S.layout==='rows'?(S.lang==='tr'?'Alt alta':'Stacked'):S.layout==='three'?(S.lang==='tr'?'3 sütun':'3 columns'):S.layout==='four'?(S.lang==='tr'?'4 sütun':'4 columns'):S.layout==='five'?(S.lang==='tr'?'5 sütun':'5 columns'):(S.lang==='tr'?'2 sütun':'2 columns');
- byId('layout-tag').textContent=S.maximized?(S.lang==='tr'?'Büyütülmüş grafik':'Maximized chart'):`${label} · ${cols} × ${rows}`;
+ const label=S.layout==='auto'?('Auto'):S.layout==='rows'?('Stacked'):S.layout==='three'?('3 columns'):S.layout==='four'?('4 columns'):S.layout==='five'?('5 columns'):('2 columns');
+ byId('layout-tag').textContent=S.maximized?('Maximized chart'):`${label} · ${cols} × ${rows}`;
  byId('active-chart').innerHTML=S.activeId?`<strong>${esc(name(signalDefs.find(d=>d.id===S.activeId)||signalDefs[0]))}</strong>`:'';
  document.querySelectorAll('[data-window]').forEach(b=>b.classList.toggle('active',+b.dataset.window===(S.charts.find(c=>c.id===S.activeId)?.windowMin||15)));
- const hint=byId('saved-hint');if(hint)hint.textContent=S.savedAt?'● '+(S.lang==='tr'?'Kaydedildi':'Saved'):'';
+ const hint=byId('saved-hint');if(hint)hint.textContent=S.savedAt?'● '+('Saved'):'';
 }
 
 function stateFor(d,v){return !Number.isFinite(v)?'unknown':d.high!==null&&v>=d.high?'high':d.low!==null&&v<=d.low?'low':'normal'}
 
 function renderLayout(){const grid=byId('grid');grid.innerHTML='';resizeLayout();
- if(!S.charts.length&&!Core.ready){renderExplorer();renderProcessEvents();grid.innerHTML=`<div class="empty"><strong>${Core.error?esc(Core.error):tx('emptyTitle')}</strong><div>${Core.ready?tx('emptyDesc'):(S.lang==='tr'?'Historian bağlantısı bekleniyor':'Waiting for Historian')}</div><button class="btn primary" id="emptyAdd">${tx('add')}</button></div>`;byId('emptyAdd').onclick=()=>openDrawer();return}
+ if(!S.charts.length&&!Core.ready){renderExplorer();renderProcessEvents();grid.innerHTML=`<div class="empty"><strong>${Core.error?esc(Core.error):tx('emptyTitle')}</strong><div>${Core.ready?tx('emptyDesc'):('Waiting for Historian')}</div><button class="btn primary" id="emptyAdd">${tx('add')}</button></div>`;byId('emptyAdd').onclick=()=>openDrawer();return}
  grid.classList.toggle('compare-mode',S.compare);byId('compare-actions').classList.toggle('hidden',!S.compare);
  byId('compare').classList.toggle('active',S.compare);byId('compare-count').textContent=`${S.compareIds.size} ${tx('selected')}`;
  byId('compare-open').disabled=S.compareIds.size<2;byId('live').textContent=S.live?'● LIVE Ⅱ':'▷ PAUSED';byId('live').classList.toggle('live',S.live);
  byId('sync-cursor').checked=S.linkedCursor;
  const visibleCharts=filteredCharts();
- if(S.charts.length&&S.chartFilter&&!visibleCharts.length){grid.innerHTML=`<div class="empty"><strong>${S.lang==='tr'?'Filtreye uyan açık trend yok':'No open trends match the filter'}</strong><div>${S.lang==='tr'?'Filtreyi temizleyerek tüm trendleri gösterin.':'Clear the filter to show every open trend.'}</div></div>`;return}
+ if(S.charts.length&&S.chartFilter&&!visibleCharts.length){grid.innerHTML=`<div class="empty"><strong>${'No open trends match the filter'}</strong><div>${'Clear the filter to show every open trend.'}</div></div>`;return}
  for(const c of (S.maximized?visibleCharts:slotItems())){
   const d=signalDefs.find(s=>s.id===c.id),all=allData.get(c.id)||[],last=all.filter(p=>p.quality==='GOOD'&&Number.isFinite(p.v)).at(-1),st=stateFor(d,last?.v),label=name(d);const el=document.createElement('section');
  el.className='chart'+(S.maximized===c.id?' is-max':'')+(S.activeId===c.id?' is-active':'')+(c.wide&&!S.maximized&&S.layout==='auto'?' wide':'');el.dataset.chart=c.id;el.style.setProperty('--series',d.color);
  if(S.layout!=='auto'&&!S.chartFilter&&!S.maximized){const cols=effectiveColumns(),position=S.charts.filter(x=>x.slot<c.slot).length;el.style.gridColumnStart=String(position%cols+1);el.style.gridRowStart=String(Math.floor(position/cols)+1)}
- el.innerHTML=`<div class="chart-head"><button class="move-handle" data-action="move" draggable="true" title="${tx('reorder')}" aria-label="${tx('reorder')}">⠿</button><span class="seriesdot"></span><input type="checkbox" class="compare-check" data-action="compare-check" ${S.compareIds.has(c.id)?'checked':''} title="${tx('compare')}"><span class="chart-title" data-action="focus" title="${S.lang==='tr'?'Bu grafiği seç':'Select this chart'}">${esc(label)}</span><span class="value" id="v-${c.id}">${last?val(last.v,d):'—'}</span><span class="unit">${esc(d.unit)}</span><span class="state ${st}" id="s-${c.id}">${tx(st)}</span><span class="chart-ctrl"><span class="hf61-range-pills">${[[15,'15m'],[60,'1h'],[1440,'24h'],[10080,'7d']].map(([n,l])=>`<button class="hf61-range ${c.windowMin===n?'selected':''}" data-chart-window-btn="${n}" type="button">${l}</button>`).join('')}</span><select class="chart-range" data-chart-window="${c.id}" aria-label="${esc(label)} time range">${[[5,'5m'],[15,'15m'],[60,'1h'],[480,'8h'],[1440,'24h'],[10080,'7d'],[43200,'30d'],[525600,'1y']].map(([n,l])=>`<option value="${n}" ${c.windowMin===n?'selected':''}>${l}</option>`).join('')}</select><button class="chart-hold ${c.freeze?'paused':''}" data-action="live-chart" title="${S.lang==='tr'?'Yalnızca bu grafik için canlı/duraklat':'Live/pause this chart'}">${c.freeze?'▶ LIVE':'Ⅱ PAUSE'}</button><button class="small-action" data-action="maximize" title="${S.maximized===c.id?tx('restore'):tx('maximize')}">${S.maximized===c.id?'▣':'⛶'}</button><button class="small-action" data-action="settings" title="${tx('settingsChart')}">⚙</button><button class="small-action" data-action="remove" title="${tx('remove')}">×</button></span></div><div class="plot-frame"><svg class="chart-svg" data-id="${c.id}" aria-label="${esc(label)} chart"></svg><div class="tooltip"></div></div><div class="chart-foot"><span id="meta-${c.id}"></span><span class="quality-chip" id="quality-${c.id}"></span><span class="zoom-depth" id="zoom-${c.id}"></span></div>`;
+ el.innerHTML=`<div class="chart-head"><button class="move-handle" data-action="move" draggable="true" title="${tx('reorder')}" aria-label="${tx('reorder')}">⠿</button><span class="seriesdot"></span><input type="checkbox" class="compare-check" data-action="compare-check" ${S.compareIds.has(c.id)?'checked':''} title="${tx('compare')}"><span class="chart-title" data-action="focus" title="${'Select this chart'}">${esc(label)}</span><span class="value" id="v-${c.id}">${last?val(last.v,d):'—'}</span><span class="unit">${esc(d.unit)}</span><span class="state ${st}" id="s-${c.id}">${tx(st)}</span><span class="chart-ctrl"><span class="hf61-range-pills">${[[15,'15m'],[60,'1h'],[1440,'24h'],[10080,'7d']].map(([n,l])=>`<button class="hf61-range ${c.windowMin===n?'selected':''}" data-chart-window-btn="${n}" type="button">${l}</button>`).join('')}</span><select class="chart-range" data-chart-window="${c.id}" aria-label="${esc(label)} time range">${[[5,'5m'],[15,'15m'],[60,'1h'],[480,'8h'],[1440,'24h'],[10080,'7d'],[43200,'30d'],[525600,'1y']].map(([n,l])=>`<option value="${n}" ${c.windowMin===n?'selected':''}>${l}</option>`).join('')}</select><button class="chart-hold ${c.freeze?'paused':''}" data-action="live-chart" title="${'Live/pause this chart'}">${c.freeze?'▶ LIVE':'Ⅱ PAUSE'}</button><button class="small-action" data-action="maximize" title="${S.maximized===c.id?tx('restore'):tx('maximize')}">${S.maximized===c.id?'▣':'⛶'}</button><button class="small-action" data-action="settings" title="${tx('settingsChart')}">⚙</button><button class="small-action" data-action="remove" title="${tx('remove')}">×</button></span></div><div class="plot-frame"><svg class="chart-svg" data-id="${c.id}" aria-label="${esc(label)} chart"></svg><div class="tooltip"></div></div><div class="chart-foot"><span id="meta-${c.id}"></span><span class="quality-chip" id="quality-${c.id}"></span><span class="zoom-depth" id="zoom-${c.id}"></span></div>`;
  el.querySelector('[data-action="maximize"]').textContent=S.maximized===c.id?'Restore':'Expand';
  el.querySelector('[data-action="settings"]').textContent='Settings';
  el.querySelector('[data-action="remove"]').textContent='Remove';
@@ -317,8 +315,8 @@ function renderLayout(){const grid=byId('grid');grid.innerHTML='';resizeLayout()
  renderExplorer();renderProcessEvents();
 }
 function openSettings(el,c){const prior=el.querySelector('.settings');if(prior)prior.remove();const panel=document.createElement('div');panel.className='settings';const choices=[['flags',tx('flags')],['threshold',tx('threshold')],['points',tx('points')],['batch',tx('batch')],['freeze',tx('freeze')],['wide',tx('wide')]];
- const types=[['line',S.lang==='tr'?'Düz çizgi':'Straight line'],['smooth',tx('smooth')],['area',S.lang==='tr'?'Altı dolgulu çizgi':'Shaded area']];
- panel.innerHTML=`<div class="settings-head"><strong>${tx('settingsChart')} · ${esc(name(signalDefs.find(d=>d.id===c.id)))}</strong><button type="button" data-action="close-settings" aria-label="${S.lang==='tr'?'Ayarları kapat':'Close settings'}" title="${S.lang==='tr'?'Kapat':'Close'}">×</button></div><label class="setting">${S.lang==='tr'?'Grafik tipi':'Chart type'} <select data-chart-type="${esc(c.id)}" aria-label="${S.lang==='tr'?'Grafik tipi':'Chart type'}">${types.map(([value,label])=>`<option value="${value}" ${c.chartType===value?'selected':''}>${label}</option>`).join('')}</select></label>${choices.map(([k,label])=>`<label class="setting"><input type="checkbox" data-setting="${k}" ${c[k]?'checked':''}><span>${label}</span></label>`).join('')}<hr><div class="setting-tools"><button data-action="undo">↩ ${S.lang==='tr'?'Önceki zoom':'Previous zoom'}</button><button data-action="reset-chart">${tx('resetChart')}</button></div>`;
+ const types=[['line','Straight line'],['smooth',tx('smooth')],['area','Shaded area']];
+ panel.innerHTML=`<div class="settings-head"><strong>${tx('settingsChart')} · ${esc(name(signalDefs.find(d=>d.id===c.id)))}</strong><button type="button" data-action="close-settings" aria-label="${'Close settings'}" title="${'Close'}">×</button></div><label class="setting">${'Chart type'} <select data-chart-type="${esc(c.id)}" aria-label="${'Chart type'}">${types.map(([value,label])=>`<option value="${value}" ${c.chartType===value?'selected':''}>${label}</option>`).join('')}</select></label>${choices.map(([k,label])=>`<label class="setting"><input type="checkbox" data-setting="${k}" ${c[k]?'checked':''}><span>${label}</span></label>`).join('')}<hr><div class="setting-tools"><button data-action="undo">↩ ${'Previous zoom'}</button><button data-action="reset-chart">${tx('resetChart')}</button></div>`;
  el.appendChild(panel);
  const close=panel.querySelector('[data-action="close-settings"]');
  close.textContent='Close';
@@ -405,8 +403,8 @@ function drawChartNow(c){const el=byId('grid').querySelector(`[data-chart="${c.i
  svg.innerHTML=out;svg.dataset.w=di.W;svg.dataset.h=di.H;
  const last=points.filter(p=>p.quality==='GOOD').at(-1),bad=points.filter(p=>p.quality!=='GOOD').length;
  byId('meta-'+c.id).textContent=`${last?tx('last')+': '+fmtTime(last.t,true):'—'} · ${(metaById.get(c.id)?.sampleCount??points.length).toLocaleString()} ${tx('samples')}${c.lastError?' · API ERROR':''}`;
- const q=byId('quality-'+c.id);q.classList.toggle('bad',!!bad);q.textContent=bad?`⚠ ${bad} BAD/STALE`:`✓ ${S.lang==='tr'?'Kalite iyi':'Quality good'}`;
- byId('zoom-'+c.id).textContent=metaById.get(c.id)?.summarized?`${metaById.get(c.id).sampleCount.toLocaleString()} → ${plotted.toLocaleString()} · ${S.lang==='tr'?'özet · yakınlaş: detay':'summary · zoom for detail'}`:points.length>plotted*1.3?`${points.length.toLocaleString()} → ${plotted.toLocaleString()} · ${S.lang==='tr'?'yakınlaş: detay':'zoom: detail'}`:c.history.length?`ZOOM ×${c.history.length+1}`:(c.freeze?'HOLD':'LIVE');
+ const q=byId('quality-'+c.id);q.classList.toggle('bad',!!bad);q.textContent=bad?`⚠ ${bad} BAD/STALE`:`✓ ${'Quality good'}`;
+ byId('zoom-'+c.id).textContent=metaById.get(c.id)?.summarized?`${metaById.get(c.id).sampleCount.toLocaleString()} → ${plotted.toLocaleString()} · ${'summary · zoom for detail'}`:points.length>plotted*1.3?`${points.length.toLocaleString()} → ${plotted.toLocaleString()} · ${'zoom: detail'}`:c.history.length?`ZOOM ×${c.history.length+1}`:(c.freeze?'HOLD':'LIVE');
  c.renderStats={raw:points.length,rendered:plotted,gaps:gaps.length,lastGood:last?.t||null};if(c.hover)showCross(c,c.hover,false);
  if(S.linkedCursor&&S.linkedTime!==null)drawLinkedMarker(c,S.linkedTime,false);
  if(c.needsFetch&&coreVisible&&!c.loading)void fetchSeries(c,true);
@@ -427,7 +425,7 @@ function drawLinkedMarker(c,time,updateTip=false){const el=$(`[data-chart="${c.i
  if(updateTip&&p)showCross(c,p,false);return p;
 }
 function updateLinkedCursor(time,sourceId){S.linkedTime=time;const summary=[];for(const c of S.charts){if(c.id===sourceId)continue;const p=drawLinkedMarker(c,time);if(p){const d=signalDefs.find(d=>d.id===c.id);summary.push(`${d.tag}: ${val(p.v,d)} ${d.unit}`)}else summary.push(`${signalDefs.find(d=>d.id===c.id).tag}: —`)}
- byId('sync-info').textContent=(S.lang==='tr'?'Ortak kayıt':'Linked samples')+` · ${fmtTime(time,true)} · `+summary.slice(0,3).join(' | ');
+ byId('sync-info').textContent=('Linked samples')+` · ${fmtTime(time,true)} · `+summary.slice(0,3).join(' | ');
 }
 
 let drag=null;
@@ -480,14 +478,14 @@ byId('compare-open').onclick=()=>{if(S.compareIds.size<2)return toast(tx('choose
 byId('overlay-close').onclick=()=>{S.overlay=false;byId('compare-overlay').classList.add('hidden')};
 function drawComparison(){const ids=[...S.compareIds],svg=byId('compare-svg'),b=svg.getBoundingClientRect(),w=Math.max(350,b.width),h=Math.max(200,b.height),pl=47,pr=20,pt=25,pb=30;svg.setAttribute('viewBox',`0 0 ${w} ${h}`);const all=ids.map(id=>signalDefs.find(x=>x.id===id));const tMin=Math.min(...S.charts.filter(c=>ids.includes(c.id)).map(c=>c.range[0])),tMax=Math.max(...S.charts.filter(c=>ids.includes(c.id)).map(c=>c.range[1]));let str='';for(let i=0;i<=4;i++){let y=pt+i*(h-pt-pb)/4;str+=`<line x1="${pl}" x2="${w-pr}" y1="${y}" y2="${y}" stroke="var(--grid)"/><text x="${pl-8}" y="${y+4}" text-anchor="end" font-size="10" fill="var(--muted)">${100-i*25}%</text>`}all.forEach(d=>{const p=allData.get(d.id).filter(v=>v.t>=tMin&&v.t<=tMax&&v.quality==='GOOD'),mi=Math.min(...p.map(v=>v.v)),ma=Math.max(...p.map(v=>v.v));if(!p.length)return;let x=t=>pl+(t-tMin)/(tMax-tMin)*(w-pl-pr),y=v=>pt+(1-(v-mi)/Math.max(1e-5,ma-mi))*(h-pt-pb);str+=`<path d="${monotonePath(p,x,y)}" fill="none" stroke="${d.color}" stroke-width="2.2"/>`});svg.innerHTML=str;byId('compare-legend').innerHTML=all.map(d=>`<span><i style="background:${d.color}"></i>${esc(name(d))} (${esc(d.unit)})</span>`).join('')}
 function openDrawer(){S.drawer=true;byId('drawer').classList.remove('hidden');byId('drawer').setAttribute('aria-hidden','false');renderDrawer()}function closeDrawer(){S.targetSlot=null;S.drawer=false;byId('drawer').classList.add('hidden');byId('drawer').setAttribute('aria-hidden','true')}
-function syncChartsOnlyButton(){const button=byId('charts-only-toggle');if(!button)return;const active=document.documentElement.classList.contains('charts-only');button.textContent=active?(S.lang==='tr'?'⛶ Tam ekrandan çık':'⛶ Exit full screen'):(S.lang==='tr'?'⛶ Yalnız grafikler':'⛶ Charts only');button.setAttribute('aria-pressed',String(active))}
-async function toggleChartsOnly(){const root=document.documentElement,active=root.classList.toggle('charts-only');syncChartsOnlyButton();setTimeout(()=>{resizeLayout();S.charts.forEach(drawChart)},100);try{if(active&&!document.fullscreenElement&&root.requestFullscreen)await root.requestFullscreen();else if(!active&&document.fullscreenElement&&document.exitFullscreen)await document.exitFullscreen()}catch{toast(S.lang==='tr'?'Grafik görünümü açıldı; tarayıcı tam ekranı engelledi.':'Charts-only view opened; browser full screen was blocked.')}}
-async function clearAllCharts(){if(!S.charts.length)return;if(!requireTrendEdit())return;const message=S.lang==='tr'?`Açık ${S.charts.length} trendin tümü kaldırılsın mı?`:`Remove all ${S.charts.length} open trends?`;if(!confirm(message))return;S.charts=[];S.selected.clear();S.compareIds.clear();S.compare=false;S.maximized=null;S.activeId=null;S.chartFilter='';byId('trend-open-filter').value='';renderLayout();await storeLayout();toast(S.lang==='tr'?'Tüm trendler kaldırıldı.':'All trends removed.')}
+function syncChartsOnlyButton(){const button=byId('charts-only-toggle');if(!button)return;const active=document.documentElement.classList.contains('charts-only');button.textContent=active?('⛶ Exit full screen'):('⛶ Charts only');button.setAttribute('aria-pressed',String(active))}
+async function toggleChartsOnly(){const root=document.documentElement,active=root.classList.toggle('charts-only');syncChartsOnlyButton();setTimeout(()=>{resizeLayout();S.charts.forEach(drawChart)},100);try{if(active&&!document.fullscreenElement&&root.requestFullscreen)await root.requestFullscreen();else if(!active&&document.fullscreenElement&&document.exitFullscreen)await document.exitFullscreen()}catch{toast('Charts-only view opened; browser full screen was blocked.')}}
+async function clearAllCharts(){if(!S.charts.length)return;if(!requireTrendEdit())return;const message=`Remove all ${S.charts.length} open trends?`;if(!confirm(message))return;S.charts=[];S.selected.clear();S.compareIds.clear();S.compare=false;S.maximized=null;S.activeId=null;S.chartFilter='';byId('trend-open-filter').value='';renderLayout();await storeLayout();toast('All trends removed.')}
 byId('add').onclick=openDrawer;byId('hf61-explorer-add').onclick=openDrawer;byId('hf61-explorer-search').addEventListener('input',renderExplorer);byId('hf61-explorer-list').addEventListener('click',e=>{const item=e.target.closest('[data-signal-id]');if(!item)return;const id=item.dataset.signalId;if(S.charts.some(c=>c.id===id)){S.charts=S.charts.filter(c=>c.id!==id);S.compareIds.delete(id);if(S.maximized===id)S.maximized=null;if(S.activeId===id)S.activeId=S.charts[0]?.id||null;renderLayout()}else appendSignals([id],null,Number.isInteger(S.targetSlot)?S.targetSlot:null);S.targetSlot=null;});byId('hf62-layout-select').onchange=e=>{S.layout=e.target.value;S.maximized=null;normalizeSlots();renderLayout();};byId('hf62-more-toggle').onclick=()=>{const panel=byId('hf62-advanced');panel.hidden=!panel.hidden;byId('hf62-more-toggle').setAttribute('aria-expanded',String(!panel.hidden));hf61Translate();};byId('drawer-close').onclick=closeDrawer;byId('search').oninput=renderDrawer;
 byId('trend-open-filter').oninput=e=>{S.chartFilter=e.target.value;if(S.maximized&&!filteredCharts().some(c=>c.id===S.maximized))S.maximized=null;renderLayout()};
 byId('charts-only-toggle').onclick=toggleChartsOnly;byId('clear-all-charts').onclick=clearAllCharts;
 document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement)document.documentElement.classList.remove('charts-only');syncChartsOnlyButton();setTimeout(()=>{resizeLayout();S.charts.forEach(drawChart)},100)});
-function renderDrawer(){let q=(byId('search')?.value||'').toLocaleLowerCase('tr-TR');byId('signal-list').innerHTML=signalDefs.filter(d=>(`${d.device} ${d.tag} ${d.eng}`).toLocaleLowerCase('tr-TR').includes(q)).map(d=>`<div class="sig" draggable="true" data-signal="${d.id}" title="${S.lang==='tr'?'Sürükleyip grafik alanına bırak':'Drag into chart area'}"><input type="checkbox" ${S.selected.has(d.id)?'checked':''} aria-label="${esc(name(d))}"><span class="seriesdot" style="--series:${d.color}"></span><span style="flex:1"><b>${esc(name(d))}</b><br><small>${esc(d.unit)} · ${d.interval/1000}s</small></span><span class="draghandle">⠿</span></div>`).join('');}
+function renderDrawer(){let q=(byId('search')?.value||'').toLocaleLowerCase('tr-TR');byId('signal-list').innerHTML=signalDefs.filter(d=>(`${d.device} ${d.tag} ${d.eng}`).toLocaleLowerCase('tr-TR').includes(q)).map(d=>`<div class="sig" draggable="true" data-signal="${d.id}" title="${'Drag into chart area'}"><input type="checkbox" ${S.selected.has(d.id)?'checked':''} aria-label="${esc(name(d))}"><span class="seriesdot" style="--series:${d.color}"></span><span style="flex:1"><b>${esc(name(d))}</b><br><small>${esc(d.unit)} · ${d.interval/1000}s</small></span><span class="draghandle">⠿</span></div>`).join('');}
 byId('signal-list').addEventListener('change',e=>{const sig=e.target.closest('.sig');if(!sig)return;e.target.checked?S.selected.add(sig.dataset.signal):S.selected.delete(sig.dataset.signal)});
 byId('signal-list').addEventListener('click',e=>{const sig=e.target.closest('.sig');if(!sig||e.target.matches('input'))return;const box=sig.querySelector('input');box.checked=!box.checked;box.checked?S.selected.add(sig.dataset.signal):S.selected.delete(sig.dataset.signal)});
 byId('select-all').onclick=()=>{for(const d of signalDefs)S.selected.add(d.id);renderDrawer()};
@@ -520,7 +518,7 @@ byId('collapse').onclick=()=>{const collapsed=byId('app').classList.toggle('coll
 byId('theme').onclick=()=>{S.theme=S.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=S.theme;byId('theme').textContent=S.theme==='dark'?'☾':'☼';renderLayout()};
 
 // HF3+ controls: aligned by sample timestamp; independent viewports and saved layout only.
-byId('sync-cursor').onchange=e=>{S.linkedCursor=e.target.checked;if(!S.linkedCursor){S.linkedTime=null;byId('sync-info').textContent='';for(const c of S.charts)drawChart(c)}else toast(S.lang==='tr'?'Ortak imleç açık: grafiğin üzerine gel':'Linked cursor enabled: hover a chart')};
+byId('sync-cursor').onchange=e=>{S.linkedCursor=e.target.checked;if(!S.linkedCursor){S.linkedTime=null;byId('sync-info').textContent='';for(const c of S.charts)drawChart(c)}else toast('Linked cursor enabled: hover a chart')};
 byId('col-width').oninput=e=>{S.leftPercent=Math.min(70,Math.max(30,+e.target.value));resizeLayout();S.charts.forEach(drawChart)};
 async function storeLayout(){if(!requireTrendEdit()||!await refreshTrendAuth())return;const data={savedAt:Date.now(),leftPercent:S.leftPercent,linkedCursor:S.linkedCursor,layout:S.layout,charts:S.charts.map(c=>({id:c.id,windowMin:c.windowMin,flags:c.flags,threshold:c.threshold,points:c.points,batch:c.batch,smooth:c.smooth,chartType:c.chartType,wide:c.wide,slot:c.slot}))};
  try{
@@ -529,11 +527,11 @@ async function storeLayout(){if(!requireTrendEdit()||!await refreshTrendAuth())r
    if(!resp.ok)throw Error('Core layout save failed (sign in as Core owner)');
    localStorage.setItem(STORE_KEY,JSON.stringify(data));
    S.savedAt=data.savedAt;toast(tx('layoutSaved'));byId('save-layout').classList.add('layout-saved');resizeLayout()}
- catch(e){toast(S.lang==='tr'?'Düzen kaydedilemedi. Yetkili oturumunuzu kontrol edin.':'Layout not saved. Check your authorized session.');void refreshTrendAuth()}}
+ catch(e){toast('Layout not saved. Check your authorized session.');void refreshTrendAuth()}}
 byId('save-layout').onclick=storeLayout;
 const csvButton=byId('export-csv');if(csvButton)csvButton.onclick=()=>{
- if(!S.charts.length)return toast(S.lang==='tr'?'Önce grafik seçin.':'Select a chart first.');
- if(S.charts.some(c=>metaById.get(c.id)?.summarized))return toast(S.lang==='tr'?'Özet veri: eksiksiz CSV için Historian dışa aktarımını kullanın veya yakınlaşın.':'Summarized range: export full CSV from Historian or zoom in.');
+ if(!S.charts.length)return toast('Select a chart first.');
+ if(S.charts.some(c=>metaById.get(c.id)?.summarized))return toast('Summarized range: export full CSV from Historian or zoom in.');
  const rows=[['Device / Tag','Time (UTC)','Value','Quality','Unit']];
  for(const c of S.charts){const d=signalDefs.find(s=>s.id===c.id);for(const p of visible(c))rows.push([name(d),new Date(p.t).toISOString().slice(0,19).replace('T',' '),p.v??'',p.quality,d.unit])}
  const csv='\uFEFFsep=;\r\n'+rows.map(row=>row.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(';')).join('\r\n');
@@ -549,7 +547,7 @@ byId('reset-layout').onclick=async()=>{
   S.charts=[];S.leftPercent=50;S.layout='auto';S.maximized=null;S.activeId=null;
   S.linkedCursor=false;S.linkedTime=null;S.savedAt=null;S.compare=false;S.compareIds.clear();S.live=true;
   renderLayout();applyTrendPermissions();toast(tx('layoutReset'));
- }catch{toast(S.lang==='tr'?'Sıfırlama reddedildi; tekrar giriş yapın.':'Reset rejected; sign in again.');void refreshTrendAuth()}
+ }catch{toast('Reset rejected; sign in again.');void refreshTrendAuth()}
 };
 // Pointer fallback for chart handles: Chrome/embedded WebView sometimes suppresses
 // native HTML dragstart on buttons when the destination is in a scrollable grid.
@@ -564,7 +562,7 @@ document.addEventListener('pointerup',e=>{
  const dest=S.charts.find(c=>c.id===target?.dataset.chart);
  if(S.layout==='auto'){if(dest&&dest.id!==moving.id){const src=S.charts.findIndex(c=>c.id===moving.id),dst=S.charts.findIndex(c=>c.id===dest.id);S.charts.splice(src,1);S.charts.splice(dst,0,moving);renderLayout();}}
  else{const requested=slot?Number(slot.dataset.dropSlot):dest?.slot;
-   if(Number.isInteger(requested)&&requested!==moving.slot){const old=moving.slot;moving.slot=requested;if(dest)dest.slot=old;renderLayout();toast(S.lang==='tr'?'Panel taşındı':'Panel moved');}}
+   if(Number.isInteger(requested)&&requested!==moving.slot){const old=moving.slot;moving.slot=requested;if(dest)dest.slot=old;renderLayout();toast('Panel moved');}}
 },true);
 byId('grid').addEventListener('dragstart',e=>{const move=e.target.closest('.move-handle');if(!move)return;const chart=move.closest('.chart');if(!chart)return;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('application/x-pgn-chart',chart.dataset.chart);chart.querySelector('.chart-head').classList.add('dragging');});
 byId('grid').addEventListener('dragend',()=>{document.querySelectorAll('.chart-head.dragging').forEach(el=>el.classList.remove('dragging'));document.querySelectorAll('.chart.reorder-over').forEach(el=>el.classList.remove('reorder-over'));});
@@ -583,13 +581,13 @@ byId('grid').addEventListener('drop',e=>{
    const targetSlot=slot?Number(slot.dataset.dropSlot):targetChart?.slot;
    if(Number.isInteger(targetSlot)&&targetSlot!==moving.slot){const original=moving.slot;moving.slot=targetSlot;if(targetChart)targetChart.slot=original}
  }
- renderLayout();toast(S.lang==='tr'?'Panel hedef hücreye taşındı':'Chart placed in target cell');
+ renderLayout();toast('Chart placed in target cell');
 },true);
 
 
 document.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>setLang(b.dataset.lang));
-byId('help').onclick=()=>{S.help=!S.help;byId('help-panel').classList.toggle('hidden',!S.help);byId('help-panel').innerHTML=`<strong>${tx('helpTitle')}</strong><br><br>1. ${tx('add')} → ${tx('dragGuide')}<br>2. ${tx('zoomhint')}<br>3. ${tx('maximize')} · ${tx('settingsChart')}<br>4. ${tx('compare')} → ${tx('chooseTwo')}<br><br>${S.lang==='tr'?'Core Historian gerçek verileri':'Live Core Historian data'}`};
-document.querySelectorAll('[data-nav]').forEach(b=>{if(b.dataset.nav!=='trend')b.onclick=()=>toast(S.lang==='tr'?'Core menüsünden gezinin.':'Use the Core navigation.')});
+byId('help').onclick=()=>{S.help=!S.help;byId('help-panel').classList.toggle('hidden',!S.help);byId('help-panel').innerHTML=`<strong>${tx('helpTitle')}</strong><br><br>1. ${tx('add')} → ${tx('dragGuide')}<br>2. ${tx('zoomhint')}<br>3. ${tx('maximize')} · ${tx('settingsChart')}<br>4. ${tx('compare')} → ${tx('chooseTwo')}<br><br>${'Live Core Historian data'}`};
+document.querySelectorAll('[data-nav]').forEach(b=>{if(b.dataset.nav!=='trend')b.onclick=()=>toast('Use the Core navigation.')});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDrawer();byId('compare-overlay').classList.add('hidden');S.overlay=false;S.maximized=null;renderLayout()}});
 // Dynamic chart cards are rebuilt after every layout operation. Re-apply the
 // validated access state without changing page layout or chart rendering.

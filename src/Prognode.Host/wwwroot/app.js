@@ -13,7 +13,8 @@ const state = {
   license: null,
   licenseUsage: null,
   health: null,
-  language: localStorage.getItem("prognode.language") || "en",
+  // English-only UI. Any language saved by earlier versions is ignored.
+  language: "en",
   theme: localStorage.getItem("prognode.theme") || "dark",
   selectedProtocol: null,
   modbusTestPassed: false,
@@ -83,43 +84,11 @@ const translations = {
     alarmsText:"Create digital or numeric alarms, acknowledge active alarms and review persistent alarm history.", addAlarmPlus:"+ Add Alarm", live:"LIVE", noActiveAlarms:"No active alarms.", configuredAlarms:"Configured alarms", noAlarmDefinitions:"No alarm definitions yet.", source:"Source", alarmText:"Alarm Text", priority:"Priority", state:"State", activeSince:"Active Since", sourceTag:"Source Tag", condition:"Condition", delay:"Delay", alarmHistory:"ALARM HISTORY", recentAlarmEvents:"Alarm occurrences", time:"Time", event:"Event", acknowledge:"ACK", alarmCame:"Active At", alarmCleared:"Cleared At", duration:"Duration", checking:"Checking...", agentOnline:"Connected", agentOffline:"Not running",
     addAlarm:"Add Alarm", editAlarm:"Edit Alarm", alarmSourceHelp:"BOOL and WORD Tags are available as digital alarm sources.", triggerWhen:"Trigger when", delayOn:"Delay ON (ms)", delayOff:"Delay OFF (ms)", windowsNotification:"Windows Notification", alarmInfo:"Alarm reads the existing Tag value. It never creates a second PLC/Modbus read.", saveAlarm:"Save Alarm", alarmSaved:"Alarm saved.", alarmUpdated:"Alarm updated.", alarmDeleted:"Alarm deleted.", alarmAcknowledged:"Alarm acknowledged.",
     trendsText:"Create saved live and historical trends from Tags, compare signals and work across useful time ranges.", addTrendPlus:"+ Add Trend", savedTrends:"SAVED TRENDS", liveTrend:"LIVE TREND", selectTrend:"Select or create a trend.", addTrend:"Add Trend", editTrend:"Edit Trend", trendName:"Trend name", defaultRange:"Default range", selectTags:"Select Tags (max 8)", trendInfo:"Select up to 8 Tags, choose a time range and inspect values with local trend data.", saveTrend:"Save Trend", trendSaved:"Trend saved.", trendUpdated:"Trend updated.", trendDeleted:"Trend deleted."
-  },
-  tr: {
-    industrialMonitoring:"Endüstriyel İzleme", operations:"OPERASYON", overview:"Genel Bakış", devices:"Cihazlar", tags:"Taglar", alarms:"Alarmlar", trends:"Trendler", historian:"Geçmiş Veri", system:"SİSTEM", diagnostics:"Tanılama", notifications:"Bildirimler", license:"Lisans", settings:"Ayarlar",
-    coreRunning:"Core Çalışıyor", localSystem:"YEREL SİSTEM", systemHealthy:"Sistem Sağlıklı", localByDesign:"YEREL TASARIM", knowBefore:"Durmadan önce bil.",
-    heroText:"Endüstriyel cihazları bağlayın, canlı veriyi doğrulayın, alarmlar oluşturun ve proses verisini buluta göndermeden kayıt almaya başlayın.",
-    addFirstDevice:"+ İlk cihazınızı ekleyin", monitoredTags:"İzlenen Taglar", tagPollingActive:"Canlı tag tarama motoru aktif", activeAlarms:"Aktif Alarmlar", alarmEngineNext:"Alarm değerlendirme motoru aktif", healthy:"Sağlıklı",
-    quickStart:"HIZLI BAŞLANGIÇ", commissioningPath:"15 dakikalık devreye alma akışı", serviceFoundationRunning:"Servis altyapısı çalışıyor", devEntitlementActive:"Yerel lisans hakkı aktif",
-    firstRunTitle:"PROGNODE’u yaklaşık 15 dakikada devreye alın", firstRunText:"Yerel erişimden cihaz, canlı Tag, alarm ve Historian kaydına uzanan yönlendirmeli devreye alma akışı.", firstRunDevice:"Cihaz bağla", firstRunTags:"Canlı Tag doğrula", firstRunAlarm:"Alarm oluştur", firstRunHistorian:"Historian'ı etkinleştir", firstRunStart:"Kuruluma devam et", firstRunLater:"Şimdi değil", firstRunAccessRequired:"Bu PROGNODE Server'ı yapılandırmak için giriş yapın.", firstRunAccessReady:"Yerel yapılandırma oturumu aktif.", firstRunSignIn:"Başlamak için giriş yap", setupAssistant:"Kurulum Asistanı", setupComplete:"Kurulum tamamlandı", setupProgress:"Kurulum ilerlemesi", commissioningAssistant:"DEVREYE ALMA ASİSTANI", localFirstFootnote:"PLC taraması, alarmlar ve Historian bu PROGNODE Server üzerinde kalır.", operationalStatus:"OPERASYON DURUMU", accessMode:"Erişim", connectivity:"Bağlantı", alarmPosture:"Alarm durumu", recordingState:"Yerel kayıt", viewOnly:"Salt görüntüleme", viewOnlyHelp:"Canlı izleme kullanılabilir. Yapılandırmayı değiştirmek için geçerli lisansı içe aktarın ve giriş yapın.", signedInLocal:"Giriş yapıldı", attentionRequired:"Dikkat gerekiyor", systemStable:"Sistem stabil",
-    addDevice:"Cihaz ekle", modbusAvailable:"Modbus TCP kullanılabilir", addDeviceArrow:"Cihaz ekle →", verifyLiveTags:"Canlı tagları doğrula", addFirstTagHelp:"40001 ekleyin ve değeri canlı izleyin", addTagArrow:"Tag ekle →",
-    createFirstAlarm:"İlk alarmınızı oluşturun", alarmEngineMilestone:"Alarm izleme", enableRecording:"Kayıt almayı etkinleştir", historianMilestone:"Historian kaydı",
-    architecture:"MİMARİ", localSystemStatus:"Yerel sistem durumu", running:"Çalışıyor", available:"Kullanılabilir",
-    fieldConnectivity:"SAHA HABERLEŞMESİ", devicesText:"PLC, sayaç, sürücü, RTU ve diğer endüstriyel veri kaynaklarını ekleyin.", addDevicePlus:"+ Cihaz Ekle", noDevicesYet:"Henüz cihaz yok", noDevicesText:"PLC, sayaç, sürücü, RTU veya desteklenen başka bir endüstriyel cihaz bağlayın.",
-    device:"Cihaz", protocol:"Protokol", status:"Durum", host:"Host", poll:"Tarama", created:"Oluşturma", editDevice:"Cihaz Düzenle",
-    tagsText:"Modbus registerlarından canlı Taglar oluşturun; değer, veri tipi, durum ve mühendislik gösterimini doğrulayın.", addTagPlus:"+ Tag Ekle", noTagsYet:"Henüz tag yok", noTagsText:"Bir Modbus Tagı ekleyin (ör. 40001 veya 30001); PROGNODE hemen taramaya başlayacaktır.",
-    tag:"Tag", address:"Adres", datatype:"Veri Tipi", value:"Değer", dataStatus:"Durum", updated:"Güncelleme", edit:"Düzenle",
-    alarmsPlaceholder:"Alarm tanımları mevcut Tagları referans alacak. BOOL ve integer WORD Taglar dijital alarm kaynağı seçilip alarm metni atanabilecek.", trendsPlaceholder:"Zaman aralığına göre optimize edilmiş hızlı yerel trendler.", historianPlaceholder:"Retention, disk sağlığı, CSV export ve kayıtlı tag ayarları.", diagnosticsPlaceholder:"Bağlantı gecikmesi, son tarama, retry sayısı, haberleşme hataları ve cihaz sağlığı.", modbusDiagnosticsSoon:"Gelişmiş Modbus tanılama sıradaki geliştirmedir.", nextMilestone:"Sıradaki kilometre taşı",
-    notificationsText:"PROGNODE Agent üzerinden browser'dan bağımsız Windows masaüstü bildirimleri.", sendTestNotification:"Windows Test Bildirimi Gönder", agentStatus:"AGENT DURUMU",
-    agentHelp:"Windows Agent projesini çalıştırın. Sistem tepsisinde kalır ve browser kapalı olsa bile yerel bildirim olaylarını alır.", coreNotificationApi:"Core Bildirim API", trayAgent:"Tray Agent", runSeparately:"Ayrı çalıştır", recentEvents:"SON OLAYLAR",
-    entitlements:"LİSANS HAKLARI", licenseText:"İmzalı offline lisansınız etkin PROGNODE modüllerini belirler; runtime verisi yerelde kalır.", currentLicense:"MEVCUT LİSANS", plan:"Plan", alarmDefinitions:"Alarm Tanımları", recordedTags:"Kayıtlı Taglar", features:"ÖZELLİKLER", licensedProtocols:"Lisanslı Protokoller",
-    settingsPlaceholder:"Kullanıcılar, backup/restore, network, update, güvenlik ve veri akışı ayarları burada olacak.",
-    commissioning:"DEVREYE ALMA", configure:"Yapılandırma", chooseProtocolText:"PROGNODE'un endüstriyel cihazla nasıl haberleşeceğini seçin.", backProtocols:"← Protokollere dön", selectedProtocol:"Seçili protokol", deviceName:"PLC / Varlık adı", deviceNameHelp:"Global olarak anlaşılır bir ekipman adı kullanın. Örn: Kazan PLC, Ana Pompa PLC, Paketleme Hattı PLC.", mockInfo:"Protokole özel ayarlar yerel konfigürasyon veritabanına kaydedilir.",
-    hostIp:"Host / IP", port:"Port", unitId:"Unit ID", pollInterval:"Tarama süresi (ms)", timeout:"Timeout (ms)", modbusTestInfo:"Ping ve Modbus testleri opsiyoneldir. Cihaz haberleşme yokken de kaydedilebilir.", cancel:"İptal", ping:"Ping", pingOk:"Ping Başarılı", pingFail:"Ping Başarısız", testConnection:"Modbus Test", saveDevice:"Cihazı Kaydet",
-    addTag:"Tag Ekle", editTag:"Tag Düzenle", modbusDeviceOnly:"Yapılandırılmış Modbus TCP, Siemens S7 TCP, MQTT ve OPC UA cihazları kullanılabilir.", tagName:"Tag / Sinyal adı", unit:"Birim", offset:"Offset",
-    decimalPoint:"Ondalık nokta", decimalPointHelp:"Integer örnek: raw 236 + 1 ondalık = 23.6", displayDecimals:"Gösterim basamağı", displayDecimalsHelp:"FLOAT32 / REAL değeri değişmez; yalnız noktadan sonra kaç basamak gösterileceğini belirler.",
-    tagAddressHelp:"Modbus okuma alanları: 00001 Coil (FC01), 10001 Discrete Input (FC02), 30001 Input Register (FC04), 40001 Holding Register (FC03). Coil/Discrete doğrudan BOOL kullanır; Holding Register BOOL 0..15 bit kullanır. Input Register WORD/sayısal tip kullanır. 32-bit değerler iki register kullanır.",
-    saveTag:"Tagı Kaydet", noDevicesConfigured:"Yapılandırılmış cihaz yok", configuredDevice:"yapılandırılmış cihaz", configuredDevices:"yapılandırılmış cihaz", delete:"Sil",
-    deviceSaved:"Cihaz PROGNODE konfigürasyonuna kaydedildi.", deviceDeleted:"Cihaz silindi.", tagSaved:"Tag kaydedildi. Canlı tarama başladı.", tagUpdated:"Tag güncellendi.", tagDeleted:"Tag silindi.",
-    testSuccess:"Modbus protokol testi başarılı", testFailed:"Modbus testi başarısız", testNotificationQueued:"Test bildirimi PROGNODE Agent için kuyruğa alındı.", noNotificationEvents:"Henüz bildirim olayı yok.",
-    alarmRuntimeActive:"Alarm motoru ve sistem alarmları aktif", alarmEngineRunning:"Dijital + sayısal alarm motoru çalışıyor", addAlarmArrow:"Alarm ekle →",
-    alarmsText:"Dijital veya sayısal alarmlar oluşturun, aktif alarmları ACK edin ve kalıcı alarm geçmişini görüntüleyin.", addAlarmPlus:"+ Alarm Ekle", live:"CANLI", noActiveAlarms:"Aktif alarm yok.", configuredAlarms:"Tanımlı alarmlar", noAlarmDefinitions:"Henüz alarm tanımı yok.", source:"Kaynak", alarmText:"Alarm Metni", priority:"Öncelik", state:"Durum", activeSince:"Aktif Zaman", sourceTag:"Kaynak Tag", condition:"Koşul", delay:"Gecikme", alarmHistory:"ALARM GEÇMİŞİ", recentAlarmEvents:"Alarm kayıtları", time:"Zaman", event:"Olay", acknowledge:"ACK", alarmCame:"Geldiği Zaman", alarmCleared:"Gittiği Zaman", duration:"Süre", checking:"Kontrol ediliyor...", agentOnline:"Bağlı", agentOffline:"Çalışmıyor",
-    addAlarm:"Alarm Ekle", editAlarm:"Alarm Düzenle", alarmSourceHelp:"BOOL ve WORD Taglar dijital alarm kaynağı olarak kullanılabilir.", triggerWhen:"Şu durumda tetikle", delayOn:"Aktif Gecikme (ms)", delayOff:"Pasif Gecikme (ms)", windowsNotification:"Windows Bildirimi", alarmInfo:"Alarm mevcut Tag değerini kullanır. PLC/Modbus tarafında ikinci bir okuma oluşturmaz.", saveAlarm:"Alarmı Kaydet", alarmSaved:"Alarm kaydedildi.", alarmUpdated:"Alarm güncellendi.", alarmDeleted:"Alarm silindi.", alarmAcknowledged:"Alarm ACK edildi.",
-    trendsText:"Taglardan canlı ve geçmiş trendler oluşturun, sinyalleri karşılaştırın ve uygun zaman aralıklarında inceleyin.", addTrendPlus:"+ Trend Ekle", savedTrends:"KAYITLI TRENDLER", liveTrend:"CANLI TREND", selectTrend:"Bir trend seçin veya oluşturun.", addTrend:"Trend Ekle", editTrend:"Trend Düzenle", trendName:"Trend adı", defaultRange:"Varsayılan aralık", selectTags:"Tagları seçin (maks. 8)", trendInfo:"En fazla 8 Tag seçin, zaman aralığını belirleyin ve yerel trend verilerini inceleyin.", saveTrend:"Trendi Kaydet", trendSaved:"Trend kaydedildi.", trendUpdated:"Trend güncellendi.", trendDeleted:"Trend silindi."
   }
 };
 
 Object.assign(translations.en, {acknowledgedAt:"Acknowledged At",acknowledgedBy:"Acknowledged By"});
-Object.assign(translations.tr, {acknowledgedAt:"Onay Zamanı",acknowledgedBy:"Onaylayan"});
+
 
 Object.assign(translations.en, {
   signIn:"Sign in",
@@ -164,48 +133,7 @@ Object.assign(translations.en, {
   exportReady:"Export ready"
 });
 
-Object.assign(translations.tr, {
-  signIn:"Giriş yap",
-  signedIn:"Giriş yapıldı",
-  openLicensePage:"Lisans Sayfasını Aç",
-  accountSaved:"Hesap oturumu kaydedildi.",
-  accountSignedOut:"Çıkış yapıldı.",
-  accountRequired:"Ad soyad ve e-posta girin.",
-  alarmsText:"Dijital ve sayısal alarmları cihaz bilgisi, öncelik, ACK ve kalıcı geçmiş ile yönetin.",
-  sourceTag:"Kaynak Tag",
-  notify:"Bildirim",
-  notifyOnActive:"ACTIVE olduğunda bildir",
-  notifyOnActiveHelp:"Önerilen varsayılan",
-  notificationMode:"Mobil bildirim modu", notifyOnce:"Bir kez bildir", repeatUntilAck:"Aktif kaldıkça aralıkla bildir", repeatEvery:"Tekrar aralığı",
-  ackPolicyHelp:"ACK alarmın görüldüğünü doğrular, proses alarmını temizlemez. Alarm aktif kaldığı sürece seçilen aralıkta, ACK sonrasında da bildirim sürer.",
-  requiresAcknowledgement:"Operatör ACK'i zorunlu", requiresAcknowledgementHelp:"Core ve mobil uygulamada bu alarm için ACK eylemini göster.", ackRequiredShort:"ACK gerekli", ackNotRequiredShort:"ACK yok", repeatActiveShort:"Tekrar",
-  continueAfterClear:"CLEAR sonrası ACK gelene kadar hatırlat", continueAfterClearHelp:"Görülmesi gereken kısa süreli kritik olaylar için kullanılır.",
-  notifyOnCleared:"CLEARED olduğunda bildir",
-  notifyOnClearedHelp:"İsteğe bağlı düzelme bildirimi",
-  alarmSourceHelp:"BOOL / WORD dijital alarmlar ile UInt16 / Int16 / UInt32 / Int32 / Float32 sayısal alarmlar desteklenir.",
-  trendsText:"Ayarlanabilir kayıt süresi, retention, renk ve tarih aralığı ile kalıcı SQLite Historian trendleri.",
-  historicalTrend:"GEÇMİŞ TREND",
-  sampleEvery:"Kayıt aralığı",
-  retention:"Saklama süresi",
-  selectTagsColors:"Tag + renk seçin (maks. 8)",
-  trendInfo:"Seçilen Taglar belirlenen aralıkta yerel SQLite Historian'a kalıcı kaydedilir.",
-  from:"Başlangıç",
-  to:"Bitiş",
-  apply:"Uygula",
-  historianText:"Kalıcı yerel SQLite/WAL kayıt. Proses geçmişi müşteri PC'sinde kalır.",
-  totalSamples:"Toplam Kayıt",
-  persistentLocalStorage:"Kalıcı yerel kayıt",
-  trendProfilesDriveRecording:"Kayıt profillerini Trendler belirler",
-  databaseSize:"Veritabanı Boyutu",
-  timeSpan:"Zaman Aralığı",
-  recordingProfiles:"KAYIT PROFİLLERİ",
-  historianConfiguration:"Historian konfigürasyonu",
-  trend:"Trend",
-  sampleEvery:"Kayıt Aralığı",
-  retention:"Saklama",
-  tags:"Taglar",
-  exportReady:"Export hazır"
-});
+
 
 
 Object.assign(translations.en, {
@@ -222,20 +150,7 @@ Object.assign(translations.en, {
   stopRecording:"Stop", keepHistory:"Stop recording and keep history? Cancel = delete history too.", openTrend:"Open Trend",
   historianText:"Add Tags here to start persistent local recording. Trend definitions no longer control recording.", historianArrow:"Open Historian →"
 });
-Object.assign(translations.tr, {
-  signIn:"Giriş yap",
-  signedIn:"Giriş yapıldı",
-  openLicensePage:"Lisans Sayfasını Aç",
-  accountSaved:"Hesap oturumu kaydedildi.",
-  accountSignedOut:"Çıkış yapıldı.",
-  accountRequired:"Ad soyad ve e-posta girin.",
-  historianAddTag:"+ Historian'a Tag Ekle", historianRecordedHelp:"Historian'a açıkça eklenen Taglar",
-  historianTags:"HISTORIAN TAGLARI", recordingSince:"Kayıt Başlangıcı", lastSample:"Son Kayıt", points:"Nokta",
-  historianEmpty:"Kayıt edilen Tag yok. Başlatmak için Historian'a Tag ekleyin.", historianTagHelp:"Tagı buraya eklemek kalıcı yerel kaydı başlatır.",
-  historianModalInfo:"Trend silinse veya browser kapansa bile Historian kayıt almaya devam eder.", save:"Kaydet",
-  stopRecording:"Durdur", keepHistory:"Kaydı durdurup eski veriyi korumak için Tamam. Veriyi de silmek için İptal.", openTrend:"Trend Aç",
-  historianText:"Kalıcı kaydı başlatmak için Tagları buraya ekleyin. Trend artık kayıt davranışını kontrol etmez.", historianArrow:"Historian Aç →"
-});
+
 
 const $ = id => document.getElementById(id);
 // DEV3 UI vocabulary is kept here so the original translation table stays readable.
@@ -265,36 +180,12 @@ Object.assign(translations.en, {
   partialImport:"Valid rows are imported independently; invalid rows remain listed for correction."
 });
 
-Object.assign(translations.tr, {
-  signIn:"Giriş yap",
-  signedIn:"Giriş yapıldı",
-  openLicensePage:"Lisans Sayfasını Aç",
-  accountSaved:"Hesap oturumu kaydedildi.",
-  accountSignedOut:"Çıkış yapıldı.",
-  accountRequired:"Ad soyad ve e-posta girin.",
-  configure:"Yapılandırma", dataExchange:"İçe / Dışa Aktar", dataExchangeText:"CSV şablonları, doğrulama önizlemesi ve kısmi aktarım ile toplu devreye alma.",
-  importCsv:"CSV İçe Aktar", downloadTemplate:"Şablon indir", previewDryRun:"Önizleme / dry-run", dataset:"Veri seti",
-  chooseCsv:"CSV dosyası seç", csvExcelCompatible:"CSV / Excel uyumlu", validRows:"geçerli", errorRows:"hata", totalRows:"toplam",
-  importValidRows:"Geçerli satırları aktar", preview:"Önizleme", details:"Detay", importEmpty:"İçe aktarmadan önce doğrulamak için veri seti ve CSV dosyası seçin.",
-  exports:"DIŞA AKTAR", operationalData:"Operasyon verileri", exportDevicesHelp:"Cihaz konfigürasyonu ve haberleşme ayarları",
-  exportTagsHelp:"Adresler, veri tipleri, mühendislik gösterimi ve byte order", exportAlarmsHelp:"Alarm kuralları ve bildirim ayarları",
-  exportAlarmHistoryHelp:"Aktif ve temizlenme zamanlarıyla alarm occurrence geçmişi", exportHistorianHelp:"Historian verisini dışa aktarmak için Trend zaman aralığını kullanın",
-  templates:"ŞABLONLAR", commissioningTemplates:"Devreye alma şablonları",
-  templateHelp:"Temiz CSV şablonunu indirin, Excel'de doldurun ve doğrulama için buraya geri yükleyin. Hatalı satırlar geçerli satırları engellemez.",
-  operations:"OPERASYON", quickActions:"Hızlı işlemler", commissioningComplete:"Devreye alma tamamlandı", recordingTags:"Kaydedilen Taglar",
-  historianPoints:"Historian Noktaları", recordingHealth:"Kayıt sağlığı", localStorage:"Yerel depolama", notificationCenter:"BİLDİRİM MERKEZİ",
-  notificationCenterStored:"PROGNODE içindeki son olaylar", critical:"Kritik", priorityEvents:"Kritik / yüksek öncelikli olaylar",
-  modbusNowAvailable:"Modbus TCP kullanılabilir", runtimeSignalNext:"Tag runtime motoru aktif",
-  systemOverview:"Sistem Genel Bakışı", operational:"OPERASYONEL", openAlarms:"Alarmları Aç", noActiveAlarmsNow:"Aktif alarm yok",
-  localRecording:"Kalıcı yerel örnekler", importReady:"CSV doğrulamasına hazır", importedRows:"satır aktarıldı", checkingAgent:"Windows Agent kontrol ediliyor",
-  actionCenter:"Windows Bildirim Merkezi", actionCenterHelp:"Native Windows bildirimleri PROGNODE kimliğiyle kaydedilir.",
-  partialImport:"Geçerli satırlar bağımsız aktarılır; hatalı satırlar düzeltmek için listede kalır."
-});
+
 
 
 // HF5 Settings workspace: all existing IDs and APIs remain unchanged.
 Object.assign(translations.en, {hf5General:'Server & QR',hf5Lan:'Mobile LAN',hf5Remote:'Remote access',hf5Backup:'Backup & audit',hf5SettingsHelp:'Server, secure mobile access, remote clients and project safety — each in one place.'});
-Object.assign(translations.tr, {hf5General:'Sunucu & QR',hf5Lan:'Mobil LAN',hf5Remote:'Uzak erişim',hf5Backup:'Yedek & kayıtlar',hf5SettingsHelp:'Sunucu, güvenli mobil erişim, uzak istemciler ve proje güvenliği — ayrı bölümlerde.'});
+
 
 // V0.7.1 — B1 brand system + professional operational dashboard
 Object.assign(translations.en, {
@@ -318,39 +209,14 @@ Object.assign(translations.en, {
   addToHistorian:"Add to Historian", createTrend:"Create Trend",
   subscription:"SUBSCRIPTION", licenseCustomerHelp:"Your PROGNODE license is verified locally. Process data remains on this Server.", buyRenewLicense:"Buy / Renew License ↗", validUntil:"VALID UNTIL", licensedTo:"Licensed to", organization:"Organization", alarmMonitoring:"Alarm Monitoring", moduleIncluded:"Included", offlineLogin:"Offline Login", lanClientAccess:"LAN Client Access", enabled:"Enabled", licenseActions:"LICENSE ACTIONS", manageLicense:"Manage your license", manageLicenseHelp:"Renew or purchase a subscription online, then import the refreshed .pgnlicense file here. Offline runtime continues without a cloud dependency.", openPrognodeStore:"Open PROGNODE ↗", orImportLicense:"OR IMPORT A LICENSE", licenseLocalNote:"Signature, expiry and account credentials are verified locally."
 });
-Object.assign(translations.tr, {
-  signIn:"Giriş yap",
-  signedIn:"Giriş yapıldı",
-  openLicensePage:"Lisans Sayfasını Aç",
-  accountSaved:"Hesap oturumu kaydedildi.",
-  accountSignedOut:"Çıkış yapıldı.",
-  accountRequired:"Ad soyad ve e-posta girin.",
-  plantPerformance:"Tesis performansına genel bakış", monitor:"İZLE", monitorHelp:"Saha varlıklarından canlı veri",
-  detect:"TESPİT ET", detectHelp:"Alarmlar ve anormallikler", analyze:"ANALİZ ET", analyzeHelp:"Trend ve geçmiş veriler",
-  keepRunning:"ÇALIŞIR TUT", keepRunningHelp:"Daha yüksek süreklilik, daha düşük risk", builtCloser:"PROSES VERİSİ SAHADA KALIR.", processDataOnSite:"Proses verisi sahada kalır", noCloudRequired:"Bulut gerekmez", localFirst:"LOCAL-FIRST", sidebarDescriptor:"Bulutsuz endüstriyel izleme.",
-  liveTags:"Canlı Taglar", coreHealth:"Core Sağlığı", deviceHealth:"CİHAZ SAĞLIĞI", viewDevices:"Cihazları Aç →",
-  online:"Online", degraded:"Zayıf", offline:"Offline", maintenance:"Bakım", viewAlarms:"Alarmları Aç →",
-  recentNotifications:"SON BİLDİRİMLER", viewNotifications:"Tümünü Aç →", historianRecordingStatus:"HISTORIAN / KAYIT DURUMU",
-  openHistorian:"Historian Aç →", quality:"Kalite", pointsByTag:"Kaydedilen Tag başına nokta",
-  criticalEquipment:"Daha erken görün. Daha hızlı aksiyon alın. Daha uzun çalıştırın.", resilientTomorrow:"Alarm, trend ve geçmiş veri için local endüstriyel izleme — proses verisini buluta göndermeden.",
-  commissioningProgress:"Devreye alma devam ediyor", operationalOverview:"Operasyonel genel bakış",
-  prognodeIndustrialMonitoring:"PROGNODE ENDÜSTRİYEL İZLEME", totalDevices:"Toplam Cihaz", historianPointsToday:"Historian Noktaları",
-  viewAllDevices:"Tüm Cihazlar →", viewAllAlarms:"Tüm Alarmlar →", viewAllNotifications:"Tüm Bildirimler →",
-  addToHistorian:"Historian'a Ekle", createTrend:"Trend Oluştur",
-  subscription:"ABONELİK", licenseCustomerHelp:"PROGNODE lisansınız yerel olarak doğrulanır. Proses verisi bu Server üzerinde kalır.", buyRenewLicense:"Satın Al / Yenile ↗", validUntil:"GEÇERLİLİK TARİHİ", licensedTo:"Lisans kullanıcısı", organization:"Organizasyon", alarmMonitoring:"Alarm İzleme", moduleIncluded:"Dahil", offlineLogin:"Offline Giriş", lanClientAccess:"LAN İstemci Erişimi", enabled:"Etkin", licenseActions:"LİSANS İŞLEMLERİ", manageLicense:"Lisansınızı yönetin", manageLicenseHelp:"Aboneliğinizi online satın alın veya yenileyin, ardından güncel .pgnlicense dosyasını buraya aktarın. Offline runtime buluta bağlı olmadan çalışmaya devam eder.", openPrognodeStore:"PROGNODE'u Aç ↗", orImportLicense:"VEYA LİSANS İÇE AKTAR", licenseLocalNote:"İmza, süre ve hesap bilgileri yerel olarak doğrulanır."
-});
+
 Object.assign(translations.en, {
   localAccess:"LOCAL ACCESS", prognodeAccess:"PROGNODE Access", accessIntro:"Import the offline license once, then sign in with the PROGNODE account linked to that license.",
   offlineLicense:"OFFLINE LICENSE", importLicense:"Import License", remaining:"Remaining", signOut:"Sign out", signInConfig:"Sign in to edit configuration", signInConfigHelp:"Use the email and password linked to this PROGNODE license.", email:"Email", password:"Password", close:"Close",
   offlineActivation:"OFFLINE ACTIVATION", importPrognodeLicense:"Import PROGNODE license", offlineActivationHelp:"Load the .pgnlicense issued by your PROGNODE Account Portal. Account identity and entitlements are applied automatically.",
   assignedUser:"Assigned User", assignedEmail:"Assigned Email", portalRole:"Portal Role", site:"Site", lanAccess:"LAN Access", cloudPush:"Cloud Push", actions:"Actions"
 });
-Object.assign(translations.tr, {
-  localAccess:"YEREL ERİŞİM", prognodeAccess:"PROGNODE Erişimi", accessIntro:"Offline lisansı bir kez içe aktarın, ardından bu lisansa bağlı PROGNODE hesabıyla giriş yapın.",
-  offlineLicense:"OFFLINE LİSANS", importLicense:"Lisansı İçe Aktar", remaining:"Kalan Süre", signOut:"Çıkış yap", signInConfig:"Yapılandırmayı düzenlemek için giriş yapın", signInConfigHelp:"Bu PROGNODE lisansına bağlı e-posta ve şifreyi kullanın.", email:"E-posta", password:"Şifre", close:"Kapat",
-  offlineActivation:"OFFLINE AKTİVASYON", importPrognodeLicense:"PROGNODE lisansını içe aktar", offlineActivationHelp:"PROGNODE Account Portal tarafından verilen .pgnlicense dosyasını yükleyin. Hesap kimliği ve lisans hakları otomatik uygulanır.",
-  assignedUser:"Atanmış Kullanıcı", assignedEmail:"Atanmış E-posta", portalRole:"Portal Rolü", site:"Saha", lanAccess:"LAN Erişimi", cloudPush:"Cloud Push", actions:"İşlemler"
-});
+
 
 Object.assign(translations.en, {
   importLabel:"IMPORT", exportLabel:"EXPORT", templateLabel:"TEMPLATE", historyLabel:"HISTORY", chooseCsvArrow:"Choose CSV →", downloadArrow:"Download ↓", templateArrow:"Template ↓",
@@ -360,14 +226,7 @@ Object.assign(translations.en, {
   recordingConfig:"Recording Config", historianImportHelp:"Bulk Tag / sample interval / retention configuration.", historianExportConfigHelp:"Download current Historian recording configuration.", historianTemplateHelp:"Device, Tag, sample interval and retention template.",
   all:"All", criticalHigh:"Critical / High", systemCommunication:"System / Communication", custom:"Custom", autoFit:"Auto fit"
 });
-Object.assign(translations.tr, {
-  importLabel:"İÇE AKTAR", exportLabel:"DIŞA AKTAR", templateLabel:"ŞABLON", historyLabel:"GEÇMİŞ", chooseCsvArrow:"CSV seç →", downloadArrow:"İndir ↓", templateArrow:"Şablon ↓",
-  devicesCsv:"Cihazlar CSV", devicesImportHelp:"Doğrulama önizlemesiyle toplu cihaz devreye alma.", devicesTemplateHelp:"Excel uyumlu temiz devreye alma şablonu.",
-  tagsCsv:"Taglar CSV", tagsImportHelp:"Adresler, veri tipleri, scaling ve byte order.", tagsExportHelp:"Mevcut mühendislik Tag tanımlarını indirin.", tagsTemplateHelp:"Excel uyumlu toplu Tag mühendislik şablonu.",
-  alarmsImportHelp:"Alarm kurallarını, öncelikleri, gecikmeleri ve bildirim seçeneklerini toplu aktarın.", alarmsExportHelp:"Tanımlı tüm alarm kurallarını indirin.", alarmHistoryExportHelp:"Aktif / temizlenmiş alarm geçmişini süreleriyle indirin.", alarmsTemplateHelp:"Excel uyumlu alarm devreye alma şablonu.",
-  recordingConfig:"Kayıt Konfigürasyonu", historianImportHelp:"Tag, örnekleme süresi ve retention ayarlarını toplu aktarın.", historianExportConfigHelp:"Mevcut Historian kayıt konfigürasyonunu indirin.", historianTemplateHelp:"Cihaz, Tag, örnekleme süresi ve retention şablonu.",
-  all:"Tümü", criticalHigh:"Kritik / Yüksek", systemCommunication:"Sistem / Haberleşme", custom:"Özel", autoFit:"Otomatik sığdır"
-});
+
 
 Object.assign(translations.en, {
   tagRuntime:"TAG RUNTIME", alarmEngine:"ALARM ENGINE", historicalVisualization:"HISTORICAL VISUALIZATION", localHistorian:"LOCAL HISTORIAN", windowsAgent:"WINDOWS AGENT",
@@ -375,23 +234,14 @@ Object.assign(translations.en, {
   serverName:"Server Name", serverId:"Server ID", clientApi:"Client API", discovery:"Discovery", pairNewClient:"PAIR NEW CLIENT", pairingHelp:"On a supported PROGNODE client, choose this discovered Server and enter the pairing code once. No IP address is required.",
   dataBoundary:"DATA BOUNDARY", localFirstRuntime:"Local-first runtime", processConfiguration:"Process configuration", processData:"Process data", lanClientApi:"LAN client API", cloudDependency:"Cloud dependency", serverOnly:"Server only", localPairedAccess:"Local / paired access", notRequired:"Not required", identityLicenseOnly:"Identity + license only"
 });
-Object.assign(translations.tr, {
-  tagRuntime:"TAG RUNTIME", alarmEngine:"ALARM MOTORU", historicalVisualization:"GEÇMİŞ VERİ GÖRSELLEŞTİRME", localHistorian:"YEREL HISTORIAN", windowsAgent:"WINDOWS AGENT",
-  settingsActualHelp:"Server kimliği, LAN keşfi ve tek seferlik istemci eşleştirme.", clientAccess:"İSTEMCİ ERİŞİMİ", lanAutoDiscovery:"LAN OTOMATİK KEŞİF", clientDiscoveryHelp:"Desteklenen PROGNODE istemcileri bu Server'ı otomatik bulabilir ve değişen IP adresi yerine sabit Server ID'yi hatırlar.",
-  serverName:"Server Adı", serverId:"Server ID", clientApi:"İstemci API", discovery:"Keşif", pairNewClient:"YENİ İSTEMCİ EŞLEŞTİR", pairingHelp:"Desteklenen bir PROGNODE istemcisinde bulunan Server'ı seçin ve eşleştirme kodunu bir kez girin. IP adresi gerekmez.",
-  dataBoundary:"VERİ SINIRI", localFirstRuntime:"Local-first runtime", processConfiguration:"Proses konfigürasyonu", processData:"Proses verisi", lanClientApi:"LAN istemci API", cloudDependency:"Bulut bağımlılığı", serverOnly:"Yalnız Server", localPairedAccess:"Yerel / eşleştirilmiş erişim", notRequired:"Gerekmez", identityLicenseOnly:"Yalnız kimlik + lisans"
-});
+
 
 Object.assign(translations.en, {
   remoteAccess:"REMOTE ACCESS", remoteAccessTitle:"Remote clients", remoteAccessHelp:"LAN clients never consume a remote seat. Phones, tablets and Windows Clients consume one seat only when Remote Access is enabled.",
   subscription:"Subscription", serverBinding:"Server binding", remoteClients:"Remote clients", lastSync:"Last sync", bindRemoteAccess:"Bind Remote Access", syncNow:"Sync now", remoteAccessLocalNote:"Local runtime and LAN access never depend on this cloud connection.",
   remoteNotPurchased:"Not included", remoteLanOnly:"LAN only", remoteCloudPending:"Cloud pending", remoteSeat:"remote seat", remoteSeats:"remote seats", revokeRemote:"Revoke Remote", noRemoteClients:"No Remote Access clients are consuming seats on this Server."
 });
-Object.assign(translations.tr, {
-  remoteAccess:"REMOTE ACCESS", remoteAccessTitle:"Uzak istemciler", remoteAccessHelp:"LAN istemcileri remote seat tüketmez. Telefon, tablet ve Windows Client yalnız Remote Access etkinleştirildiğinde bir seat kullanır.",
-  subscription:"Abonelik", serverBinding:"Server bağlantısı", remoteClients:"Remote istemciler", lastSync:"Son senkron", bindRemoteAccess:"Remote Access Bağla", syncNow:"Şimdi senkronla", remoteAccessLocalNote:"Yerel runtime ve LAN erişimi bu bulut bağlantısına hiçbir zaman bağlı değildir.",
-  remoteNotPurchased:"Dahil değil", remoteLanOnly:"Yalnız LAN", remoteCloudPending:"Cloud bekleniyor", remoteSeat:"remote seat", remoteSeats:"remote seat", revokeRemote:"Remote'u Kaldır", noRemoteClients:"Bu Server üzerinde seat tüketen Remote Access istemcisi yok."
-});
+
 
 
 Object.assign(translations.en,{
@@ -399,11 +249,7 @@ Object.assign(translations.en,{
   backupPassword:"Backup passphrase (at least 12 characters)",backupPasswordConfirm:"Confirm passphrase",backupCreate:"Create encrypted snapshot",backupRefresh:"Refresh",backupSaved:"Available encrypted snapshots",
   backupRestoreTitle:"Verify and prepare restoration",backupRestoreHelp:"Upload an existing .pgnbackup. This only checks and stores the encrypted file; restoring data requires stopping Core and running RESTORE_PROGNODE_BACKUP.cmd.",backupImportPassword:"Backup passphrase",backupInspect:"Verify uploaded backup",backupAuditTitle:"Recent configuration changes"
 });
-Object.assign(translations.tr,{
-  backupKicker:"PROJE GÜVENLİĞİ",backupTitle:"Yedekleme Merkezi",backupIntro:"Cihaz, Tag, alarm, Historian, sistem kayıtları ve kaydedilmiş Trend Studio düzenini şifreli yedekle.",
-  backupPassword:"Yedek parolası (en az 12 karakter)",backupPasswordConfirm:"Parolayı doğrula",backupCreate:"Şifreli yedek oluştur",backupRefresh:"Yenile",backupSaved:"Kayıtlı şifreli yedekler",
-  backupRestoreTitle:"Geri yüklemeyi doğrula ve hazırla",backupRestoreHelp:"Mevcut .pgnbackup yükle. Yalnızca doğrulanıp saklanır; geri yükleme için Core durdurulup RESTORE_PROGNODE_BACKUP.cmd çalıştırılmalıdır.",backupImportPassword:"Yedek parolası",backupInspect:"Yüklenen yedeği doğrula",backupAuditTitle:"Son yapılandırma değişiklikleri"
-});
+
 
 const t = key => translations[state.language][key] || translations.en[key] || key;
 
@@ -481,8 +327,8 @@ function updateCommissioningAssistant() {
     el.classList.toggle("next", !step.done && progress.steps.slice(0,index).every(x => x.done));
     const badge = el.querySelector("small");
     if (badge) badge.textContent = step.done
-      ? (state.language === "tr" ? "TAMAMLANDI" : "COMPLETE")
-      : (state.language === "tr" ? "BEKLİYOR" : "PENDING");
+      ? ("COMPLETE")
+      : ("PENDING");
   });
 
   if ($("firstRunProgressText")) $("firstRunProgressText").textContent = `${progress.completed}/${progress.total}`;
@@ -490,16 +336,14 @@ function updateCommissioningAssistant() {
   if ($("overviewSetupProgress")) $("overviewSetupProgress").textContent = `${progress.completed}/${progress.total}`;
   if ($("overviewSetupProgressBar")) $("overviewSetupProgressBar").style.width = `${progress.completed / progress.total * 100}%`;
   const nextIndex = progress.steps.findIndex(x => !x.done);
-  const nextLabels = state.language === "tr"
-    ? ["Cihaz bağla", "Canlı Tag doğrula", "Alarm oluştur", "Historian kaydını aç"]
-    : ["Connect a device", "Verify a live Tag", "Create an alarm", "Enable Historian recording"];
+  const nextLabels = ["Connect a device", "Verify a live Tag", "Create an alarm", "Enable Historian recording"];
   const nextText = progress.complete
-    ? (state.language === "tr" ? "Kurulum tamamlandı" : "Commissioning complete")
-    : `${state.language === "tr" ? "Sıradaki" : "Next"}: ${nextLabels[nextIndex]}`;
+    ? ("Commissioning complete")
+    : `${"Next"}: ${nextLabels[nextIndex]}`;
   if ($("overviewSetupNextStep")) $("overviewSetupNextStep").textContent = nextText;
   if ($("overviewSetupNext")) $("overviewSetupNext").textContent = progress.complete
-    ? (state.language === "tr" ? "Kurulum tamamlandı" : "Setup complete")
-    : (state.language === "tr" ? "15 dakikalık devreye alma" : "15-minute commissioning");
+    ? ("Setup complete")
+    : ("15-minute commissioning");
   document.querySelectorAll(".setup-ring").forEach(el => { el.textContent = String(progress.completed); });
   if ($("firstRunAccessState")) {
     $("firstRunAccessState").textContent = access ? t("firstRunAccessReady") : t("firstRunAccessRequired");
@@ -557,7 +401,7 @@ function continueCommissioningIfActive() {
   if (commissioningState().complete) {
     state.quickStartActive = false;
     navigate("overview");
-    showToast(state.language === "tr" ? "15 dakikalık kurulum akışı tamamlandı." : "15-minute setup flow completed.");
+    showToast("15-minute setup flow completed.");
     return;
   }
   setTimeout(() => openFirstRunQuickStart(true), 180);
@@ -569,17 +413,17 @@ function accountInitials(name) {
 
 function licenseProductLabel(plan) {
   const value = String(plan || "").toUpperCase();
-  if (value === "ALARM_MONITORING") return state.language === "tr" ? "Alarm İzleme" : "Alarm Monitoring";
+  if (value === "ALARM_MONITORING") return "Alarm Monitoring";
   if (value === "HISTORIAN") return "Historian";
-  if (value === "ALARM_HISTORIAN") return state.language === "tr" ? "Alarm + Historian" : "Alarm + Historian";
+  if (value === "ALARM_HISTORIAN") return "Alarm + Historian";
   return plan || "—";
 }
 
 function billingPeriodLabel(period) {
   const value = String(period || "").toUpperCase();
-  if (value === "MONTHLY") return state.language === "tr" ? "Aylık" : "Monthly";
-  if (value === "YEARLY") return state.language === "tr" ? "Yıllık" : "Yearly";
-  if (value === "SIX_MONTHS") return state.language === "tr" ? "6 Aylık (eski)" : "6 Months (legacy)";
+  if (value === "MONTHLY") return "Monthly";
+  if (value === "YEARLY") return "Yearly";
+  if (value === "SIX_MONTHS") return "6 Months (legacy)";
   return period || "—";
 }
 
@@ -587,14 +431,12 @@ function graceRemainingText(license = state.license) {
   if (!license?.graceUntil) return "—";
   const graceUntil = new Date(license.graceUntil);
   const ms = graceUntil.getTime() - Date.now();
-  if (!Number.isFinite(ms) || ms <= 0) return state.language === "tr" ? "Grace süresi doldu" : "Grace period ended";
+  if (!Number.isFinite(ms) || ms <= 0) return "Grace period ended";
   const days = Math.max(1, Math.ceil(ms / 86400000));
-  const until = new Intl.DateTimeFormat(state.language === "tr" ? "tr-TR" : "en-GB", {
+  const until = new Intl.DateTimeFormat("en-GB", {
     day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit"
   }).format(graceUntil);
-  return state.language === "tr"
-    ? `Grace: ${days} gün kaldı • ${until} tarihinde biter`
-    : `Grace: ${days} day${days === 1 ? "" : "s"} remaining • ends ${until}`;
+  return `Grace: ${days} day${days === 1 ? "" : "s"} remaining • ends ${until}`;
 }
 
 function isCommercialLicenseReady(license = state.license) {
@@ -616,37 +458,33 @@ function isLocalUserSignedIn() {
 }
 
 function licenseRemainingText(license = state.license) {
-  if (!license) return state.language === "tr" ? "Aktif değil" : "Not active";
+  if (!license) return "Not active";
   const status = String(license.status || "").toUpperCase();
 
-  if (status === "REVOKED") return state.language === "tr" ? "İptal edildi" : "Revoked";
+  if (status === "REVOKED") return "Revoked";
   if (status === "GRACE") return graceRemainingText(license);
-  if (status === "EXPIRED") return state.language === "tr" ? "Süresi doldu" : "Expired";
-  if (status === "INVALID" || !license.isValid) return state.language === "tr" ? "Geçersiz" : "Invalid";
+  if (status === "EXPIRED") return "Expired";
+  if (status === "INVALID" || !license.isValid) return "Invalid";
   if (!license.expiresAt) return "—";
 
   const expires = new Date(license.expiresAt);
-  if (Number.isNaN(expires.getTime())) return state.language === "tr" ? "Bitiş tarihi okunamadı" : "Expiry unavailable";
+  if (Number.isNaN(expires.getTime())) return "Expiry unavailable";
 
   const remainingMs = expires.getTime() - Date.now();
-  if (remainingMs <= 0) return state.language === "tr" ? "Süresi doldu" : "Expired";
+  if (remainingMs <= 0) return "Expired";
 
   const totalHours = Math.ceil(remainingMs / 3600000);
-  if (totalHours < 48) return state.language === "tr"
-    ? `${totalHours} saat kaldı`
-    : `${totalHours} hour${totalHours === 1 ? '' : 's'} remaining`;
+  if (totalHours < 48) return `${totalHours} hour${totalHours === 1 ? '' : 's'} remaining`;
 
   const days = Math.ceil(totalHours / 24);
-  return state.language === "tr"
-    ? `${days} gün kaldı`
-    : `${days} day${days === 1 ? '' : 's'} remaining`;
+  return `${days} day${days === 1 ? '' : 's'} remaining`;
 }
 
 function licenseExpiryDateText(license = state.license) {
-  if (!license?.expiresAt) return state.language === "tr" ? "Süre sınırı yok" : "No expiry";
+  if (!license?.expiresAt) return "No expiry";
   const expires = new Date(license.expiresAt);
   if (Number.isNaN(expires.getTime())) return "—";
-  return new Intl.DateTimeFormat(state.language === "tr" ? "tr-TR" : "en-GB", {
+  return new Intl.DateTimeFormat("en-GB", {
     day:"2-digit", month:"short", year:"numeric"
   }).format(expires);
 }
@@ -666,9 +504,7 @@ function canMutateConfiguration() {
 
 function requireConfigurationAccess() {
   if (hasConfigurationAccess()) return true;
-  showToast(state.language === "tr"
-    ? "Yapılandırmayı değiştirmek için lisanslı hesapla giriş yapın."
-    : "Sign in with the licensed account to change configuration.");
+  showToast("Sign in with the licensed account to change configuration.");
   openAccountModal();
   return false;
 }
@@ -677,7 +513,7 @@ function renderAccount() {
   const license = state.license;
   const imported = state.importedAccount;
   const owner = license?.assignedUserName || license?.assignedUserEmail || imported?.userName || imported?.userEmail || null;
-  const plan = isLocalUserSignedIn() ? licenseProductLabel(license?.plan || 'VIEW ONLY') : (state.language === 'tr' ? 'Lisans hazır' : 'License ready');
+  const plan = isLocalUserSignedIn() ? licenseProductLabel(license?.plan || 'VIEW ONLY') : ('License ready');
   const activated = isCommercialLicenseReady(license);
   const authenticated = isLocalUserSignedIn();
   const access = hasConfigurationAccess();
@@ -710,13 +546,13 @@ function renderAccount() {
 
   if ($("accountLicenseImportState")) {
     $("accountLicenseImportState").textContent = activated
-      ? (state.language === 'tr' ? `${plan} lisansı hazır` : `${plan} license ready`)
-      : (state.language === 'tr' ? '.pgnlicense içe aktarın' : 'Import .pgnlicense');
+      ? (`${plan} license ready`)
+      : ('Import .pgnlicense');
   }
   if ($("accountLicenseHint")) {
     $("accountLicenseHint").textContent = activated
-      ? (state.language === 'tr' ? 'Lisans yerel olarak doğrulandı. Yapılandırma oturumu açmak için giriş yapın.' : 'License verified locally. Sign in below to open a local configuration session.')
-      : (state.language === 'tr' ? 'Lisans yerel olarak doğrulanır. Giriş için bulut bağlantısı gerekmez.' : 'The license is verified locally. No cloud connection is required for sign-in.');
+      ? ('License verified locally. Sign in below to open a local configuration session.')
+      : ('The license is verified locally. No cloud connection is required for sign-in.');
   }
 
   if ($("accountEmail") && !$("accountEmail").value && activated)
@@ -726,9 +562,9 @@ function renderAccount() {
       ? `${license?.assignedUserEmail || owner || t('signedIn')} • ${t('signedIn').toLowerCase()}`
       : activated
         ? (owner
-            ? `${owner} • ${state.language === 'tr' ? 'giriş yaparak devam edin' : 'sign in to continue'}`
-            : (state.language === 'tr' ? 'Lisans hazır • devam etmek için giriş yapın' : 'License ready • sign in to continue'))
-        : (state.language === 'tr' ? 'Devam etmek için geçerli bir .pgnlicense içe aktarın' : 'Import a valid .pgnlicense to continue');
+            ? `${owner} • ${'sign in to continue'}`
+            : ('License ready • sign in to continue'))
+        : ('Import a valid .pgnlicense to continue');
     $("accountSessionState").classList.toggle('authenticated', authenticated);
   }
   // Never deadlock the login UI on a duplicated frontend license check. If no usable
@@ -765,7 +601,7 @@ async function signInLocalAccess() {
   const email = $("accountEmail")?.value?.trim();
   const password = $("accountPassword")?.value || '';
   if (!email || !password) {
-    showToast(state.language === 'tr' ? 'E-posta ve şifre girin.' : 'Enter email and password.');
+    showToast('Enter email and password.');
     return;
   }
   try {
@@ -777,7 +613,7 @@ async function signInLocalAccess() {
     if ($("accountPassword")) $("accountPassword").value = '';
     await refreshLicenseForSession();
     renderAccount();
-    showToast(state.language === 'tr' ? 'Giriş başarılı.' : 'Signed in successfully.');
+    showToast('Signed in successfully.');
     closeAccountModal();
     if (hasConfigurationAccess()) openFirstRunQuickStart();
   } catch (error) {
@@ -799,7 +635,7 @@ async function signOutLocalAccess() {
   if ($("accountPassword")) $("accountPassword").value = '';
   await refreshLicenseForSession();
   renderAccount();
-  showToast(state.language === 'tr' ? 'Çıkış yapıldı.' : 'Signed out.');
+  showToast('Signed out.');
 }
 
 function openAccountModal() {
@@ -813,7 +649,7 @@ function closeAccountModal() {
 
 async function importLicenseFromFile(file) {
   if (!file) {
-    showToast(state.language === "tr" ? "Bir .pgnlicense dosyası seçin." : "Choose a .pgnlicense file.");
+    showToast("Choose a .pgnlicense file.");
     return;
   }
   const form = new FormData();
@@ -874,9 +710,7 @@ async function importLicenseFromFile(file) {
   $("accountEmail")?.focus();
 
   const who = body?.assignedUserName || body?.assignedUserEmail || '';
-  showToast(state.language === "tr"
-    ? `Lisans başarıyla içe aktarıldı${who ? ` • ${who}` : ''}. Şifrenizle giriş yapın.`
-    : `License imported successfully${who ? ` • ${who}` : ''}. Sign in with your password.`);
+  showToast(`License imported successfully${who ? ` • ${who}` : ''}. Sign in with your password.`);
 }
 
 function applyAccessMode() {
@@ -942,12 +776,6 @@ function toggleTheme() {
   applyTheme();
 }
 
-function setLanguage(language) {
-  state.language = language;
-  localStorage.setItem("prognode.language", language);
-  applyLanguage();
-}
-
 function applyLanguage() {
   document.documentElement.lang = state.language;
 
@@ -955,17 +783,15 @@ function applyLanguage() {
     el.textContent = t(el.dataset.i18n);
   });
 
-  $("langEN").classList.toggle("active", state.language === "en");
-  $("langTR").classList.toggle("active", state.language === "tr");
 
   $("deviceSearch").placeholder =
-    state.language === "tr" ? "Cihazlarda ara..." : "Search devices...";
+    "Search devices...";
 
   $("tagSearch").placeholder =
-    state.language === "tr" ? "Taglarda ara..." : "Search tags...";
+    "Search tags...";
 
   $("deviceNameInput").placeholder =
-    state.language === "tr" ? "örn. Kazan PLC" : "e.g. Boiler PLC";
+    "e.g. Boiler PLC";
 
   renderDevices();
   renderTags();
@@ -1030,8 +856,6 @@ function limitText(limit) {
 }
 
 function yesNo(value) {
-  if (state.language === "tr")
-    return value ? "ETKİN" : "DEVRE DIŞI";
   return value ? "ENABLED" : "DISABLED";
 }
 
@@ -1058,13 +882,11 @@ function renderServerAccess() {
   if ($("serverAccessName")) $("serverAccessName").textContent = identity.displayName || "PROGNODE Server";
   if ($("serverAccessId")) $("serverAccessId").textContent = identity.serverId || "—";
   if ($("serverAccessApi")) $("serverAccessApi").textContent = `API ${identity.apiVersion || "v1"} • TCP ${identity.apiPort}`;
-  if ($("serverAccessDiscovery")) $("serverAccessDiscovery").textContent = state.language === "tr"
-    ? `UDP ${identity.discoveryPort} • Server ID keşfi`
-    : `UDP ${identity.discoveryPort} • Server ID discovery`;
+  if ($("serverAccessDiscovery")) $("serverAccessDiscovery").textContent = `UDP ${identity.discoveryPort} • Server ID discovery`;
   // Never overwrite the manual tab's short-lived code while background status refreshes.
   if (pairing && $("serverPairingCode")) $("serverPairingCode").textContent = pairing.code;
   if (pairing && $("serverPairingExpiry")) $("serverPairingExpiry").textContent =
-    (state.language === "tr" ? `${pairing.expiresInSeconds} sn kaldı` : `${pairing.expiresInSeconds}s remaining`);
+    (`${pairing.expiresInSeconds}s remaining`);
 }
 
 async function loadRemoteAccess() {
@@ -1119,7 +941,7 @@ function renderRemoteAccess() {
     const canEnable = entitled && bound && active && Boolean(client.devicePublicKey) && canMutateConfiguration();
     const action = client.remoteEnabled
       ? `<button class="ghost-button remote-revoke" data-client-id="${escapeHtml(client.localClientId)}" ${canMutateConfiguration() ? "" : "disabled"}>${escapeHtml(t("revokeRemote"))}</button>`
-      : `<button class="ghost-button remote-enable" data-client-id="${escapeHtml(client.localClientId)}" ${canEnable ? "" : "disabled"}>${escapeHtml(state.language === "tr" ? "Remote Etkinleştir" : "Enable Remote")}</button>`;
+      : `<button class="ghost-button remote-enable" data-client-id="${escapeHtml(client.localClientId)}" ${canEnable ? "" : "disabled"}>${escapeHtml("Enable Remote")}</button>`;
     return `
       <div class="remote-client-row">
         <div><strong>${escapeHtml(client.deviceName || "Client")}</strong><small>${escapeHtml(client.platform || "Unknown")} · ${client.remoteEnabled ? escapeHtml(client.userDisplayName || client.userId || "Remote") : escapeHtml(t("remoteLanOnly"))}</small></div>
@@ -1129,7 +951,7 @@ function renderRemoteAccess() {
   list.querySelectorAll(".remote-revoke").forEach(button => button.addEventListener("click", async () => {
     try {
       await api(`/api/remote-access/clients/${button.dataset.clientId}`, {method:"DELETE"});
-      showToast(state.language === "tr" ? "Remote seat serbest bırakıldı." : "Remote seat released.");
+      showToast("Remote seat released.");
       await loadRemoteAccess();
     } catch (error) { showToast(error.message); }
   }));
@@ -1141,7 +963,7 @@ function renderRemoteAccess() {
         method:"POST",
         body:JSON.stringify({clientId:client.localClientId, devicePublicKey:client.devicePublicKey, platform:client.platform})
       });
-      showToast(result.message || (state.language === "tr" ? "Remote Access etkinleştirildi." : "Remote Access enabled."));
+      showToast(result.message || ("Remote Access enabled."));
       await loadRemoteAccess();
     } catch (error) { showToast(error.message); }
   }));
@@ -1218,14 +1040,14 @@ function renderLicense() {
   $("licenseSignedOutCard")?.classList.toggle("hidden", signedIn);
   if (!signedIn) {
     if ($("licenseSignedOutTitle")) $("licenseSignedOutTitle").textContent = installed
-      ? (state.language === "tr" ? "Lisans ayrıntılarını görmek için giriş yapın" : "Sign in to view license details")
-      : (state.language === "tr" ? "Devam etmek için lisans içe aktarın" : "Import a license to continue");
+      ? ("Sign in to view license details")
+      : ("Import a license to continue");
     if ($("licenseSignedOutText")) $("licenseSignedOutText").textContent = installed
-      ? (state.language === "tr" ? "Bitiş tarihi, kalan süre, kapasite ve entitlement bilgileri çıkış yapıldığında gizlenir." : "Expiry, remaining time, capacity and entitlement details are hidden while signed out.")
-      : (state.language === "tr" ? "İmzalı .pgnlicense dosyasını içe aktarın, ardından lisansa bağlı hesapla giriş yapın." : "Import the signed .pgnlicense file, then sign in with the account linked to it.");
+      ? ("Expiry, remaining time, capacity and entitlement details are hidden while signed out.")
+      : ("Import the signed .pgnlicense file, then sign in with the account linked to it.");
     if ($("licenseSignInButton")) $("licenseSignInButton").textContent = installed
-      ? (state.language === "tr" ? "Giriş yap" : "Sign in")
-      : (state.language === "tr" ? "Lisans içe aktar / Giriş" : "Import license / Sign in");
+      ? ("Sign in")
+      : ("Import license / Sign in");
 
     // Defense in depth: remove stale sensitive values from the DOM immediately after sign-out.
     ["licenseCustomer","licenseStatus","licensePlan","licenseExpiryDate","licenseRemainingDays",
@@ -1252,26 +1074,26 @@ function renderLicense() {
   if ($("licenseAssignedUser")) $("licenseAssignedUser").textContent = license.assignedUserName || license.assignedUserEmail || "—";
   if ($("licenseAssignedEmail")) $("licenseAssignedEmail").textContent = license.assignedUserEmail || "—";
   if ($("licenseAccessMode")) $("licenseAccessMode").textContent = signedIn
-    ? (state.language === "tr" ? "Yerel oturum aktif" : "Local session active")
-    : (active ? (state.language === "tr" ? "Giriş gerekli" : "Sign-in required") : (state.language === "tr" ? "Lisans gerekli" : "License required"));
+    ? ("Local session active")
+    : (active ? ("Sign-in required") : ("License required"));
 
   const usage = state.licenseUsage || {};
   const maxTags = usage.maxTags;
   const usedTags = Number(usage.usedTags || 0);
   if ($("licenseTagCapacity")) $("licenseTagCapacity").textContent = usage.unlimited
     ? (usage.legacyUnlimited
-        ? (state.language === "tr" ? "Sınırsız • Legacy" : "Unlimited • Legacy")
-        : (state.language === "tr" ? "Sınırsız" : "Unlimited"))
+        ? ("Unlimited • Legacy")
+        : ("Unlimited"))
     : String(maxTags ?? "—");
   if ($("licenseTagUsage")) $("licenseTagUsage").textContent = usage.unlimited
-    ? (state.language === "tr" ? `${usedTags} Tag yapılandırıldı` : `${usedTags} Tags configured`)
-    : `${usedTags} / ${maxTags ?? "—"} ${state.language === "tr" ? "kullanılıyor" : "used"}`;
+    ? (`${usedTags} Tags configured`)
+    : `${usedTags} / ${maxTags ?? "—"} ${"used"}`;
   if ($("licenseBillingPeriod")) $("licenseBillingPeriod").textContent = billingPeriodLabel(license.billingPeriod);
   if ($("licenseLifecycleStatus")) $("licenseLifecycleStatus").textContent = license.status || "—";
   if ($("licenseValidFrom")) {
     const validFrom = license.validFrom ? new Date(license.validFrom) : null;
     $("licenseValidFrom").textContent = validFrom && !Number.isNaN(validFrom.getTime())
-      ? `${state.language === "tr" ? "Başlangıç" : "Valid from"}: ${new Intl.DateTimeFormat(state.language === "tr" ? "tr-TR" : "en-GB", {day:"2-digit", month:"short", year:"numeric"}).format(validFrom)}`
+      ? `${"Valid from"}: ${new Intl.DateTimeFormat("en-GB", {day:"2-digit", month:"short", year:"numeric"}).format(validFrom)}`
       : "—";
   }
 
@@ -1281,26 +1103,24 @@ function renderLicense() {
   const overCapacity = Boolean(usage.overCapacity);
 
   $("licenseExpiringBanner")?.classList.toggle("hidden", !expiringSoon);
-  if ($("licenseExpiringTitle")) $("licenseExpiringTitle").textContent = state.language === "tr" ? "Lisansın süresi yakında doluyor" : "License expires soon";
+  if ($("licenseExpiringTitle")) $("licenseExpiringTitle").textContent = "License expires soon";
   if ($("licenseExpiringRemaining")) $("licenseExpiringRemaining").textContent = expiringSoon ? licenseRemainingText(license) : "—";
 
   $("licenseGraceBanner")?.classList.toggle("hidden", !inGrace);
-  if ($("licenseGraceTitle")) $("licenseGraceTitle").textContent = state.language === "tr" ? "Lisans yenilemesi gerekli" : "License renewal required";
+  if ($("licenseGraceTitle")) $("licenseGraceTitle").textContent = "License renewal required";
   if ($("licenseGraceRemaining")) $("licenseGraceRemaining").textContent = inGrace ? graceRemainingText(license) : "—";
 
   $("licenseOverCapacityBanner")?.classList.toggle("hidden", !overCapacity);
-  if ($("licenseOverCapacityTitle")) $("licenseOverCapacityTitle").textContent = state.language === "tr" ? "Lisans kapasitesi aşıldı" : "License capacity exceeded";
+  if ($("licenseOverCapacityTitle")) $("licenseOverCapacityTitle").textContent = "License capacity exceeded";
   if ($("licenseOverCapacityDetail")) $("licenseOverCapacityDetail").textContent = overCapacity
-    ? (state.language === "tr"
-        ? `${usedTags} / ${maxTags} Tag • Tag sayısını azaltın veya lisansı yükseltin.`
-        : `${usedTags} / ${maxTags} Tags • Reduce Tags or upgrade the license.`)
+    ? (`${usedTags} / ${maxTags} Tags • Reduce Tags or upgrade the license.`)
     : "—";
   const setModuleState = (id, enabled) => {
     const el = $(id);
     if (!el) return;
     el.classList.toggle("disabled", !enabled);
     const small = el.querySelector("small");
-    if (small) small.textContent = enabled ? t("moduleIncluded") : (state.language === "tr" ? "Dahil değil" : "Not included");
+    if (small) small.textContent = enabled ? t("moduleIncluded") : ("Not included");
   };
   setModuleState("licenseAlarmModule", modules.has("ALARM"));
   setModuleState("licenseHistorianModule", modules.has("HISTORIAN"));
@@ -1310,8 +1130,8 @@ function renderLicense() {
     const remoteExpiry = license.entitlements?.remoteAccessExpiresAtUtc ? new Date(license.entitlements.remoteAccessExpiresAtUtc) : null;
     const remoteExpired = remoteExpiry && !Number.isNaN(remoteExpiry.getTime()) && remoteExpiry.getTime() <= Date.now();
     $("licenseRemoteAccessCapacity").textContent = remoteLicensed
-      ? `${license.entitlements?.remoteAccessUnlimited ? (state.language === "tr" ? "Sınırsız remote client" : "Unlimited remote clients") : `${license.entitlements?.maxRemoteClients ?? 0} remote clients`}${remoteExpired ? (state.language === "tr" ? " • süresi doldu" : " • expired") : ""}`
-      : (state.language === "tr" ? "Dahil değil" : "Not included");
+      ? `${license.entitlements?.remoteAccessUnlimited ? ("Unlimited remote clients") : `${license.entitlements?.maxRemoteClients ?? 0} remote clients`}${remoteExpired ? (" • expired") : ""}`
+      : ("Not included");
   }
   renderAccount();
 }
@@ -1334,13 +1154,6 @@ function renderProtocolGrid() {
   const grid = $("protocolGrid");
   if (!grid || !state.protocols.length) return;
 
-  const trDescriptions = {
-    mock:"Arayüz ve motor testleri için dahili simülatör.",
-    "modbus-tcp":"Protokol seviyesinde test ve canlı polling bulunan Modbus TCP connector.",
-    "siemens-s7-tcp":"S7-1200/1500 için TCP 102, optimize edilmemiş DB okuma. Saha testi.",
-    "opc-ua":"Güvenilir SignAndEncrypt oturumu ile salt-okunur NodeId taraması. Saha testi.",
-    mqtt:"Harici broker'dan salt-okunur topic aboneliği; sayısal/BOOL UTF-8 veri. Saha testi."
-  };
 
   grid.innerHTML = state.protocols.map(p => `
     <button class="protocol-card ${p.enabled ? "enabled" : "disabled"}"
@@ -1349,16 +1162,12 @@ function renderProtocolGrid() {
         <h3>${escapeHtml(p.name)}</h3>
         <span class="availability">${
           escapeHtml(
-            state.language === "tr"
-              ? (p.availability === "Available" ? "Kullanılabilir" : "Planlandı")
-              : p.availability)
+            p.availability)
         }</span>
       </div>
       <p>${
         escapeHtml(
-          state.language === "tr"
-            ? (trDescriptions[p.id] || p.description)
-            : p.description)
+          p.description)
       }</p>
       <span class="availability">${escapeHtml(p.note || "")}</span>
     </button>
@@ -1440,7 +1249,7 @@ function renderTablePager(prefix, result, hasData) {
   $(`${prefix}PageInfo`).textContent = `${result.page} / ${result.pages}`;
   $(`${prefix}PrevPage`).disabled = result.page <= 1;
   $(`${prefix}NextPage`).disabled = result.page >= result.pages;
-  $(`${prefix}RowsLabel`).textContent = state.language === "tr" ? "Satır" : "Rows";
+  $(`${prefix}RowsLabel`).textContent = "Rows";
 }
 
 const bulkSelections = new Map();
@@ -1457,7 +1266,7 @@ function renderBulkSelection(kind, tbody, rows, idOf, deleteOne, reload, deleteM
   bulkSelections.set(kind, selected);
   for (const stale of [...selected]) if (!ids.includes(stale)) selected.delete(stale);
   const count=selected.size, all=ids.length>0&&ids.every(x=>selected.has(x));
-  bar.innerHTML=`<label><input type="checkbox" data-bulk-page="${kind}" ${all?'checked':''} ${ids.length?'':'disabled'}><span>${state.language==='tr'?'Bu sayfadakilerin tümünü seç':'Select all on this page'}</span></label><span class="bulk-selection-count">${state.language==='tr'?`${count} seçili`:`${count} selected`}</span><button type="button" class="delete-button" data-bulk-delete="${kind}" ${count?'':'disabled'}>${state.language==='tr'?'Seçilenleri sil':'Delete selected'}</button>`;
+  bar.innerHTML=`<label><input type="checkbox" data-bulk-page="${kind}" ${all?'checked':''} ${ids.length?'':'disabled'}><span>${'Select all on this page'}</span></label><span class="bulk-selection-count">${`${count} selected`}</span><button type="button" class="delete-button" data-bulk-delete="${kind}" ${count?'':'disabled'}>${'Delete selected'}</button>`;
   tbody.querySelectorAll('[data-bulk-check]').forEach(x=>x.checked=selected.has(x.value));
   bar.querySelector('[data-bulk-page]').onchange=e=>{
     if(e.target.checked)ids.forEach(x=>selected.add(x));else ids.forEach(x=>selected.delete(x));
@@ -1470,15 +1279,15 @@ function renderBulkSelection(kind, tbody, rows, idOf, deleteOne, reload, deleteM
   bar.querySelector('[data-bulk-delete]').onclick=async e=>{
     const chosen=ids.filter(x=>selected.has(x)); if(!chosen.length)return;
     if(!requireConfigurationAccess())return;
-    const warning=kind==='historian'?(state.language==='tr'?'Seçilen Historian kayıt ayarları ve bunlara ait kayıtlı örnekler kalıcı olarak silinecek.':'Selected Historian configurations and their recorded samples will be permanently deleted.'):
-      state.language==='tr'?`${chosen.length} kayıt ve ilişkili veriler silinsin mi?`:`Delete ${chosen.length} selected records and related data?`;
+    const warning=kind==='historian'?('Selected Historian configurations and their recorded samples will be permanently deleted.'):
+      `Delete ${chosen.length} selected records and related data?`;
     if(!confirm(warning))return;
     e.currentTarget.disabled=true;
     try {
       if(deleteMany) await deleteMany(chosen);
       else await Promise.all(chosen.map(x=>deleteOne(x)));
       selected.clear(); await reload();
-      showToast(state.language==='tr'?`${chosen.length} kayıt silindi.`:`Deleted ${chosen.length} records.`);
+      showToast(`Deleted ${chosen.length} records.`);
     } catch(error) { showToast(error.message); }
   };
 }
@@ -1486,8 +1295,8 @@ function renderBulkSelection(kind, tbody, rows, idOf, deleteOne, reload, deleteM
 function renderDevices() {
   syncTableFilter($("deviceStatusFilter"),
     [...new Set(state.devices.map(d => d.status).filter(Boolean))].sort().map(status => [status,status]),
-    state.language === "tr" ? "Tüm durumlar" : "All statuses");
-  $("deviceProtocolFilter").options[0].textContent = state.language === "tr" ? "Tüm protokoller" : "All protocols";
+    "All statuses");
+  $("deviceProtocolFilter").options[0].textContent = "All protocols";
   const query =
     $("deviceSearch").value.trim().toLowerCase();
   const protocol = $("deviceProtocolFilter").value;
@@ -1501,7 +1310,7 @@ function renderDevices() {
        d.protocol.toLowerCase().includes(query) ||
        (d.host || "").toLowerCase().includes(query)));
 
-  const compare = (a,b) => a.localeCompare(b, state.language === "tr" ? "tr" : "en", {numeric:true,sensitivity:"base"});
+  const compare = (a,b) => a.localeCompare(b, "en", {numeric:true,sensitivity:"base"});
   const sort = $("deviceSort").value;
   filtered.sort((a,b) => sort === "name-desc" ? compare(b.name,a.name) :
     sort === "protocol" ? compare(a.protocol,b.protocol) || compare(a.name,b.name) :
@@ -1514,9 +1323,7 @@ function renderDevices() {
   $("navDeviceCount").textContent = state.devices.length;
 
   $("deviceTableMeta").textContent =
-    state.language === "tr"
-      ? `${filtered.length} / ${state.devices.length} cihaz`
-      : `${filtered.length} / ${state.devices.length} devices`;
+    `${filtered.length} / ${state.devices.length} devices`;
 
   const has = state.devices.length > 0;
 
@@ -1533,7 +1340,7 @@ function renderDevices() {
         <td><span class="status-badge ${statusClass(device.status)}">${escapeHtml(device.status)}</span></td>
         <td>${device.host ? `${escapeHtml(device.host)}:${device.port}` : "—"}</td>
         <td>${device.pollIntervalMs} ms</td>
-        <td>${new Date(device.createdAt).toLocaleString(state.language === "tr" ? "tr-TR" : "en-US")}</td>
+        <td>${new Date(device.createdAt).toLocaleString("en-US")}</td>
         <td class="actions-cell">
           ${device.host ? `
             <button class="ping-button"
@@ -1552,7 +1359,7 @@ function renderDevices() {
           </button>
         </td>
       </tr>
-    `).join("") || `<tr><td colspan="7">${state.language === "tr" ? "Filtreye uyan cihaz yok." : "No devices match the filters."}</td></tr>`;
+    `).join("") || `<tr><td colspan="7">${"No devices match the filters."}</td></tr>`;
   document.querySelectorAll("[data-ping-device]")
     .forEach(button =>
       button.addEventListener("click", async () => {
@@ -1610,9 +1417,7 @@ function renderDevices() {
             x => x.id === button.dataset.deleteDevice);
 
         const question =
-          state.language === "tr"
-            ? `"${device?.name}" silinsin mi?`
-            : `Delete "${device?.name}"?`;
+          `Delete "${device?.name}"?`;
 
         if (!confirm(question))
           return;
@@ -1686,9 +1491,6 @@ function tagValueText(tag, snapshot) {
   {
     const isTrue = Number(snapshot.value) !== 0;
 
-    if (state.language === "tr")
-      return isTrue ? "TRUE" : "FALSE";
-
     return isTrue ? "TRUE" : "FALSE";
   }
 
@@ -1703,7 +1505,7 @@ function tagValueText(tag, snapshot) {
 
   return Number(snapshot.value)
     .toLocaleString(
-      state.language === "tr" ? "tr-TR" : "en-US",
+      "en-US",
       {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals
@@ -1715,8 +1517,8 @@ function renderTags() {
     state.devices.filter(d => state.tags.some(tag => tag.deviceId === d.id))
       .sort((a,b) => a.name.localeCompare(b.name))
       .map(d => [d.id,d.name]),
-    state.language === "tr" ? "Tüm cihazlar" : "All devices");
-  $("tagTypeFilter").options[0].textContent = state.language === "tr" ? "Tüm veri tipleri" : "All datatypes";
+    "All devices");
+  $("tagTypeFilter").options[0].textContent = "All datatypes";
   const query =
     $("tagSearch").value.trim().toLowerCase();
   const deviceId = $("tagDeviceFilter").value;
@@ -1730,7 +1532,7 @@ function renderTags() {
        tag.address.toLowerCase().includes(query) ||
        tagDeviceName(tag.deviceId).toLowerCase().includes(query)));
 
-  const compare = (a,b) => a.localeCompare(b, state.language === "tr" ? "tr" : "en", {numeric:true,sensitivity:"base"});
+  const compare = (a,b) => a.localeCompare(b, "en", {numeric:true,sensitivity:"base"});
   const sort = $("tagSort").value;
   filtered.sort((a,b) => sort === "name-desc" ? compare(b.name,a.name) :
     sort === "device" ? compare(tagDeviceName(a.deviceId),tagDeviceName(b.deviceId)) || compare(a.name,b.name) :
@@ -1742,14 +1544,12 @@ function renderTags() {
   $("navTagCount").textContent = state.tags.length;
 
   $("tagTableMeta").textContent =
-    state.language === "tr"
-      ? `${filtered.length} / ${state.tags.length} tag`
-      : `${filtered.length} / ${state.tags.length} tags`;
+    `${filtered.length} / ${state.tags.length} tags`;
 
   const usage = state.licenseUsage || {};
   if (usage.visible === false) {
-    if ($("tagCapacityUsed")) $("tagCapacityUsed").textContent = state.language === "tr" ? "Giriş yapın" : "Sign in";
-    if ($("tagCapacityRemaining")) $("tagCapacityRemaining").textContent = state.language === "tr" ? "Kapasite girişten sonra görünür" : "Capacity visible after sign-in";
+    if ($("tagCapacityUsed")) $("tagCapacityUsed").textContent = "Sign in";
+    if ($("tagCapacityRemaining")) $("tagCapacityRemaining").textContent = "Capacity visible after sign-in";
     $("tagCapacityInline")?.classList.remove("over-capacity");
   }
   const usedTags = Number.isFinite(Number(usage.usedTags)) ? Number(usage.usedTags) : state.tags.length;
@@ -1765,10 +1565,10 @@ function renderTags() {
     }
     if ($("tagCapacityRemaining")) {
       $("tagCapacityRemaining").textContent = usage.unlimited
-        ? (state.language === "tr" ? "Kalan: sınırsız" : "Remaining: unlimited")
+        ? ("Remaining: unlimited")
         : remainingTags != null && Number.isFinite(remainingTags)
-          ? `${state.language === "tr" ? "Kalan" : "Remaining"}: ${remainingTags}`
-          : `${state.language === "tr" ? "Kalan" : "Remaining"}: —`;
+          ? `${"Remaining"}: ${remainingTags}`
+          : `${"Remaining"}: —`;
     }
     $("tagCapacityInline")?.classList.toggle("over-capacity", Boolean(usage.overCapacity));
   }
@@ -1798,9 +1598,7 @@ function renderTags() {
         snapshot?.timestamp
           ? new Date(snapshot.timestamp)
               .toLocaleTimeString(
-                state.language === "tr"
-                  ? "tr-TR"
-                  : "en-US")
+                "en-US")
           : "—";
 
       return `
@@ -1836,7 +1634,7 @@ function renderTags() {
           </td>
         </tr>
       `;
-    }).join("") || `<tr><td colspan="8">${state.language === "tr" ? "Filtreye uyan Tag yok." : "No Tags match the filters."}</td></tr>`;
+    }).join("") || `<tr><td colspan="8">${"No Tags match the filters."}</td></tr>`;
 
   renderBulkSelection('tags',$("tagTableBody"),pageResult.items,x=>x.id,x=>api(`/api/tags/${x}`,{method:'DELETE'}),async()=>{await loadTags();await loadAlarms();await loadHistorianStats()});
   document.querySelectorAll("[data-edit-tag]")
@@ -1854,9 +1652,7 @@ function renderTags() {
             x => x.id === button.dataset.deleteTag);
 
         const question =
-          state.language === "tr"
-            ? `"${tag?.name}" tagı silinsin mi?`
-            : `Delete tag "${tag?.name}"?`;
+          `Delete tag "${tag?.name}"?`;
 
         if (!confirm(question))
           return;
@@ -1890,9 +1686,7 @@ function populateTagDeviceSelect() {
           .join("")
       : `<option value="">
           ${
-            state.language === "tr"
-              ? "Önce desteklenen bir cihaz ekleyin"
-              : "Add a supported device first"
+            "Add a supported device first"
           }
         </option>`;
 }
@@ -2019,7 +1813,7 @@ async function inspectOpcUaCertificate() {
   const box = $("opcUaCertificateResult");
   state.opcUaCertificate = null;
   box.classList.remove("hidden", "success", "failure");
-  box.textContent = state.language === "tr" ? "Sunucu sertifikası okunuyor..." : "Reading server certificate...";
+  box.textContent = "Reading server certificate...";
   try {
     const info = await api("/api/devices/opc-ua/certificate/inspect", {
       method:"POST",body:JSON.stringify({endpointUrl})});
@@ -2036,19 +1830,17 @@ async function inspectOpcUaCertificate() {
 function renderOpcUaCertificate() {
   const info = state.opcUaCertificate;
   if(!info)return;
-  const tr = state.language === "tr";
+  
   const box = $("opcUaCertificateResult");
   box.classList.remove("hidden", "success", "failure");
   box.classList.add(info.trusted ? "success" : "failure");
-  box.innerHTML = `<strong>${info.trusted ? (tr ? "Sertifika güvenilir" : "Certificate trusted") :
-    (tr ? "Sertifika onay bekliyor" : "Certificate awaiting approval")}</strong><br>
+  box.innerHTML = `<strong>${info.trusted ? ("Certificate trusted") :
+    ("Certificate awaiting approval")}</strong><br>
     ${escapeHtml(info.subject)}<br>SHA-256: <code>${escapeHtml(info.sha256)}</code><br>
     SHA-1: <code>${escapeHtml(info.sha1)}</code><br>
-    ${tr ? "Geçerlilik" : "Valid"}: ${escapeHtml(new Date(info.validFrom).toLocaleString())} – ${escapeHtml(new Date(info.validUntil).toLocaleString())}
-    ${info.trusted ? "" : `<br><label><input type="checkbox" id="opcUaFingerprintVerified"> ${tr ?
-      "Parmak izini PLC/TIA sertifikasıyla bağımsız karşılaştırdım" :
-      "I independently matched this fingerprint with the PLC/TIA certificate"}</label>
-      <button type="button" class="secondary" id="approveOpcUaCertificate" disabled>${tr ? "Sertifikayı onayla" : "Trust certificate"}</button>`}`;
+    ${"Valid"}: ${escapeHtml(new Date(info.validFrom).toLocaleString())} – ${escapeHtml(new Date(info.validUntil).toLocaleString())}
+    ${info.trusted ? "" : `<br><label><input type="checkbox" id="opcUaFingerprintVerified"> ${"I independently matched this fingerprint with the PLC/TIA certificate"}</label>
+      <button type="button" class="secondary" id="approveOpcUaCertificate" disabled>${"Trust certificate"}</button>`}`;
   if(!info.trusted){
     $("opcUaFingerprintVerified").addEventListener("change",()=>{
       $("approveOpcUaCertificate").disabled = !$("opcUaFingerprintVerified").checked;
@@ -2077,9 +1869,7 @@ async function pingModbusHost() {
 
   box.classList.remove("hidden", "success", "failure");
   box.textContent =
-    state.language === "tr"
-      ? "Ping gönderiliyor..."
-      : "Pinging...";
+    "Pinging...";
 
   try {
     const result = await api(
@@ -2117,9 +1907,7 @@ async function testModbus() {
     "failure");
 
   box.textContent =
-    state.language === "tr"
-      ? "Test ediliyor..."
-      : "Testing...";
+    "Testing...";
 
   try {
     const result =
@@ -2162,16 +1950,14 @@ async function saveDevice() {
     const name = $("deviceNameInput").value.trim();
 
     if (!name)
-      throw new Error(state.language === "tr" ? "Cihaz adı gerekli." : "Device name is required.");
+      throw new Error("Device name is required.");
 
     if (state.selectedProtocol === "opc-ua") {
       const endpointUrl = $("opcUaUrl").value.trim();
       if (state.opcUaCertificateInput !== endpointUrl || !state.opcUaCertificate?.trusted)
         await inspectOpcUaCertificate();
       if (!state.opcUaCertificate?.trusted || state.opcUaCertificateInput !== endpointUrl)
-        throw new Error(state.language === "tr" ?
-          "Önce PLC sertifikasının parmak izini doğrulayıp onaylayın." :
-          "Verify and trust the PLC certificate before saving.");
+        throw new Error("Verify and trust the PLC certificate before saving.");
     }
 
     if (state.editingDeviceId) {
@@ -2215,7 +2001,7 @@ async function saveDevice() {
       closeDeviceModal();
       await loadDevices();
       navigate("devices");
-      showToast(state.language === "tr" ? "Cihaz güncellendi." : "Device updated.");
+      showToast("Device updated.");
       return;
     }
 
@@ -2256,7 +2042,7 @@ async function saveDevice() {
       })});
     }
     else {
-      throw new Error(state.language === "tr" ? "Bir protokol seçin." : "Select a protocol.");
+      throw new Error("Select a protocol.");
     }
 
     closeDeviceModal();
@@ -2297,9 +2083,7 @@ function openAddTagModal() {
 
   if (!supportedDevices.length) {
     showToast(
-      state.language === "tr"
-        ? "Önce desteklenen bir cihaz ekleyin."
-        : "Add a supported device first.");
+      "Add a supported device first.");
 
     navigate("devices");
     return;
@@ -2413,15 +2197,9 @@ function updateTagFormVisibility() {
 
   $("tagDecimalsLabel").textContent = isFloat ? t("displayDecimals") : t("decimalPoint");
   $("tagDecimalsHelp").textContent = isFloat ? t("displayDecimalsHelp") : t("decimalPointHelp");
-  if (tagIsMqtt()) $("tagAddressHelp").textContent = state.language === "tr"
-    ? "MQTT adresi tam topic olmalı (örn. plant/temperature). Wildcard yok; UTF-8 metin payload sayısal veya true/false olmalı. Retained değer belirsiz kaliteyle gösterilir."
-    : "Use an exact MQTT topic, e.g. plant/temperature. No wildcards; UTF-8 payload must be numeric or true/false. Retained values are marked uncertain.";
-  else if (tagIsOpcUa()) $("tagAddressHelp").textContent = state.language === "tr"
-    ? "OPC UA NodeId girin: ns=2;i=13 veya TIA'daki tam http://...;i=13 adresi. Yalnızca sayısal ve BOOL Value okunur."
-    : "Use ns=2;i=13 or the full Siemens http://...;i=13 NodeId. Only numeric and BOOL Values are read.";
-  else if (s7) $("tagAddressHelp").textContent = state.language === "tr"
-    ? "S7 mutlak DB adresi kullanın: BOOL için DB1.DBX0.0, WORD/UINT16/INT16 için DB1.DBW2, 32-bit tipler için DB1.DBD4. BOOL biti DBX adresindedir; ayrı BitIndex girilmez."
-    : "Use an absolute S7 DB address: DB1.DBX0.0 for BOOL, DB1.DBW2 for WORD/UINT16/INT16, DB1.DBD4 for 32-bit values. The BOOL bit is in the DBX address; do not enter a separate BitIndex.";
+  if (tagIsMqtt()) $("tagAddressHelp").textContent = "Use an exact MQTT topic, e.g. plant/temperature. No wildcards; UTF-8 payload must be numeric or true/false. Retained values are marked uncertain.";
+  else if (tagIsOpcUa()) $("tagAddressHelp").textContent = "Use ns=2;i=13 or the full Siemens http://...;i=13 NodeId. Only numeric and BOOL Values are read.";
+  else if (s7) $("tagAddressHelp").textContent = "Use an absolute S7 DB address: DB1.DBX0.0 for BOOL, DB1.DBW2 for WORD/UINT16/INT16, DB1.DBD4 for 32-bit values. The BOOL bit is in the DBX address; do not enter a separate BitIndex.";
   else $("tagAddressHelp").textContent = t("tagAddressHelp");
 }
 
@@ -2548,34 +2326,22 @@ function validateTagAddressClient() {
   let message = "";
 
   if (!area) {
-    message = state.language === "tr"
-      ? "Adres 00001..09999, 10001..19999, 30001..39999 veya 40001..49999 aralığında olmalı."
-      : "Address must be in 00001..09999, 10001..19999, 30001..39999 or 40001..49999.";
+    message = "Address must be in 00001..09999, 10001..19999, 30001..39999 or 40001..49999.";
   } else if (area.bitArea && draft.dataType !== "Bool") {
-    message = state.language === "tr"
-      ? `${area.area} yalnızca BOOL veri tipini destekler.`
-      : `${area.area} supports BOOL datatype only.`;
+    message = `${area.area} supports BOOL datatype only.`;
   } else if (area.area === "Input Register" && draft.dataType === "Bool") {
-    message = state.language === "tr"
-      ? "Input Register (3xxxx) BOOL bit desteklemez; WORD veya sayısal veri tipi kullanın."
-      : "Input Register (3xxxx) does not support BOOL bit access; use WORD or a numeric datatype.";
+    message = "Input Register (3xxxx) does not support BOOL bit access; use WORD or a numeric datatype.";
   } else if (!area.bitArea && draft.dataType === "Bool" &&
              (!Number.isInteger(draft.bitIndex) || draft.bitIndex < 0 || draft.bitIndex > 15)) {
-    message = state.language === "tr"
-      ? "Register BOOL için Bit 0..15 gerekli."
-      : "Register BOOL requires Bit 0..15.";
+    message = "Register BOOL requires Bit 0..15.";
   } else {
     const width = area.bitArea ? 1 : tagRegisterWidth(draft.dataType);
     if (numeric + width - 1 > area.last) {
-      message = state.language === "tr"
-        ? "Seçilen 32-bit veri tipi Modbus alan sınırını aşıyor."
-        : "The selected 32-bit datatype exceeds the Modbus area boundary.";
+      message = "The selected 32-bit datatype exceeds the Modbus area boundary.";
     } else {
       const conflict = findTagAddressConflict(draft);
       if (conflict) {
-        message = state.language === "tr"
-          ? `${describeTagAddress(draft)} adresi '${conflict.name}' tagı ile çakışıyor.`
-          : `${describeTagAddress(draft)} overlaps with tag '${conflict.name}'.`;
+        message = `${describeTagAddress(draft)} overlaps with tag '${conflict.name}'.`;
       }
     }
   }
@@ -2590,7 +2356,7 @@ async function saveTag() {
   if (!requireConfigurationAccess()) return;
   try {
     if (!$("tagName").value.trim())
-      throw new Error(state.language === "tr" ? "Tag adı gerekli." : "Tag name is required.");
+      throw new Error("Tag name is required.");
 
     if (!validateTagAddressClient())
       return;
@@ -2835,7 +2601,7 @@ function renderAlarms() {
   const historyPage = {items:state.alarmHistory,page:state.alarmHistoryPage,
     pages:Math.max(1,Math.ceil(state.alarmHistoryFilteredCount / Number($("alarmHistoryPageSize").value)))};
   const formatAckTimestamp = value => value
-    ? new Date(value).toLocaleString(state.language === "tr" ? "tr-TR" : "en-US", {
+    ? new Date(value).toLocaleString("en-US", {
         year:"numeric",month:"2-digit",day:"2-digit",
         hour:"2-digit",minute:"2-digit",second:"2-digit"
       })
@@ -2893,7 +2659,7 @@ function renderAlarms() {
           </td>
           <td>
             ${new Date(a.activeSince).toLocaleString(
-              state.language === "tr" ? "tr-TR" : "en-US")}
+              "en-US")}
           </td>
           <td>${formatAckTimestamp(a.acknowledgedAt)}</td>
           <td>${escapeHtml(a.acknowledgedBy || "—")}</td>
@@ -2908,7 +2674,7 @@ function renderAlarms() {
             }
           </td>
         </tr>`;
-    }).join("") || (state.activeAlarms.length ? `<tr><td colspan="9">${state.language === "tr" ? "Filtreye uyan aktif alarm yok." : "No active alarms match the filters."}</td></tr>` : "");
+    }).join("") || (state.activeAlarms.length ? `<tr><td colspan="9">${"No active alarms match the filters."}</td></tr>` : "");
 
   document
     .querySelectorAll("[data-ack-alarm]")
@@ -2967,7 +2733,7 @@ function renderAlarms() {
           </button>
         </td>
       </tr>
-    `).join("") || (state.alarmDefinitions.length ? `<tr><td colspan="8">${state.language === "tr" ? "Filtreye uyan alarm tanımı yok." : "No alarm definitions match the filters."}</td></tr>` : "");
+    `).join("") || (state.alarmDefinitions.length ? `<tr><td colspan="8">${"No alarm definitions match the filters."}</td></tr>` : "");
 
   document
     .querySelectorAll("[data-edit-alarm]")
@@ -2986,9 +2752,7 @@ function renderAlarms() {
         async () => {
           if (!requireConfigurationAccess()) return;
           if (!confirm(
-            state.language === "tr"
-              ? "Alarm tanımı silinsin mi?"
-              : "Delete alarm definition?"))
+            "Delete alarm definition?"))
           {
             return;
           }
@@ -3028,13 +2792,13 @@ function renderAlarms() {
           <td><input type="checkbox" data-bulk-check value="${e.occurrenceId||''}" aria-label="Select alarm occurrence" ${e.occurrenceId?'':'disabled'}></td>
           <td>
             ${new Date(e.activeAt).toLocaleString(
-              state.language === "tr" ? "tr-TR" : "en-US")}
+              "en-US")}
           </td>
           <td>
             ${
               e.clearedAt
                 ? new Date(e.clearedAt).toLocaleString(
-                    state.language === "tr" ? "tr-TR" : "en-US")
+                    "en-US")
                 : `<span class="alarm-state-${String(e.state).toLowerCase()}">
                      ${escapeHtml(String(e.state).toUpperCase())}
                    </span>`
@@ -3056,7 +2820,7 @@ function renderAlarms() {
             </span>
           </td>
         </tr>`;
-    }).join("") || `<tr><td colspan="10">${state.language === "tr" ? "Filtreye uyan alarm geçmişi yok." : "No alarm history matches the filters."}</td></tr>`;
+    }).join("") || `<tr><td colspan="10">${"No alarm history matches the filters."}</td></tr>`;
   renderBulkSelection('alarmHistory',$("alarmHistoryTableBody"),historyPage.items,x=>x.occurrenceId,
     ()=>Promise.resolve(),async()=>refreshAlarmHistory(),ids=>api('/api/alarms/history/delete-selected',{
       method:'POST',body:JSON.stringify({occurrenceIds:ids})}));
@@ -3079,9 +2843,7 @@ function populateAlarmTagSelect() {
         `).join("")
       : `<option value="">
           ${
-            state.language === "tr"
-              ? "Önce desteklenen bir alarm Tagı ekleyin"
-              : "Add a supported alarm Tag first"
+            "Add a supported alarm Tag first"
           }
         </option>`;
 }
@@ -3144,9 +2906,7 @@ function openAddAlarmModal() {
   if (!alarmSourceTags().length)
   {
     showToast(
-      state.language === "tr"
-        ? "Önce desteklenen bir alarm Tagı oluşturun."
-        : "Create a supported alarm Tag first.");
+      "Create a supported alarm Tag first.");
 
     navigate("tags");
     return;
@@ -3218,17 +2978,13 @@ async function saveAlarm() {
     if (!tag)
     {
       throw new Error(
-        state.language === "tr"
-          ? "Kaynak Tag gerekli."
-          : "Source Tag is required.");
+        "Source Tag is required.");
     }
 
     if (!$("alarmText").value.trim())
     {
       throw new Error(
-        state.language === "tr"
-          ? "Alarm metni gerekli."
-          : "Alarm text is required.");
+        "Alarm text is required.");
     }
 
     const numericAlarm = !["Bool","Word"].includes(tag.dataType);
@@ -3236,9 +2992,9 @@ async function saveAlarm() {
       const threshold = Number($("alarmThreshold").value);
       const deadband = Number($("alarmDeadband").value || 0);
       if (!Number.isFinite(threshold))
-        throw new Error(state.language === "tr" ? "Numeric alarm için Threshold gerekli." : "Threshold is required for a numeric alarm.");
+        throw new Error("Threshold is required for a numeric alarm.");
       if (!Number.isFinite(deadband) || deadband < 0)
-        throw new Error(state.language === "tr" ? "Deadband 0 veya daha büyük olmalı." : "Deadband must be 0 or greater.");
+        throw new Error("Deadband must be 0 or greater.");
     }
 
     const body = {
@@ -3283,13 +3039,9 @@ async function saveAlarm() {
     const verifySavedAckRequirement = saved => {
       const savedValue = getSavedAckRequirement(saved);
       if (savedValue === null)
-        throw new Error(state.language === "tr"
-          ? "Core yanıtında ACK ayarı yok. Core'u yeniden derleyip başlatın."
-          : "The Core response does not include the ACK setting. Rebuild and restart Core.");
+        throw new Error("The Core response does not include the ACK setting. Rebuild and restart Core.");
       if (savedValue !== body.requiresAcknowledgement)
-        throw new Error(state.language === "tr"
-          ? `Core ACK ayarını ${savedValue ? "açık" : "kapalı"} kaydetti; istenen değer ${body.requiresAcknowledgement ? "açık" : "kapalı"}. Core'u yeniden başlatıp tekrar deneyin.`
-          : `Core saved ACK as ${savedValue ? "enabled" : "disabled"}, but ${body.requiresAcknowledgement ? "enabled" : "disabled"} was requested. Restart Core and try again.`);
+        throw new Error(`Core saved ACK as ${savedValue ? "enabled" : "disabled"}, but ${body.requiresAcknowledgement ? "enabled" : "disabled"} was requested. Restart Core and try again.`);
     };
 
     if (state.editingAlarmId)
@@ -3439,14 +3191,10 @@ function intervalLabel(seconds) {
 
 function retentionLabel(days) {
   if (days === 1825)
-    return state.language === "tr"
-      ? "5 yıl"
-      : "5 years";
+    return "5 years";
 
   if (days === 365)
-    return state.language === "tr"
-      ? "1 yıl"
-      : "1 year";
+    return "1 year";
 
   return `${days}d`;
 }
@@ -3460,9 +3208,7 @@ function renderTrendList() {
   if ($("navTrendCount")) {
     const available = state.historianConfigurations.filter(x=>x.configuration?.enabled===true).length;
     $("navTrendCount").textContent = String(available);
-    $("navTrendCount").title = state.language === "tr"
-      ? `${available} Historian sinyali Trend Studio'da kullanılabilir; en fazla 15 grafik aynı anda açılır.`
-      : `${available} Historian signals available in Trend Studio; up to 15 charts can be open at once.`;
+    $("navTrendCount").title = `${available} Historian signals available in Trend Studio; up to 15 charts can be open at once.`;
   }
 
   $("trendList").innerHTML =
@@ -3488,9 +3234,7 @@ function renderTrendList() {
         `).join("")
       : `<div class="empty-inline">
           ${
-            state.language === "tr"
-              ? "Henüz trend yok."
-              : "No trends yet."
+            "No trends yet."
           }
         </div>`;
 
@@ -3552,9 +3296,7 @@ function renderTrendList() {
           event.stopPropagation();
 
           if (!confirm(
-            state.language === "tr"
-              ? "Trend silinsin mi?"
-              : "Delete trend?"))
+            "Delete trend?"))
           {
             return;
           }
@@ -3627,9 +3369,7 @@ function populateTrendTagChecklist(
           }).join("")
       : `<div class="empty-inline">
           ${
-            state.language === "tr"
-              ? "Önce Tag ekleyin."
-              : "Add Tags first."
+            "Add Tags first."
           }
         </div>`;
 }
@@ -3639,9 +3379,7 @@ function openAddTrendModal() {
   if (!state.tags.length)
   {
     showToast(
-      state.language === "tr"
-        ? "Önce Tag ekleyin."
-        : "Add Tags first.");
+      "Add Tags first.");
 
     navigate("tags");
     return;
@@ -3708,18 +3446,14 @@ async function saveTrend() {
     if (!$("trendName").value.trim())
     {
       throw new Error(
-        state.language === "tr"
-          ? "Trend adı gerekli."
-          : "Trend name is required.");
+        "Trend name is required.");
     }
 
     if (tagIds.length < 1 ||
         tagIds.length > 8)
     {
       throw new Error(
-        state.language === "tr"
-          ? "1 ile 8 arasında Tag seçin."
-          : "Select between 1 and 8 Tags.");
+        "Select between 1 and 8 Tags.");
     }
 
     const body = {
@@ -3820,9 +3554,7 @@ function currentTrendRange() {
         to <= from)
     {
       throw new Error(
-        state.language === "tr"
-          ? "Geçerli başlangıç ve bitiş tarihi seçin."
-          : "Select a valid start and end date.");
+        "Select a valid start and end date.");
     }
 
     return {from,to};
@@ -3888,9 +3620,7 @@ function formatTrendValue(tag, value) {
 
   const formatted =
     Number(value).toLocaleString(
-      state.language === "tr"
-        ? "tr-TR"
-        : "en-US",
+      "en-US",
       {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals
@@ -4078,9 +3808,7 @@ function updateTrendTooltip() {
   tooltip.innerHTML = `
     <strong>
       ${new Date(hover.timeMs).toLocaleString(
-        state.language === "tr"
-          ? "tr-TR"
-          : "en-US")}
+        "en-US")}
     </strong>
     ${rows.join("")}
   `;
@@ -4278,9 +4006,7 @@ function drawTrendChart() {
 
     ctx.fillText(
       ts.toLocaleString(
-        state.language === "tr"
-          ? "tr-TR"
-          : "en-US",
+        "en-US",
         {
           month:"2-digit",
           day:"2-digit",
@@ -4474,9 +4200,7 @@ async function exportTrendCsv() {
   if (!state.selectedTrendId)
   {
     showToast(
-      state.language === "tr"
-        ? "Önce trend seçin."
-        : "Select a trend first.");
+      "Select a trend first.");
 
     return;
   }
@@ -4533,7 +4257,7 @@ async function exportTrendCsv() {
 
 function exportTrendArchive() {
   if (!state.selectedTrendId) {
-    showToast(state.language === "tr" ? "Önce trend seçin." : "Select a trend first.");
+    showToast("Select a trend first.");
     return;
   }
   const range = currentTrendRange();
@@ -4550,9 +4274,7 @@ function exportTrendPng() {
   if (!state.trendPayload)
   {
     showToast(
-      state.language === "tr"
-        ? "Önce trend seçin."
-        : "Select a trend first.");
+      "Select a trend first.");
 
     return;
   }
@@ -4606,15 +4328,13 @@ function formatBytes(bytes) {
 function renderHistorianStats() {
   if (!$("historianTotalSamples") || !state.historianStats) return;
   const s = state.historianStats;
-  $("historianTotalSamples").textContent = Number(s.totalSamples || 0).toLocaleString(state.language === "tr" ? "tr-TR" : "en-US");
+  $("historianTotalSamples").textContent = Number(s.totalSamples || 0).toLocaleString("en-US");
   $("historianRecordedTags").textContent = String(state.historianConfigurations.filter(x=>x.configuration?.enabled===true).length);
   if ($("navHistorianCount")) $("navHistorianCount").textContent = String(state.historianConfigurations.filter(x=>x.configuration?.enabled===true).length);
   if ($("navTrendCount")) {
     const available = state.historianConfigurations.filter(x=>x.configuration?.enabled===true).length;
     $("navTrendCount").textContent = String(available);
-    $("navTrendCount").title = state.language === "tr"
-      ? `${available} kayıtlı Tag Trend Studio'da kullanılabilir; en fazla 15 grafik aynı anda açılır.`
-      : `${available} recorded Tags available in Trend Studio; up to 15 charts can be open at once.`;
+    $("navTrendCount").title = `${available} recorded Tags available in Trend Studio; up to 15 charts can be open at once.`;
   }
   $("historianDbSize").textContent = formatBytes(s.databaseBytes);
 
@@ -4622,7 +4342,7 @@ function renderHistorianStats() {
     const oldest=new Date(s.oldestSample), newest=new Date(s.newestSample);
     const days=Math.max(0,Math.round((newest-oldest)/86400000));
     $("historianTimeSpan").textContent = days > 0 ? `${days}d` : "<1d";
-    $("historianTimeSpanDetail").textContent = `${oldest.toLocaleString(state.language === "tr" ? "tr-TR" : "en-US")} → ${newest.toLocaleString(state.language === "tr" ? "tr-TR" : "en-US")}`;
+    $("historianTimeSpanDetail").textContent = `${oldest.toLocaleString("en-US")} → ${newest.toLocaleString("en-US")}`;
   } else {
     $("historianTimeSpan").textContent="—";
     $("historianTimeSpanDetail").textContent="—";
@@ -4655,12 +4375,12 @@ function renderHistorianConfigurations() {
       <td><strong>${escapeHtml(tag?.name || c.tagId)}</strong></td>
       <td>${escapeHtml(intervalLabel(c.sampleIntervalSeconds))}</td>
       <td>${escapeHtml(retentionLabel(c.retentionDays))}</td>
-      <td>${status.firstSample ? new Date(status.firstSample).toLocaleString(state.language === "tr" ? "tr-TR" : "en-US") : "Waiting"}</td>
-      <td>${status.lastSample ? new Date(status.lastSample).toLocaleString(state.language === "tr" ? "tr-TR" : "en-US") : "—"}</td>
+      <td>${status.firstSample ? new Date(status.firstSample).toLocaleString("en-US") : "Waiting"}</td>
+      <td>${status.lastSample ? new Date(status.lastSample).toLocaleString("en-US") : "—"}</td>
       <td class="historian-quality-${escapeHtml(q)}">${escapeHtml((status.lastQuality || "WAITING").toUpperCase())}</td>
-      <td>${Number(status.sampleCount || 0).toLocaleString(state.language === "tr" ? "tr-TR" : "en-US")}</td>
+      <td>${Number(status.sampleCount || 0).toLocaleString("en-US")}</td>
       <td class="historian-action-row">
-        <button class="historian-trend-button" data-open-historian-trend="${c.tagId}">${state.language === "tr" ? "Trend'de aç" : "Open in Trend"}</button>
+        <button class="historian-trend-button" data-open-historian-trend="${c.tagId}">${"Open in Trend"}</button>
         <button class="edit-button" data-edit-historian="${c.id}">${t("edit")}</button>
         <button class="historian-stop-button" data-stop-historian="${c.id}">${t("stopRecording")}</button>
         <button class="historian-csv-button" data-csv-historian="${c.tagId}" data-csv-name="${escapeHtml(tag?.name || "Historian")}">CSV ZIP ↓</button>
@@ -4685,14 +4405,14 @@ function renderHistorianConfigurations() {
   }));
 
   document.querySelectorAll("[data-stop-historian]").forEach(b => b.addEventListener("click", async () => {
-    const keep=confirm(state.language === "tr" ? "Historian kaydı durdurulsun ve eski veriler korunsun mu?\n\nTamam = koru\nİptal = veri silme seçeneğine geç" : "Stop Historian recording and keep existing data?\n\nOK = keep history\nCancel = choose whether to delete data");
+    const keep=confirm("Stop Historian recording and keep existing data?\n\nOK = keep history\nCancel = choose whether to delete data");
     let deleteData=false;
     if (!keep) {
-      deleteData=confirm(state.language === "tr" ? "Eski historian verilerini de KALICI olarak silmek istiyor musun?" : "Permanently delete existing Historian data for this Tag too?");
+      deleteData=confirm("Permanently delete existing Historian data for this Tag too?");
       if (!deleteData) return;
     }
     await api(`/api/historian/configurations/${b.dataset.stopHistorian}?deleteData=${deleteData}`, {method:"DELETE"});
-    showToast(state.language === "tr" ? "Historian kaydı durduruldu." : "Historian recording stopped.");
+    showToast("Historian recording stopped.");
     await loadHistorianStats();
   }));
 }
@@ -4700,12 +4420,12 @@ function renderHistorianConfigurations() {
 function populateHistorianTagSelect(selectedTagId=null) {
   const configured=new Set(state.historianConfigurations.map(x => x.configuration.tagId));
   const tags=state.tags.filter(x => !configured.has(x.id) || x.id === selectedTagId);
-  $("historianTag").innerHTML = tags.length ? tags.map(tag => `<option value="${tag.id}">${escapeHtml(deviceName(tag.deviceId))} • ${escapeHtml(tag.name)}</option>`).join("") : `<option value="">${state.language === "tr" ? "Tüm Taglar Historian'da" : "All Tags are already in Historian"}</option>`;
+  $("historianTag").innerHTML = tags.length ? tags.map(tag => `<option value="${tag.id}">${escapeHtml(deviceName(tag.deviceId))} • ${escapeHtml(tag.name)}</option>`).join("") : `<option value="">${"All Tags are already in Historian"}</option>`;
 }
 
 function openAddHistorianModal() {
   if (!requireConfigurationAccess()) return;
-  if (!state.tags.length) { showToast(state.language === "tr" ? "Önce Tag ekleyin." : "Add a Tag first."); navigate("tags"); return; }
+  if (!state.tags.length) { showToast("Add a Tag first."); navigate("tags"); return; }
   state.editingHistorianId=null;
   populateHistorianTagSelect();
   $("historianSampleInterval").value="30";
@@ -4726,7 +4446,7 @@ function openEditHistorianModal(id) {
   $("historianTag").disabled=true;
   $("historianSampleInterval").value=String(c.sampleIntervalSeconds);
   $("historianRetention").value=String(c.retentionDays);
-  $("historianModalTitle").textContent=state.language === "tr" ? "Historian Ayarı" : "Edit Historian";
+  $("historianModalTitle").textContent="Edit Historian";
   $("historianModal").classList.remove("hidden");
 }
 
@@ -4740,14 +4460,14 @@ async function saveHistorianConfiguration() {
       sampleIntervalSeconds:Number($("historianSampleInterval").value),
       retentionDays:Number($("historianRetention").value)
     };
-    if (!body.tagId) throw new Error(state.language === "tr" ? "Tag seçin." : "Select a Tag.");
+    if (!body.tagId) throw new Error("Select a Tag.");
     if (state.editingHistorianId) {
       await api(`/api/historian/configurations/${state.editingHistorianId}`, {method:"PUT",body:JSON.stringify(body)});
     } else {
       await api("/api/historian/configurations", {method:"POST",body:JSON.stringify(body)});
     }
     closeHistorianModal();
-    showToast(state.language === "tr" ? "Historian ayarı kaydedildi." : "Historian configuration saved.");
+    showToast("Historian configuration saved.");
     await loadHistorianStats();
     continueCommissioningIfActive();
   } catch(error) { showToast(error.message); }
@@ -4774,7 +4494,7 @@ function renderServerClock() {
   const elapsed = performance.now() - state.serverClock.perfBase;
   const localMs = state.serverClock.baseUtcMs + elapsed + state.serverClock.offsetMinutes * 60000;
   const date = new Date(localMs);
-  const locale = state.language === "tr" ? "tr-TR" : "en-GB";
+  const locale = "en-GB";
 
   $("serverClockTime").textContent = new Intl.DateTimeFormat(locale, {
     timeZone:"UTC", hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:false
@@ -4801,17 +4521,17 @@ async function loadAgentStatus() {
 
 function renderDiagnostics() {
   if (state.page !== "diagnostics" || !$("diagnosticsDeviceRows")) return;
-  const tr = state.language === "tr";
-  const locale = tr ? "tr-TR" : "en-US";
+  
+  const locale = "en-US";
   const coreRunning = String(state.health?.status || "").toLowerCase() === "running";
   const core = $("diagnosticsCoreStatus");
-  core.textContent = state.health ? (coreRunning ? (tr ? "Çalışıyor" : "Running") : String(state.health.status || "—")) : "—";
+  core.textContent = state.health ? (coreRunning ? ("Running") : String(state.health.status || "—")) : "—";
   core.classList.toggle("status-good", coreRunning);
   core.classList.toggle("status-bad", !!state.health && !coreRunning);
   $("diagnosticsCoreVersion").textContent = state.health?.coreVersion ? `v${state.health.coreVersion}` : "—";
   const agentOnline = state.agentStatus?.isOnline === true;
   const agent = $("diagnosticsAgentStatus");
-  agent.textContent = agentOnline ? (tr ? "Bağlı" : "Online") : (tr ? "Bağlı değil" : "Offline");
+  agent.textContent = agentOnline ? ("Online") : ("Offline");
   agent.classList.toggle("status-good", agentOnline);
   agent.classList.toggle("status-bad", !agentOnline);
   $("diagnosticsAgentDetail").textContent = state.agentStatus?.machineName || "Windows";
@@ -4824,7 +4544,7 @@ function renderDiagnostics() {
     else waiting++;
   }
   $("diagnosticsTagQuality").textContent = `${good} / ${state.tags.length}`;
-  $("diagnosticsTagDetail").textContent = tr ? `${other} diğer · ${waiting} bekliyor` : `${other} other · ${waiting} waiting`;
+  $("diagnosticsTagDetail").textContent = `${other} other · ${waiting} waiting`;
   $("diagnosticsHistorianSamples").textContent = Number(state.historianStats?.totalSamples || 0).toLocaleString(locale);
   $("diagnosticsHistorianSize").textContent = state.historianStats ? formatBytes(state.historianStats.databaseBytes) : "—";
   $("diagnosticsDeviceRows").innerHTML = state.devices.length ? state.devices.map(device => {
@@ -4840,8 +4560,8 @@ function renderDiagnostics() {
       if (Number.isFinite(timestamp)) latest = Math.max(latest, timestamp);
     }
     return `<tr><td><strong>${escapeHtml(device.name)}</strong></td><td>${escapeHtml(device.protocol || "—")}</td><td>${escapeHtml(device.status || "—")}</td><td>${deviceGood} / ${deviceOther} / ${deviceWaiting}</td><td>${latest ? escapeHtml(new Date(latest).toLocaleString(locale)) : "—"}</td><td class="diagnostics-read-error">${readError ? escapeHtml(readError) : "—"}</td></tr>`;
-  }).join("") : `<tr><td colspan="6">${tr ? "Henüz cihaz tanımlanmadı." : "No devices configured yet."}</td></tr>`;
-  $("diagnosticsUpdatedAt").textContent = `${tr ? "Güncellendi" : "Updated"}: ${new Date().toLocaleTimeString(locale)}`;
+  }).join("") : `<tr><td colspan="6">${"No devices configured yet."}</td></tr>`;
+  $("diagnosticsUpdatedAt").textContent = `${"Updated"}: ${new Date().toLocaleTimeString(locale)}`;
 }
 
 function renderAgentStatus() {
@@ -4862,14 +4582,10 @@ function renderAgentStatus() {
     const version = state.agentStatus.version ? ` • v${state.agentStatus.version}` : "";
     detail.textContent = `${machine}${version}`;
   } else if (state.agentStatus?.lastSeenUtc) {
-    const lastSeen = new Date(state.agentStatus.lastSeenUtc).toLocaleString(state.language === "tr" ? "tr-TR" : "en-US");
-    detail.textContent = state.language === "tr"
-      ? `Son görülme: ${lastSeen}. PROGNODE Host + Agent ile başlatın.`
-      : `Last seen: ${lastSeen}. Start PROGNODE Host + Agent.`;
+    const lastSeen = new Date(state.agentStatus.lastSeenUtc).toLocaleString("en-US");
+    detail.textContent = `Last seen: ${lastSeen}. Start PROGNODE Host + Agent.`;
   } else {
-    detail.textContent = state.language === "tr"
-      ? "Agent çalışmıyor. VS Code: PROGNODE Host + Agent veya START_PROGNODE_WITH_AGENT.cmd kullanın."
-      : "Agent is not running. Use VS Code: PROGNODE Host + Agent or START_PROGNODE_WITH_AGENT.cmd.";
+    detail.textContent = "Agent is not running. Use VS Code: PROGNODE Host + Agent or START_PROGNODE_WITH_AGENT.cmd.";
   }
 }
 
@@ -4881,8 +4597,7 @@ async function loadNotifications() {
     const node = $("notificationStorageHealth");
     if (node) {
       node.style.display = health.storageHealthy ? "none" : "block";
-      node.textContent = health.storageHealthy ? "" : (state.language === "tr"
-        ? "Bildirim veritabanı hatası: " : "Notification database error: ") +
+      node.textContent = health.storageHealthy ? "" : ("Notification database error: ") +
         String(health.lastStorageError || "Check SQLite/disk space");
     }
   } catch (_) { /* Restricted to locally signed-in engineer session. */ }
@@ -4894,20 +4609,20 @@ async function loadNotificationDelivery() {
   const policy=await api('/api/notifications/delivery');
   const global=$('notificationGlobalEnabled'),list=$('notificationClientControls');
   if(!global||!list)return;
-  const tr=state.language==='tr';
+  
   const editable=isLocalUserSignedIn()&&['OWNER','ORGANIZATION_ADMIN'].includes(state.accessSession?.portalRole);
-  $('notificationDeliveryTitle').textContent=tr?'Bildirim teslimi':'Notification delivery';
-  $('notificationDeliveryHelp').textContent=tr?'Teslimi kapatmak alarm ve bildirim geçmişini silmez. Kapalıyken yeni uyarılar gönderilmez.':'Pausing delivery keeps alarm and notification history. New alerts are not delivered while paused.';
-  $('notificationGlobalLabel').textContent=tr?'Bildirimleri gönder':'Deliver notifications';
+  $('notificationDeliveryTitle').textContent='Notification delivery';
+  $('notificationDeliveryHelp').textContent='Pausing delivery keeps alarm and notification history. New alerts are not delivered while paused.';
+  $('notificationGlobalLabel').textContent='Deliver notifications';
   global.checked=!!policy.enabled;global.disabled=!editable;
-  list.innerHTML=(policy.clients||[]).length?(policy.clients||[]).map(client=>`<label class="notification-delivery-row"><span><strong>${escapeHtml(client.name)}</strong><small>${escapeHtml(client.platform||'')} · ${escapeHtml(client.clientId)}</small></span><input type="checkbox" data-notification-client="${escapeHtml(client.clientId)}" ${client.notificationsEnabled?'checked':''} ${editable?'':'disabled'}></label>`).join(''):`<p class="panel-copy">${tr?'Henüz eşleşmiş istemci yok.':'No paired clients yet.'}</p>`;
+  list.innerHTML=(policy.clients||[]).length?(policy.clients||[]).map(client=>`<label class="notification-delivery-row"><span><strong>${escapeHtml(client.name)}</strong><small>${escapeHtml(client.platform||'')} · ${escapeHtml(client.clientId)}</small></span><input type="checkbox" data-notification-client="${escapeHtml(client.clientId)}" ${client.notificationsEnabled?'checked':''} ${editable?'':'disabled'}></label>`).join(''):`<p class="panel-copy">${'No paired clients yet.'}</p>`;
 }
 
 async function updateNotificationDelivery(clientId,enabled) {
   const path=clientId?`/api/notifications/delivery/clients/${encodeURIComponent(clientId)}`:'/api/notifications/delivery';
   await api(path,{method:'PUT',body:JSON.stringify({enabled})});
   await loadNotificationDelivery();
-  showToast(state.language==='tr'?'Bildirim teslimi güncellendi.':'Notification delivery updated.');
+  showToast('Notification delivery updated.');
 }
 
 function renderNotifications() {
@@ -4926,9 +4641,7 @@ function renderNotifications() {
               <span>${
                 new Date(n.timestamp)
                   .toLocaleString(
-                    state.language === "tr"
-                      ? "tr-TR"
-                      : "en-US")
+                    "en-US")
               }</span>
             </div>
           `).join("")
@@ -4947,9 +4660,7 @@ async function sendTestNotification() {
           body:JSON.stringify({
             title:"PROGNODE",
             message:
-              state.language === "tr"
-                ? "Windows Agent bildirim yolu çalışıyor."
-                : "Windows Agent notification path is working."
+              "Windows Agent notification path is working."
           })
         });
 
@@ -4961,9 +4672,7 @@ async function sendTestNotification() {
     if (state.agentStatus?.isOnline) {
       showToast(t("testNotificationQueued"));
     } else {
-      showToast(state.language === "tr"
-        ? "Bildirim Core'a kaydedildi fakat Windows Agent çalışmıyor."
-        : "Notification was queued in Core, but Windows Agent is not running.");
+      showToast("Notification was queued in Core, but Windows Agent is not running.");
     }
   }
   catch(error) {
@@ -4977,7 +4686,7 @@ async function sendTestNotification() {
 // ============================================================================
 
 function dev3Count(value) {
-  return Number(value || 0).toLocaleString(state.language === "tr" ? "tr-TR" : "en-US");
+  return Number(value || 0).toLocaleString("en-US");
 }
 
 function overviewRelativeTime(value) {
@@ -4985,13 +4694,13 @@ function overviewRelativeTime(value) {
   const ms = Date.now() - new Date(value).getTime();
   if (!Number.isFinite(ms)) return "";
   const sec = Math.max(0, Math.round(ms / 1000));
-  if (sec < 60) return state.language === "tr" ? "şimdi" : "now";
+  if (sec < 60) return "now";
   const min = Math.round(sec / 60);
-  if (min < 60) return state.language === "tr" ? `${min} dk önce` : `${min} min ago`;
+  if (min < 60) return `${min} min ago`;
   const hr = Math.round(min / 60);
-  if (hr < 24) return state.language === "tr" ? `${hr} sa önce` : `${hr} hr ago`;
+  if (hr < 24) return `${hr} hr ago`;
   const day = Math.round(hr / 24);
-  return state.language === "tr" ? `${day} gün önce` : `${day} d ago`;
+  return `${day} d ago`;
 }
 
 function overviewSeverityClass(value) {
@@ -5017,26 +4726,26 @@ function renderOverviewFeeds() {
 
   if (alarmList) {
     const alarms = (state.activeAlarms || []).slice(0, 4);
-    $("overviewAlarmHeading").textContent = state.language === "tr" ? `${alarms.length} Aktif` : `${alarms.length} Active`;
+    $("overviewAlarmHeading").textContent = `${alarms.length} Active`;
     $("overviewAlarmHeading").classList.toggle("has-alerts", alarms.length > 0);
     alarmList.innerHTML = alarms.length
       ? alarms.map(a => overviewFeedItem({
           title: `${a.sourceName || "PROGNODE"} • ${a.text || "Alarm"}`,
-          text: a.isSystem ? (state.language === "tr" ? "Sistem alarmı" : "System alarm") : (a.tagName || a.source || ""),
+          text: a.isSystem ? ("System alarm") : (a.tagName || a.source || ""),
           meta: overviewRelativeTime(a.activeSince || a.lastChangedAt),
           severity: a.priority,
           badge: a.priority
         })).join("")
-      : `<div class="overview-feed-empty"><span class="status-dot ok"></span>${state.language === "tr" ? "Sistem sakin. Aktif alarm yok." : "System quiet. No active alarms."}</div>`;
+      : `<div class="overview-feed-empty"><span class="status-dot ok"></span>${"System quiet. No active alarms."}</div>`;
   }
 
   if (notificationList) {
     const items = (state.notifications || []).slice(0, 5);
     if ($("overviewNotificationHeading")) {
-      $("overviewNotificationHeading").textContent = state.language === "tr" ? `${items.length} Son` : `${items.length} Recent`;
+      $("overviewNotificationHeading").textContent = `${items.length} Recent`;
     }
     notificationList.innerHTML = items.length
-      ? items.map(n => `<button type="button" class="overview-notification-action" data-open-notification-alarm="${escapeHtml(String(n.id||''))}" aria-label="${escapeHtml(state.language==='tr'?'Alarm sayfasını aç':'Open alarms page')}">${overviewFeedItem({
+      ? items.map(n => `<button type="button" class="overview-notification-action" data-open-notification-alarm="${escapeHtml(String(n.id||''))}" aria-label="${escapeHtml('Open alarms page')}">${overviewFeedItem({
           title: n.title || n.source || "PROGNODE",
           text: n.message || "",
           meta: overviewRelativeTime(n.timestamp || n.createdAt),
@@ -5098,9 +4807,7 @@ function renderOverviewHistorian() {
 
   const configs = (state.historianConfigurations || []).filter(x=>x.configuration?.enabled===true);
   if ($("overviewHistorianHeading")) {
-    $("overviewHistorianHeading").textContent = state.language === "tr"
-      ? `${configs.length} Tag kaydediliyor`
-      : `Recording ${configs.length} tag${configs.length === 1 ? "" : "s"}`;
+    $("overviewHistorianHeading").textContent = `Recording ${configs.length} tag${configs.length === 1 ? "" : "s"}`;
   }
   const bad = configs.filter(x => {
     const q = String(x.lastQuality || "waiting").toLowerCase();
@@ -5108,8 +4815,8 @@ function renderOverviewHistorian() {
   }).length;
   if ($("overviewHistorianQuality")) {
     $("overviewHistorianQuality").textContent = bad === 0
-      ? (state.language === "tr" ? "İyi" : "Good")
-      : (state.language === "tr" ? `${bad} sorun` : `${bad} issue${bad === 1 ? "" : "s"}`);
+      ? ("Good")
+      : (`${bad} issue${bad === 1 ? "" : "s"}`);
     $("overviewHistorianQuality").classList.toggle("danger-text", bad > 0);
   }
 
@@ -5123,7 +4830,7 @@ function renderOverviewHistorian() {
         return `<i style="--bar:${pct}%" title="${dev3Count(v)}"></i>`;
       }).join("");
     } else {
-      chart.innerHTML = `<span class="historian-chart-empty">${state.language === "tr" ? "Henüz historian noktası yok" : "No historian points yet"}</span>`;
+      chart.innerHTML = `<span class="historian-chart-empty">${"No historian points yet"}</span>`;
     }
   }
 }
@@ -5164,16 +4871,16 @@ function updateOverviewCommandStrip() {
   $("overviewStatusBeacon")?.classList.toggle("stable", !needsAttention);
 
   const detail = [];
-  if (!coreRunning) detail.push(state.language === "tr" ? "Core durumu kontrol edilmeli" : "Core health requires attention");
-  if (health.offline) detail.push(state.language === "tr" ? `${health.offline} cihaz offline` : `${health.offline} device${health.offline===1?'':'s'} offline`);
-  if (health.degraded) detail.push(state.language === "tr" ? `${health.degraded} cihaz zayıf` : `${health.degraded} device${health.degraded===1?'':'s'} degraded`);
-  if (alarms) detail.push(state.language === "tr" ? `${alarms} aktif alarm` : `${alarms} active alarm${alarms===1?'':'s'}`);
-  if (!detail.length) detail.push(state.language === "tr" ? "Aktif kritik durum yok" : "No active critical conditions");
+  if (!coreRunning) detail.push("Core health requires attention");
+  if (health.offline) detail.push(`${health.offline} device${health.offline===1?'':'s'} offline`);
+  if (health.degraded) detail.push(`${health.degraded} device${health.degraded===1?'':'s'} degraded`);
+  if (alarms) detail.push(`${alarms} active alarm${alarms===1?'':'s'}`);
+  if (!detail.length) detail.push("No active critical conditions");
   $("overviewPostureDetail").textContent = detail.join(" • ");
-  if ($("overviewLastRefresh")) $("overviewLastRefresh").textContent = state.language === "tr" ? "Canlı yerel durum" : "Live local status";
+  if ($("overviewLastRefresh")) $("overviewLastRefresh").textContent = "Live local status";
   if ($("systemHealthLabel")) $("systemHealthLabel").textContent = needsAttention
-    ? (state.language === "tr" ? "Dikkat gerekiyor" : "Attention required")
-    : (state.language === "tr" ? "Sistem stabil" : "System stable");
+    ? ("Attention required")
+    : ("System stable");
   if ($("systemHealthDot")) {
     $("systemHealthDot").classList.toggle("ok", !needsAttention);
     $("systemHealthDot").classList.toggle("alert", needsAttention);
@@ -5182,20 +4889,20 @@ function updateOverviewCommandStrip() {
 
   $("overviewConnectivity").textContent = `${health.online}/${health.total} online`;
   if ($("overviewConnectivityDetail")) $("overviewConnectivityDetail").textContent = health.total === 0
-    ? (state.language === "tr" ? "Henüz cihaz yok" : "No devices configured")
+    ? ("No devices configured")
     : health.offline > 0
-      ? (state.language === "tr" ? `${health.offline} offline` : `${health.offline} offline`)
-      : (state.language === "tr" ? "Tüm cihazlar erişilebilir" : "All devices reachable");
+      ? (`${health.offline} offline`)
+      : ("All devices reachable");
 
-  $("overviewAlarmPosture").textContent = alarms ? `${alarms} ${state.language === "tr" ? "aktif" : "active"}` : (state.language === "tr" ? "Temiz" : "Clear");
+  $("overviewAlarmPosture").textContent = alarms ? `${alarms} ${"active"}` : ("Clear");
   if ($("overviewAlarmDetail")) $("overviewAlarmDetail").textContent = alarms
-    ? (state.language === "tr" ? "Operatör ilgisi gerekiyor" : "Operator attention required")
-    : (state.language === "tr" ? "Aktif alarm yok" : "No active alarms");
+    ? ("Operator attention required")
+    : ("No active alarms");
 
-  $("overviewRecordingPosture").textContent = recording ? `${recording} ${state.language === "tr" ? "Tag" : `tag${recording===1?'':'s'}`}` : (state.language === "tr" ? "Kapalı" : "Not configured");
+  $("overviewRecordingPosture").textContent = recording ? `${recording} ${`tag${recording===1?'':'s'}`}` : ("Not configured");
   if ($("overviewRecordingDetail")) $("overviewRecordingDetail").textContent = recording
-    ? (state.language === "tr" ? "Yerel kayıt aktif" : "Local recording active")
-    : (state.language === "tr" ? "Historian bekliyor" : "Historian idle");
+    ? ("Local recording active")
+    : ("Historian idle");
 
   if ($("overviewCorePosture")) {
     $("overviewCorePosture").textContent = coreRunning ? t("healthy") : (state.health?.status || "Unknown");
@@ -5209,22 +4916,22 @@ function updateOverviewCommandStrip() {
   const licenseCritical = licenseLifecycle === "GRACE" || licenseLifecycle === "EXPIRED" || licenseLifecycle === "INVALID";
   if ($("overviewLicensePosture")) {
     $("overviewLicensePosture").textContent = licenseLifecycle === "GRACE"
-      ? (state.language === "tr" ? "Grace • yenileme gerekli" : "Grace • renewal required")
+      ? ("Grace • renewal required")
       : licenseLifecycle === "EXPIRING_SOON"
-        ? (state.language === "tr" ? "Yakında sona eriyor" : "Expiring soon")
-        : (licenseValid ? licenseProductLabel(state.license?.plan) : (state.language === "tr" ? "Lisans yok" : "Not licensed"));
+        ? ("Expiring soon")
+        : (licenseValid ? licenseProductLabel(state.license?.plan) : ("Not licensed"));
     $("overviewLicensePosture").classList.toggle("warning-text", licenseWarning);
     $("overviewLicensePosture").classList.toggle("danger-text", licenseCritical);
   }
-  if ($("overviewLicenseDetail")) $("overviewLicenseDetail").textContent = licenseValid ? licenseRemainingText(state.license) : (state.language === "tr" ? ".pgnlicense içe aktarın" : "Import .pgnlicense");
+  if ($("overviewLicenseDetail")) $("overviewLicenseDetail").textContent = licenseValid ? licenseRemainingText(state.license) : ("Import .pgnlicense");
 
   if ($("overviewAccessPosture")) {
     $("overviewAccessPosture").textContent = access ? t("signedInLocal") : t("viewOnly");
     $("overviewAccessPosture").classList.toggle("healthy-text", access);
   }
   if ($("overviewAccessDetail")) $("overviewAccessDetail").textContent = access
-    ? (state.language === "tr" ? "Yapılandırma açık" : "Configuration enabled")
-    : (state.language === "tr" ? "Yapılandırmak için giriş yapın" : "Sign in to configure");
+    ? ("Configuration enabled")
+    : ("Sign in to configure");
 
   updateCommissioningAssistant();
 }
@@ -5246,16 +4953,16 @@ function updateOverview() {
 
   $("metricDevicesSub").textContent = deviceCount === 0
     ? t("noDevicesConfigured")
-    : (state.language === "tr" ? `${deviceCount} yapılandırılmış cihaz` : `${deviceCount} configured device${deviceCount === 1 ? "" : "s"}`);
+    : (`${deviceCount} configured device${deviceCount === 1 ? "" : "s"}`);
   $("metricTagsSub").textContent = tagCount === 0
-    ? (state.language === "tr" ? "Henüz canlı Tag yok" : "No live Tags yet")
-    : (state.language === "tr" ? `${tagCount} runtime Tag` : `${tagCount} runtime Tag${tagCount === 1 ? "" : "s"}`);
+    ? ("No live Tags yet")
+    : (`${tagCount} runtime Tag${tagCount === 1 ? "" : "s"}`);
   $("metricAlarmSub").textContent = activeAlarmCount === 0
     ? t("noActiveAlarmsNow")
-    : (state.language === "tr" ? "Operatör ilgisi gerekiyor" : "Operator attention required");
+    : ("Operator attention required");
   $("metricRecordingSub").textContent = historianCount === 0
-    ? (state.language === "tr" ? "Historian yapılandırılmadı" : "Historian not configured")
-    : (state.language === "tr" ? "Yerel kayıt aktif" : "Local recording configured");
+    ? ("Historian not configured")
+    : ("Local recording configured");
   $("metricHistorianSub").textContent = t("localRecording");
 
   const coreRunning = String(state.health?.status || "Running").toLowerCase() === "running";
@@ -5300,10 +5007,10 @@ function renderAgentStatus() {
     const version = state.agentStatus.version ? ` • v${state.agentStatus.version}` : "";
     detailText = `${machine}${version}`;
   } else if (state.agentStatus?.lastSeenUtc) {
-    const lastSeen = new Date(state.agentStatus.lastSeenUtc).toLocaleString(state.language === "tr" ? "tr-TR" : "en-US");
-    detailText = state.language === "tr" ? `Son görülme: ${lastSeen}` : `Last seen: ${lastSeen}`;
+    const lastSeen = new Date(state.agentStatus.lastSeenUtc).toLocaleString("en-US");
+    detailText = `Last seen: ${lastSeen}`;
   } else {
-    detailText = state.language === "tr" ? "Agent çalışmıyor. PROGNODE Host + Agent ile başlatın." : "Agent is not running. Start PROGNODE Host + Agent.";
+    detailText = "Agent is not running. Start PROGNODE Host + Agent.";
   }
   if (detail) detail.textContent = detailText;
 
@@ -5343,8 +5050,8 @@ function renderNotifications() {
   box.innerHTML = items.length
     ? items.map(n => {
         const severity = String(n.severity || "information").toLowerCase();
-        const when = n.timestamp ? new Date(n.timestamp).toLocaleString(state.language === "tr" ? "tr-TR" : "en-US") : "";
-        return `<button type="button" class="notification-event severity-${escapeHtml(severity)}" data-open-notification-alarm="${escapeHtml(String(n.id||''))}" aria-label="${escapeHtml(state.language==='tr'?'Alarm sayfasını aç':'Open alarms page')}">
+        const when = n.timestamp ? new Date(n.timestamp).toLocaleString("en-US") : "";
+        return `<button type="button" class="notification-event severity-${escapeHtml(severity)}" data-open-notification-alarm="${escapeHtml(String(n.id||''))}" aria-label="${escapeHtml('Open alarms page')}">
           <span class="notification-event-severity" title="${escapeHtml(n.severity || "Information")}"></span>
           <div class="notification-event-copy"><strong>${escapeHtml(n.title || "PROGNODE")}</strong><span>${escapeHtml(n.message || "")}</span></div>
           <time>${escapeHtml(when)}</time>
@@ -5657,7 +5364,7 @@ function renderImportPreview() {
     <td>${x.row}</td>
     <td><span class="import-row-status ${x.valid || x.imported || x.action==='skip' ? "valid" : "error"}">${x.imported ? (x.action==='update'?'UPDATED':'IMPORTED') : (x.action==='skip'?'SKIPPED':x.valid ? (x.action==='update'?'UPDATE':'CREATE') : "ERROR")}</span></td>
     <td>${escapeHtml(x.preview)}</td>
-    <td>${x.imported ? "—" : x.action==='skip' ? (state.language==='tr'?'Mevcut kayıt korundu':'Existing record kept') : (x.errors.length ? escapeHtml(x.errors.join(" • ")) : "—")}</td>
+    <td>${x.imported ? "—" : x.action==='skip' ? ('Existing record kept') : (x.errors.length ? escapeHtml(x.errors.join(" • ")) : "—")}</td>
   </tr>`).join("");
 }
 
@@ -5675,7 +5382,7 @@ async function previewImportFile(file) {
     }
     const dataset = $("importDataset").value;
     const rows = dev3ParseCsv(text);
-    if (!rows.length) throw new Error(state.language === "tr" ? "CSV içinde veri satırı bulunamadı veya ayraç/header algılanamadı." : "No data rows found or the delimiter/header could not be detected.");
+    if (!rows.length) throw new Error("No data rows found or the delimiter/header could not be detected.");
     const seen=new Set();
     state.importPreview = rows.map(row => {const item=dev3PreviewRow(row,dataset),key=dev3ImportRowKey(dataset,item.payload);if(key){if(seen.has(key)){item.errors.push('Duplicate row in this CSV');item.valid=false}else seen.add(key)}return item});
     renderImportPreview();
@@ -5691,7 +5398,7 @@ async function executeCsvImport() {
   const validItems = (state.importPreview || []).filter(x => x.valid);
   if (!validItems.length) return;
   const updateCount=validItems.filter(x=>x.action==='update').length;
-  if(updateCount&&!confirm(state.language==='tr'?`${updateCount} mevcut kayıt yerinde güncellenecek. Devam edilsin mi?`:`Update ${updateCount} existing records in place?`))return;
+  if(updateCount&&!confirm(`Update ${updateCount} existing records in place?`))return;
   $("executeImport").disabled = true;
   let imported = 0;
   for (const item of validItems) {
@@ -5716,7 +5423,7 @@ async function executeCsvImport() {
       }
       imported++;
       item.valid = false;
-      item.errors = [state.language === "tr" ? "Aktarıldı" : "Imported"];
+      item.errors = ["Imported"];
       item.imported = true;
     } catch (error) {
       item.valid = false;
@@ -5725,7 +5432,7 @@ async function executeCsvImport() {
   }
   await Promise.all([loadDevices(), loadTags(), loadAlarms(), loadHistorianStats()]);
   renderImportPreview();
-  showToast(state.language === "tr" ? `${imported} satır aktarıldı.` : `${imported} rows imported.`);
+  showToast(`${imported} rows imported.`);
 }
 
 const dev3Templates = {
@@ -5761,7 +5468,7 @@ function exportDataset(dataset) {
     const from = $("alarmExportFrom")?.value || "";
     const to = $("alarmExportTo")?.value || "";
     if (from && to && from > to) {
-      alert(state.language === "tr" ? "Başlangıç tarihi bitiş tarihinden sonra olamaz." : "The start date cannot be after the end date.");
+      alert("The start date cannot be after the end date.");
       return;
     }
     const query = new URLSearchParams();
@@ -5781,12 +5488,7 @@ function setImportDataset(dataset) {
   state.importPreview = [];
   if ($("importFile")) $("importFile").value = "";
   renderImportPreview();
-  const titles = state.language === "tr" ? {
-    devices: ["Cihazları İçe Aktar", "Cihaz tanımları ve bağlantı ayarları"],
-    tags: ["Tagları İçe Aktar", "Adresler, veri tipleri, byte order ve mühendislik gösterimi"],
-    alarms: ["Alarm Tanımlarını İçe Aktar", "Alarm kuralları, öncelikler, gecikmeler ve bildirim seçenekleri"],
-    historian: ["Historian Kaydını İçe Aktar", "Tag kayıt aralığı ve retention konfigürasyonu"]
-  } : {
+  const titles = {
     devices: ["Import Devices", "Device definitions and connection settings"],
     tags: ["Import Tags", "Addresses, datatypes, byte order and engineering display"],
     alarms: ["Import Alarm Definitions", "Alarm rules, priorities, delays and notification flags"],
@@ -5794,10 +5496,10 @@ function setImportDataset(dataset) {
   };
   const copy = titles[dataset] || titles.devices;
   if ($("csvImportTitle")) $("csvImportTitle").textContent = copy[0];
-  if ($("csvImportIntro")) $("csvImportIntro").textContent = copy[1] + (state.language === "tr" ? ". Her satır içe aktarmadan önce doğrulanır." : ". Every row is validated before import.");
-  if($("importExistingModeLabel"))$("importExistingModeLabel").textContent=state.language==='tr'?'Mevcut kayıtlar':'Existing records';
-  if($("importExistingModeHelp"))$("importExistingModeHelp").textContent=state.language==='tr'?'Aynı adlı kayıtlar yerinde güncellenir; dosyada olmayan kayıtlar korunur. Silme yapılmaz.':'Matching records are updated in place; records absent from the file are kept. Nothing is deleted.';
-  const mode=$("importExistingMode");if(mode){mode.options[0].textContent=state.language==='tr'?'Eşleşenleri güncelle, diğerlerini koru':'Update matching, keep others';mode.options[1].textContent=state.language==='tr'?'Eşleşenleri atla, yenileri ekle':'Skip matching, add new'}
+  if ($("csvImportIntro")) $("csvImportIntro").textContent = copy[1] + (". Every row is validated before import.");
+  if($("importExistingModeLabel"))$("importExistingModeLabel").textContent='Existing records';
+  if($("importExistingModeHelp"))$("importExistingModeHelp").textContent='Matching records are updated in place; records absent from the file are kept. Nothing is deleted.';
+  const mode=$("importExistingMode");if(mode){mode.options[0].textContent='Update matching, keep others';mode.options[1].textContent='Skip matching, add new'}
 }
 
 function openDatasetImport(dataset) {
@@ -6032,15 +5734,6 @@ function wireEvents() {
       "click",
       () => { const open = $("sidebar").classList.toggle("open"); $("mobileMenu")?.setAttribute("aria-expanded", String(open)); });
 
-  $("langEN")
-    .addEventListener(
-      "click",
-      () => setLanguage("en"));
-
-  $("langTR")
-    .addEventListener(
-      "click",
-      () => setLanguage("tr"));
 
   $("themeToggle")
     .addEventListener("click", toggleTheme);
@@ -6144,29 +5837,14 @@ Object.assign(translations.en, {
   qrTlsRecheck:"Recheck HTTPS",
   qrPairSelect:"Select an accessible network adapter first.", qrPairSeconds:"seconds left"
 });
-Object.assign(translations.tr, {
-  qrPairTitle:"QR ile telefon eşleştir", qrPairIntro:"Core bilgisayarında QR okutun; IP, kod veya sertifika parmak izi girmeyin.",
-  qrPairStart:"+ QR ile Cihaz Ekle", qrLanLabel:"Telefonun erişebildiği LAN adresi", qrPairRenew:"QR Yenile",
-  qrPairCancel:"İptal", qrPairWarning:"QR yalnızca bir kez, 120 saniye geçerlidir. Yalnızca yetkili Core ekranında gösterin.",
-  qrPairWait:"Hazır. PROGNODE Mobile ile QR'ı tarayın.", qrPairDone:"Cihaz başarıyla eşleştirildi.",
-  qrPairExpired:"QR süresi doldu. Devam etmek için yenileyin.", qrPairLocal:"PROGNODE'u bu Core PC'de açın ve yönetici olarak giriş yapın.",
-  qrPairTls:"LAN HTTPS hazır değil. Ayarlar → Mobil LAN üzerinden Kontrol Et / Onar işlemini yerel yönetici onayıyla tamamlayın. Mevcut sertifika korunur; manuel eşleştirme kullanılabilir.",
-  qrTlsGuideTitle:"Güvenli QR için LAN HTTPS gerekli",
-  qrTlsGuideText:"Ayarlar içindeki Mobil LAN Erişimi sayfasını açın. HTTPS durumunu kontrol edin; gerekirse yerel Windows Agent ile yönetici onaylı onarım yapın. Yalnızca istenirse Core'u yeniden başlatın. Güncellemeler mevcut sertifikayı ve eşleşmeleri korur.",
-  qrTlsRecheck:"HTTPS’i yeniden kontrol et",
-  qrPairSelect:"Önce telefonun erişebildiği ağ adaptörünü seçin.", qrPairSeconds:"saniye kaldı"
-});
+
 
 Object.assign(translations.en, {
   tagCapacity:"Tag Capacity", subscriptionPeriod:"Subscription", licenseState:"License Status",
   offlineFirst:"Offline-first entitlement", renewalRequired:"License renewal required",
   firstRunDontShowAgain:"Don't show this again"
 });
-Object.assign(translations.tr, {
-  tagCapacity:"Tag Kapasitesi", subscriptionPeriod:"Abonelik", licenseState:"Lisans Durumu",
-  offlineFirst:"Offline-first lisans", renewalRequired:"Lisans yenileme gerekli",
-  firstRunDontShowAgain:"Bir daha gösterme"
-});
+
 
 async function start() {
   try {
@@ -6243,13 +5921,7 @@ Object.assign(translations.en,{
   lanWizardPublicConfirm:"This is a Public Windows network. I explicitly approve only this interface and source range.",lanWizardPrepare:"Prepare LAN access",lanWizardVerify:"Verify / refresh",lanWizardApprove:"On this PC, right-click the PROGNODE Windows tray Agent → Complete LAN Access Setup (UAC); review the rule and approve Windows UAC once.",
   lanWizardProbe:"Test from phone",lanWizardRepair:"Repair rule",lanWizardDisable:"Disable LAN access",lanWizardQr:"Continue to QR pairing",lanWizardIt:"If guest VLAN/client isolation or enterprise GPO blocks access, request TCP 5443 from the approved sources to the selected Core IP from IT. PROGNODE never bypasses network policy."
 });
-Object.assign(translations.tr,{
-  lanWizardKicker:"MOBİL ERİŞİM",lanWizardTitle:"LAN Erişimini Etkinleştir",lanWizardIntro:"Yalnızca seçilen tesis ağı için TCP 5443 izni. Windows ağ profilini değiştirmeye ve ücretli Remote lisansına gerek yok.",
-  lanWizardAdapter:"Tesis / LAN arayüzü (Tailscale hariç)",lanWizardChoose:"Ağ arayüzü seçin",lanWizardScope:"Windows güvenlik duvarı erişim kapsamı",lanWizardDevices:"Seçilen telefonların IP adresleri",lanWizardSubnet:"Onaylı tesis LAN alt ağı",
-  lanWizardIps:"İzin verilen mobil IP'ler (virgülle, en fazla 8)",lanWizardSubnetWarning:"Bu alt ağdaki tüm cihazlar, uygulama doğrulamasından önce HTTPS portuna erişebilir. Tesis VLAN'ını tercih edin.",
-  lanWizardPublicConfirm:"Bu ağ Windows'ta Public. YALNIZ seçilen arayüz ve kaynak aralığına izin vermeyi onaylıyorum.",lanWizardPrepare:"LAN erişimini hazırla",lanWizardVerify:"Doğrula / yenile",lanWizardApprove:"Bu PC'de PROGNODE Windows Agent tepsi simgesine sağ tıkla → Complete LAN Access Setup (UAC). Kuralı kontrol edip yönetici onayını ver.",
-  lanWizardProbe:"Telefondan test et",lanWizardRepair:"Kuralı onar",lanWizardDisable:"LAN erişimini kapat",lanWizardQr:"QR eşleştirmeye geç",lanWizardIt:"Konuk VLAN, istemci izolasyonu veya GPO bağlantıyı engelliyorsa IT'den belirtilen telefon/alt ağdan Core IP'sine TCP 5443 izni isteyin. PROGNODE ağ politikasını aşmaz."
-});
+
 let lanWizardStatus=null;
 function lanWizardSelected(){return (lanWizardStatus?.interfaces||[]).find(n=>String(n.interfaceIndex)===($('lanWizardNic')?.value||''));}
 function lanWizardUpdateScope(){
@@ -6289,14 +5961,14 @@ async function lanWizardPrepare(action='ENABLE'){
     if(!nic||!nic.eligible)throw Error(t('lanWizardChoose'));
     const publicConfirmed=Boolean($('lanWizardPublicConfirm')?.checked);
     if(nic.profile==='Public'&&action!=='DISABLE'&&!publicConfirmed)throw Error(t('lanWizardPublicConfirm'));
-    if(action==='DISABLE' && !window.confirm(state.language==='tr'?'Yalnız PROGNODE tarafından oluşturulmuş LAN firewall kuralını kaldırmayı onaylıyor musunuz?':'Remove only the PROGNODE-managed LAN firewall rule?'))return;
+    if(action==='DISABLE' && !window.confirm('Remove only the PROGNODE-managed LAN firewall rule?'))return;
     const request={interfaceIndex:nic.interfaceIndex,selectedHost:nic.ipv4[0],scopeType:$('lanWizardScope').value,
       deviceIps:($('lanWizardDeviceIps').value||'').split(',').map(x=>x.trim()).filter(Boolean),
       confirmPublic:publicConfirmed,action};
     const p=await api('/api/mobile-access/prepare',{method:'POST',body:JSON.stringify(request)});
     $('lanWizardPreview').textContent=`${p.action} · ${p.interfaceName} · ${p.profile} · ${p.selectedHost}:5443\n${p.scopeType}: ${p.remoteAddresses.join(', ')}\n${p.warning||''}\nExpires ${new Date(p.expiresAtUtc).toLocaleTimeString()}`;
     $('lanWizardApproval').classList.remove('hidden');
-    out.textContent=state.language==='tr'?'Ayarlar hazır. 3 dakika içinde BU PC’deki Windows Agent üzerinden onayla.':'Prepared. Approve through the Windows tray Agent ON THIS PC within three minutes.';
+    out.textContent='Prepared. Approve through the Windows tray Agent ON THIS PC within three minutes.';
   }catch(e){out.textContent=e.message||String(e);}
 }
 async function lanWizardPhoneProbe(){
@@ -6304,7 +5976,7 @@ async function lanWizardPhoneProbe(){
   try{
     if(!nic)throw Error(t('lanWizardChoose'));
     const p=await api('/api/mobile-access/phone-probe',{method:'POST',body:JSON.stringify({interfaceIndex:nic.interfaceIndex})});
-    out.replaceChildren();const label=document.createElement('span');label.textContent=state.language==='tr'?'Telefonda AYNI LAN üzerinden bu URL’yi aç; 5 dakika geçerli. Chrome sertifika uyarısı gerçek mobil uygulama sertifika kontrolünün yerini tutmaz: ':'On phone on the SAME LAN open this URL (valid 5 min). Browser trust warnings are not a substitute for Mobile certificate pinning: ';
+    out.replaceChildren();const label=document.createElement('span');label.textContent='On phone on the SAME LAN open this URL (valid 5 min). Browser trust warnings are not a substitute for Mobile certificate pinning: ';
     const link=document.createElement('a');link.href=p.url;link.textContent=p.url;link.target='_blank';link.rel='noopener';out.append(label,link);
     const frame=$('lanWizardPhoneQr');
     if(frame&&typeof window.PrognodeQrSvg==='function'){
@@ -6404,18 +6076,18 @@ async function loadBackupCenter(){
   const status=$('backupStatusLine');if(!status)return;
   try{
     const [data,audit]=await Promise.all([api('/api/backup/status'),api('/api/backup/audit')]);
-    const tr=state.language==='tr';
+    
     $('backupScheduleNote').textContent=data.autoEnabled
-      ? (tr?`Otomatik: her gün ${String(data.dailyHourLocal).padStart(2,'0')}:00 sonrası · ${data.retentionDays} gün saklanır.`:`Automatic: daily after ${String(data.dailyHourLocal).padStart(2,'0')}:00 · keeps ${data.retentionDays} days.`)
-      : (tr?'Otomatik yedek kapalı: Windows servis ortamına PROGNODE_BACKUP_PASSWORD eklenmeli (min. 12 karakter).':'Automatic backup disabled: set PROGNODE_BACKUP_PASSWORD (12+ characters) for the Windows Core service.');
+      ? (`Automatic: daily after ${String(data.dailyHourLocal).padStart(2,'0')}:00 · keeps ${data.retentionDays} days.`)
+      : ('Automatic backup disabled: set PROGNODE_BACKUP_PASSWORD (12+ characters) for the Windows Core service.');
     window.__pgnBackupDirectory=data.backupDirectory;
     const list=$('backupList');list.replaceChildren();
-    if(!data.backups?.length){list.textContent=tr?'Henüz yedek yok.':'No snapshots yet.';}
+    if(!data.backups?.length){list.textContent='No snapshots yet.';}
     for(const b of data.backups||[]){
       const row=document.createElement('div');row.className='backup-row';
       const meta=document.createElement('div');const title=document.createElement('strong');title.textContent=b.fileName;
       const small=document.createElement('small');small.textContent=`${new Date(b.createdAtUtc).toLocaleString()} · ${b.sizeBytes < 1048576 ? Math.max(1,Math.round(b.sizeBytes/1024)) + ' KiB' : (b.sizeBytes/1048576).toFixed(1) + ' MiB'} ${b.automated?'· AUTO':''}`;
-      meta.append(title,small);const download=document.createElement('button');download.className='secondary';download.type='button';download.textContent=tr?'İndir':'Download';
+      meta.append(title,small);const download=document.createElement('button');download.className='secondary';download.type='button';download.textContent='Download';
       download.addEventListener('click',()=>backupDownload(b.fileName));row.append(meta,download);list.appendChild(row);
     }
     const aud=$('backupAuditList');aud.replaceChildren();
@@ -6425,14 +6097,14 @@ async function loadBackupCenter(){
         const detail=document.createElement('small');detail.textContent=`${new Date(a.utc).toLocaleString()} · ${a.actor} · ${a.success?'OK':'FAILED'}`;line.append(strong,detail);div.appendChild(line);aud.appendChild(div);
       }catch{}
     }
-    if(!aud.children.length)aud.textContent=tr?'Henüz işlem kaydı yok.':'No changes logged yet.';
-    status.classList.remove('error');if(!status.textContent)status.textContent=tr?'Şifreli yedek hazır.':'Ready for encrypted backup.';
+    if(!aud.children.length)aud.textContent='No changes logged yet.';
+    status.classList.remove('error');if(!status.textContent)status.textContent='Ready for encrypted backup.';
   }catch(error){status.classList.add('error');status.textContent=error.message||String(error)}
 }
 async function backupDownload(fileName){
   const status=$('backupStatusLine');
   try{
-    status.textContent=state.language==='tr'?'Şifreli dosya indiriliyor…':'Downloading encrypted file…';
+    status.textContent='Downloading encrypted file…';
     const token=sessionStorage.getItem('prognode.accessSession')||'';
     const resp=await fetch('/api/backup/download/'+encodeURIComponent(fileName),{headers:{'X-PROGNODE-Session':token},cache:'no-store'});
     if(!resp.ok){const error=await resp.json().catch(()=>({}));throw Error(error.message||`HTTP ${resp.status}`)}
@@ -6443,36 +6115,36 @@ async function backupDownload(fileName){
       if(Number(resp.headers.get('content-length'))>512*1048576)throw Error('Large backups require Chrome/Edge Save File support.');
       const url=URL.createObjectURL(await resp.blob());const a=document.createElement('a');a.href=url;a.download=fileName;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
     }
-    status.textContent=state.language==='tr'?'Şifreli yedek indirildi. Harici diskte de saklayın.':'Encrypted file downloaded. Keep an external copy.';
+    status.textContent='Encrypted file downloaded. Keep an external copy.';
   }catch(e){status.textContent=e.message||String(e);status.classList.add('error')}
 }
 $('backupRefresh')?.addEventListener('click',()=>{ $('backupStatusLine').textContent='';void loadBackupCenter();});
 $('backupCreate')?.addEventListener('click',async()=>{
   const button=$('backupCreate'),status=$('backupStatusLine');const password=$('backupPassword').value;
-  if(password.length<12 || password!==$('backupPasswordConfirm').value){status.classList.add('error');status.textContent=state.language==='tr'?'Parolalar aynı olmalı ve en az 12 karakter içermeli.':'Passphrases must match and have 12+ characters.';return;}
-  button.disabled=true;status.classList.remove('error');status.textContent=state.language==='tr'?'SQLite ve proje yedeği hazırlanıyor; bu işlem uzun sürebilir…':'Creating encrypted SQLite snapshot; this may take time…';
+  if(password.length<12 || password!==$('backupPasswordConfirm').value){status.classList.add('error');status.textContent='Passphrases must match and have 12+ characters.';return;}
+  button.disabled=true;status.classList.remove('error');status.textContent='Creating encrypted SQLite snapshot; this may take time…';
   try{const result=await api('/api/backup/create',{method:'POST',body:JSON.stringify({passphrase:password})});
-    status.classList.add('success');status.textContent=(state.language==='tr'?'Yedek hazır: ':'Snapshot ready: ')+result.fileName+(result.overview?` · ${result.overview.devices} PLC · ${result.overview.tags} Tags · ${result.overview.historianSamples} Historian samples`: '');
+    status.classList.add('success');status.textContent=('Snapshot ready: ')+result.fileName+(result.overview?` · ${result.overview.devices} PLC · ${result.overview.tags} Tags · ${result.overview.historianSamples} Historian samples`: '');
     await loadBackupCenter();await backupDownload(result.fileName);
   }catch(e){status.classList.add('error');status.textContent=e.message||String(e)}
   finally{button.disabled=false;$('backupPassword').value='';$('backupPasswordConfirm').value='';}
 });
 $('backupInspect')?.addEventListener('click',async()=>{
   const input=$('backupImportFile'),password=$('backupImportPassword').value,out=$('backupImportResult'),button=$('backupInspect');
-  if(!input.files?.length || !password){out.textContent=state.language==='tr'?'Dosya ve parolayı seçin.':'Select file and passphrase.';return;}
+  if(!input.files?.length || !password){out.textContent='Select file and passphrase.';return;}
   const form=new FormData();form.append('backup',input.files[0]);form.append('passphrase',password);
-  button.disabled=true;out.textContent=state.language==='tr'?'Yedek şifresi ve dosyalar doğrulanıyor…':'Verifying encrypted backup and file hashes…';
+  button.disabled=true;out.textContent='Verifying encrypted backup and file hashes…';
   try{
     const token=sessionStorage.getItem('prognode.accessSession')||'';
     const response=await fetch('/api/backup/inspect',{method:'POST',headers:{'X-PROGNODE-Session':token},body:form});
     const result=await response.json().catch(()=>({}));if(!response.ok)throw Error(result.message||`HTTP ${response.status}`);
     const different = Boolean(result.crossServer);
-    const t=state.language==='tr';
+    
     out.classList.toggle('backup-cross-server',different);
-    out.textContent=(t?'Şifreli dosya doğrulandı ve güvenle içe aktarıldı; henüz geri yüklenmedi. ':'Encrypted archive verified and staged; NO data has been restored. ')+
+    out.textContent=('Encrypted archive verified and staged; NO data has been restored. ')+
       `${result.fileName} • ${result.files} files • schema ${result.databaseSchema} • ${result.overview?.devices??'—'} PLC • ${result.overview?.tags??'—'} Tags • ${result.overview?.historianSamples??'—'} samples. `+
-      (different ? (t?'Bilgi: Bu yedek başka bir Server ID ile oluşturulmuş. Bu bir yedek doğrulama hatası DEĞİL. Başka Core üzerine geri yükleme için çevrimdışı araçta ayrı kimlik aktarımı onayı gerekir; lisans, HTTPS sertifikası ve cihaz eşleşmeleri kontrol edilir. ':'Notice: This backup is from a different Server ID. Verification PASSED. An offline identity-migration confirmation is required to restore; review license, HTTPS certificate and paired devices. ') : '')+
-      (t?'Core durdurulduktan sonra RESTORE_PROGNODE_BACKUP.cmd ile açık onay vererek geri yükleyebilirsiniz. ':'To restore, stop Core and approve the offline RESTORE_PROGNODE_BACKUP.cmd operation. ')+
+      (different ? ('Notice: This backup is from a different Server ID. Verification PASSED. An offline identity-migration confirmation is required to restore; review license, HTTPS certificate and paired devices. ') : '')+
+      ('To restore, stop Core and approve the offline RESTORE_PROGNODE_BACKUP.cmd operation. ')+
       (window.__pgnBackupDirectory?window.__pgnBackupDirectory+'\\'+result.fileName:'');
     await loadBackupCenter();
   }catch(error){out.textContent=error.message||String(error)}
@@ -6484,11 +6156,7 @@ Object.assign(translations.en,{
   dataResetSelectAll:"Select all categories",dataResetAll:"Delete all data",dataResetDevices:"Devices",dataResetTags:"Tags",dataResetAlarms:"Alarm rules",dataResetAlarmHistory:"Alarm history",dataResetHistorian:"Historian samples and settings",dataResetTrends:"Saved trends",dataResetBatch:"Batch history",dataResetNotifications:"Notifications",
   dataResetCascade:"Deleting devices also removes their Tags and related recording/alarm configuration. Deleting Tags removes their recording data, alarm rules and trend links.",dataResetReview:"Review selected data",dataResetReviewTitle:"Review before deletion",dataResetContinue:"Continue to password",dataResetCancel:"Cancel",dataResetPassword:"Current PROGNODE account password",dataResetFinalAck:"I understand these records will be permanently deleted.",dataResetExecute:"Delete selected records",dataResetBack:"Back"
 });
-Object.assign(translations.tr,{
-  dataResetKicker:"VERİ YÖNETİMİ",dataResetTitle:"Seçili verileri sil",dataResetIntro:"Silinecek kayıtları seçin. Lisans, sunucu kimliği, güvenlik sertifikaları ve yedekler korunur.",
-  dataResetSelectAll:"Tüm kategorileri seç",dataResetAll:"Tüm verileri sil",dataResetDevices:"Cihazlar",dataResetTags:"Taglar",dataResetAlarms:"Alarm kuralları",dataResetAlarmHistory:"Alarm geçmişi",dataResetHistorian:"Historian kayıtları ve ayarları",dataResetTrends:"Kayıtlı trendler",dataResetBatch:"Batch geçmişi",dataResetNotifications:"Bildirimler",
-  dataResetCascade:"Cihazları silmek, Taglarını ve ilişkili kayıt/alarm yapılandırmalarını da siler. Tagları silmek, kayıt verilerini, alarm kurallarını ve trend bağlantılarını siler.",dataResetReview:"Seçimi gözden geçir",dataResetReviewTitle:"Silmeden önce kontrol edin",dataResetContinue:"Şifre adımına geç",dataResetCancel:"Vazgeç",dataResetPassword:"Mevcut PROGNODE hesap şifresi",dataResetFinalAck:"Bu kayıtların kalıcı olarak silineceğini anlıyorum.",dataResetExecute:"Seçili kayıtları sil",dataResetBack:"Geri"
-});
+
 
 const resetChecks=[...document.querySelectorAll('[data-reset-category]')];
 const resetReview=$('dataResetReview'),resetPasswordStage=$('dataResetPasswordStage');
@@ -6500,7 +6168,7 @@ function updateResetButtons(){
 resetChecks.forEach(x=>x.addEventListener('change',updateResetButtons));
 $('dataResetSelectAll')?.addEventListener('click',()=>{
   const selectAll=resetChecks.some(x=>!x.checked);resetChecks.forEach(x=>x.checked=selectAll);
-  $('dataResetSelectAll').textContent=selectAll?(state.language==='tr'?'Seçimi kaldır':'Clear selection'):t('dataResetSelectAll');updateResetButtons();
+  $('dataResetSelectAll').textContent=selectAll?('Clear selection'):t('dataResetSelectAll');updateResetButtons();
 });
 $('dataResetAllButton')?.addEventListener('click',()=>{
   resetChecks.forEach(x=>x.checked=true);updateResetButtons();
@@ -6518,11 +6186,11 @@ $('dataResetPassword')?.addEventListener('input',updateResetButtons);
 $('dataResetFinalAck')?.addEventListener('change',updateResetButtons);
 $('dataResetExecute')?.addEventListener('click',async()=>{
   const button=$('dataResetExecute'),status=$('dataResetStatus'),password=$('dataResetPassword').value;
-  button.disabled=true;status.classList.remove('error');status.textContent=state.language==='tr'?'Seçili kayıtlar siliniyor…':'Deleting selected records…';
+  button.disabled=true;status.classList.remove('error');status.textContent='Deleting selected records…';
   try{
     const result=await api('/api/system/data-reset',{method:'POST',body:JSON.stringify({categories:resetSelection(),password})});
     const count=Object.values(result.deleted||{}).reduce((sum,n)=>sum+Number(n||0),0);
-    status.textContent=state.language==='tr'?`${count} kayıt silindi. Sayfa yenileniyor…`:`${count} records deleted. Reloading…`;
+    status.textContent=`${count} records deleted. Reloading…`;
     setTimeout(()=>location.reload(),900);
   }catch(error){status.classList.add('error');status.textContent=error.message||String(error);button.disabled=false}
   finally{$('dataResetPassword').value='';updateResetButtons()}

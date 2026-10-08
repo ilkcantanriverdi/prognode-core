@@ -46,7 +46,7 @@ vm.runInContext(trend.slice(start,end),context);
   await context.loadCatalog();
   assert.equal(context.Core.ready,true,'alarm outage must not block Historian catalog');
   assert.equal(context.signalDefs.length,100,'all 100 recorded Tags must be available');
-  assert.equal(dom['hf61-source'].textContent,'100 HISTORIAN SİNYALİ');
+  assert.equal(dom['hf61-source'].textContent,'100 HISTORIAN SIGNALS');
   assert.equal(alarmAttempts,1);
   emptyCatalog=true;
   await context.loadCatalog();
