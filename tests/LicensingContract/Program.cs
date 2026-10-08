@@ -169,6 +169,63 @@ static void Check(bool condition, string message)
     Console.WriteLine("PASS TypeScript (Control) signed activation verifies in C# (Core)");
 }
 
+// --- Trusted clock: turning the PC clock back cannot extend a license --------------------------
+{
+    var folder = Path.Combine(Path.GetTempPath(), "prognode-clock-" + Guid.NewGuid().ToString("N"));
+    var paths = new[] { Path.Combine(folder, "a", "clock.dat"), Path.Combine(folder, "b", "clock.dat") };
+    var machine = new FixedMachine(MachineFingerprint.FromMachineId("clock-test-machine"));
+    var system = new DateTimeOffset(2027, 3, 1, 12, 0, 0, TimeSpan.Zero);
+    try
+    {
+        var clock = new TrustedClock(paths, machine, () => system);
+        Check(clock.UtcNow == system, "The clock follows the system clock while it moves forward.");
+        system = system.AddDays(-30); // user sets Windows back a month
+        Check(clock.UtcNow == system.AddDays(30), "A clock set back never moves license time backwards.");
+        Check(clock.RollbackDetected, "A rollback beyond the tolerance is reported.");
+        Console.WriteLine("PASS license time never moves backwards; rollback is detected");
+
+        clock.ObserveSigned(system.AddDays(40)); // signed activation issued later
+        var restarted = new TrustedClock(paths, machine, () => system);
+        Check(restarted.HighWaterMark == system.AddDays(40), "The high-water mark survives a restart.");
+        Check(new TrustedClock(paths, new FixedMachine(MachineFingerprint.FromMachineId("another-pc")), () => system).HighWaterMark == DateTimeOffset.MinValue,
+            "A clock file copied from another machine is ignored.");
+        File.WriteAllText(paths[0], File.ReadAllText(paths[0]).Replace("2027", "2026"));
+        File.Delete(paths[1]);
+        Check(new TrustedClock(paths, machine, () => system).HighWaterMark == DateTimeOffset.MinValue, "An edited clock file is ignored.");
+        Console.WriteLine("PASS clock mark persists, and copied or edited clock files are ignored");
+
+        var cloudClock = new TrustedClock([Path.Combine(folder, "c", "clock.dat")], machine, () => system);
+        cloudClock.ObserveSigned(system.AddYears(3)); // PC was set to 2030 by mistake
+        cloudClock.SynchronizeFromCloud(system.AddMinutes(1));
+        Check(cloudClock.UtcNow == system.AddMinutes(1), "PROGNODE Cloud time recovers a clock that was set too far ahead.");
+        cloudClock.ObserveSigned(system.AddDays(-5));
+        Check(cloudClock.HighWaterMark == system.AddMinutes(1), "Signed timestamps only raise the mark.");
+        Console.WriteLine("PASS Cloud time recovers a mistaken future clock; signed times only raise it");
+
+        // An expired license stays expired after the clock is turned back.
+        var issued = new DateTimeOffset(2026, 10, 1, 0, 0, 0, TimeSpan.Zero);
+        var payload = new LicensePayloadV2("prognode.license.payload/v2", "PROGNODE", "lic-clock", "PGN-CLOCK", 1, "org", "Org",
+            new LicenseSubscriptionV2("ALARM_HISTORIAN", "MONTHLY", issued, issued.AddDays(30), issued.AddDays(37), 100, false, "V1.8"),
+            new LicenseAccountV2("u", "u@example.test", "U", "OWNER"),
+            new OfflineAuthClaimV1(1, "ARGON2ID", 19, new byte[16], new byte[32], 65536, 3, 1, 32, "BASE64URL_NOPAD", 1),
+            new LicenseEntitlementClaimsV2(true, true, null, null, null, null, 100),
+            issued);
+        var now = issued.AddDays(60);
+        var lifecycleClock = new TrustedClock([Path.Combine(folder, "d", "clock.dat")], machine, () => now);
+        var entitlements = new LicenseEntitlementService(() => lifecycleClock.UtcNow);
+        Check(entitlements.GetLicenseStatus(payload) == "EXPIRED", "A license is expired after its grace period.");
+        now = issued.AddDays(10); // clock turned back into the paid period
+        Check(entitlements.GetLicenseStatus(payload) == "EXPIRED", "Turning the clock back does not revive an expired license.");
+        var beforeIssue = new LicenseEntitlementService(() => issued.AddYears(-1));
+        Check(beforeIssue.GetLicenseStatus(payload) == "ACTIVE", "Lifecycle time is never earlier than the signed issue time.");
+        Console.WriteLine("PASS an expired license stays expired after the clock is turned back");
+    }
+    finally
+    {
+        if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
+    }
+}
+
 if (OperatingSystem.IsWindows())
 {
     var real = new OsMachineFingerprintProvider().GetFingerprint();

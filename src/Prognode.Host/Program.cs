@@ -204,10 +204,20 @@ var licensePath = Path.Combine(dataRoot, "license", "current.pgnlicense");
 var licenseVerificationOptions = PrognodeTrustedLicenseKeys.CreateVerificationOptions(builder.Environment.ContentRootPath);
 var licenseSignatureVerifier = new LicenseSignatureVerifier(licenseVerificationOptions);
 var localLicenseStore = new LocalLicenseStore(licensePath);
-var licenseEntitlementService = new LicenseEntitlementService();
-var offlineCredentialVerifier = new OfflineCredentialVerifier();
 // A license runs only on the Core and machine named in its Cloud-signed activation certificate.
 var machineFingerprintProvider = new OsMachineFingerprintProvider();
+// License time never goes backwards: turning the PC clock back cannot extend a license or trial.
+var trustedClock = new TrustedClock(
+    new[]
+    {
+        Path.Combine(dataRoot, "license", "clock.dat"),
+        OperatingSystem.IsWindows()
+            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "PROGNODE", "clock.dat")
+            : string.Empty,
+    },
+    machineFingerprintProvider);
+var licenseEntitlementService = new LicenseEntitlementService(() => trustedClock.UtcNow);
+var offlineCredentialVerifier = new OfflineCredentialVerifier();
 var licenseActivationService = new LicenseActivationService(
     licenseSignatureVerifier,
     new LicenseActivationStore(Path.Combine(dataRoot, "license", "activation.pgnact")),
@@ -224,6 +234,7 @@ builder.Services.AddSingleton(localLicenseStore);
 builder.Services.AddSingleton(licenseEntitlementService);
 builder.Services.AddSingleton(offlineCredentialVerifier);
 builder.Services.AddSingleton<IMachineFingerprintProvider>(machineFingerprintProvider);
+builder.Services.AddSingleton(trustedClock);
 builder.Services.AddSingleton(licenseActivationService);
 builder.Services.AddSingleton(fileLicenseProvider);
 builder.Services.AddSingleton<ILicenseProvider>(fileLicenseProvider);

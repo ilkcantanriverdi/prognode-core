@@ -1,6 +1,7 @@
 using Prognode.Contracts.Tags;
 using Prognode.Core.Devices;
 using Prognode.Core.Tags;
+using Prognode.Licensing;
 using Prognode.Protocols.Abstractions;
 using Prognode.Protocols.Mqtt;
 using Prognode.Protocols.OpcUa;
@@ -14,6 +15,9 @@ namespace Prognode.Host.Services;
 /// still running is skipped instead of queued. When a device produces no fresh values for
 /// 3 × its poll interval (at least 10 s), its last Good values are marked STALE so alarms,
 /// the signal-quality monitor and the historian never treat old data as current.
+/// Without an operational license (missing, expired after grace, not activated on this PC, or
+/// revoked) nothing is polled: PLC connections are closed and live values are marked NotConnected.
+/// Configuration and recorded history are kept; polling resumes when a valid license is active.
 /// </summary>
 public sealed class TagPollingHostedService(
     IDeviceRepository devices,
@@ -23,8 +27,13 @@ public sealed class TagPollingHostedService(
     MqttTagReader mqttReader,
     OpcUaTagReader opcUaReader,
     S7SessionPool s7Sessions,
+    LicenseService license,
     ILogger<TagPollingHostedService> logger) : BackgroundService
 {
+    private static readonly TimeSpan LicenseCheckInterval = TimeSpan.FromSeconds(2);
+    private DateTimeOffset _licenseCheckedAt = DateTimeOffset.MinValue;
+    private bool _licensed = true;
+    private bool _suspended;
     private static readonly TimeSpan DeviceListRefresh = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan MinimumStaleAfter = TimeSpan.FromSeconds(10);
 
@@ -74,6 +83,8 @@ public sealed class TagPollingHostedService(
         CancellationToken cancellationToken)
     {
         var now = DateTimeOffset.UtcNow;
+        if (!await LicenseAllowsPollingAsync(now))
+            return;
 
         if (now - _devicesLoadedAt >= DeviceListRefresh)
         {
@@ -135,6 +146,39 @@ public sealed class TagPollingHostedService(
 
             _inFlight[device.Id] = ReadDeviceAsync(reader, device, deviceTags, cancellationToken);
         }
+    }
+
+    private async Task<bool> LicenseAllowsPollingAsync(DateTimeOffset now)
+    {
+        if (now - _licenseCheckedAt >= LicenseCheckInterval)
+        {
+            _licenseCheckedAt = now;
+            _licensed = license.Current.IsValid;
+        }
+        if (_licensed)
+        {
+            if (_suspended)
+                logger.LogInformation("PROGNODE license is operational again; tag polling resumed.");
+            _suspended = false;
+            return true;
+        }
+        if (_suspended)
+            return false;
+
+        _suspended = true;
+        // Let reads that already started finish first, so they cannot overwrite the marking below.
+        try { await Task.WhenAll(_inFlight.Values); } catch { /* individual read errors are already handled */ }
+        _inFlight.Clear();
+        _nextDue.Clear();
+        _devicesLoadedAt = DateTimeOffset.MinValue;
+        var none = new HashSet<Guid>();
+        mqttReader.PruneExcept(none);
+        opcUaReader.PruneExcept(none);
+        s7Sessions.PruneExcept(none);
+        foreach (var value in currentValues.GetAll())
+            currentValues.Set(value with { Quality = TagQuality.NotConnected, Error = "PROGNODE license is not active." });
+        logger.LogWarning("PROGNODE license is not operational ({Status}); tag polling stopped. Configuration and history are kept.", license.Current.Status);
+        return false;
     }
 
     private async Task ReadDeviceAsync(ITagReader reader,

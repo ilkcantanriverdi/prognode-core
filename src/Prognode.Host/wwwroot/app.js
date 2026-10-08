@@ -1024,6 +1024,10 @@ async function refreshLicenseForSession() {
 async function loadActivationStatus() {
   try { state.activation = await api('/api/license/activation'); }
   catch { state.activation = null; }
+  if (state.activation?.clockRollbackDetected && !state.clockWarningShown) {
+    state.clockWarningShown = true;
+    showToast("This PC's clock is behind time PROGNODE has already recorded. License time is counted from the later time — please correct the Windows date and time.");
+  }
 }
 
 function activationRequired() {

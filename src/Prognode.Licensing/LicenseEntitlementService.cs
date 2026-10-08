@@ -7,6 +7,20 @@ public sealed class LicenseEntitlementService
     public const int GracePeriodDays = 7;
     public const int ExpiringSoonDays = 7;
 
+    private readonly Func<DateTimeOffset> _clock;
+
+    /// <param name="clock">Lifecycle clock; production passes <see cref="TrustedClock.UtcNow"/> so a
+    /// clock set back cannot extend a license. Defaults to the system clock.</param>
+    public LicenseEntitlementService(Func<DateTimeOffset>? clock = null) =>
+        _clock = clock ?? (() => DateTimeOffset.UtcNow);
+
+    /// <summary>Lifecycle time for a signed license: never earlier than its signed issue time.</summary>
+    private DateTimeOffset LifecycleNow(LicensePayloadV2 payload)
+    {
+        var instant = _clock();
+        return instant < payload.IssuedAtUtc ? payload.IssuedAtUtc : instant;
+    }
+
     public IReadOnlySet<string> ValidateAndGetModules(LicensePayloadV2 payload, bool rejectExpired)
     {
         var status = GetLicenseStatus(payload);
@@ -84,7 +98,7 @@ public sealed class LicenseEntitlementService
 
     public string GetLicenseStatus(LicensePayloadV2 payload, DateTimeOffset? now = null)
     {
-        var instant = now ?? DateTimeOffset.UtcNow;
+        var instant = now ?? LifecycleNow(payload);
         var subscription = payload.Subscription;
 
         var isTrial = string.Equals(payload.LicenseType, "TRIAL", StringComparison.OrdinalIgnoreCase);
@@ -121,7 +135,7 @@ public sealed class LicenseEntitlementService
         if (!remote.Enabled)
             return false;
 
-        var instant = now ?? DateTimeOffset.UtcNow;
+        var instant = now ?? LifecycleNow(payload);
         var remoteExpiry = remote.ExpiresAtUtc ?? payload.Subscription.ExpiresAtUtc;
         return instant < remoteExpiry && GetLicenseStatus(payload, instant) is not ("EXPIRED" or "INVALID");
     }
