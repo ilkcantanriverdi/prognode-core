@@ -239,7 +239,7 @@ Object.assign(translations.en, {
 Object.assign(translations.en, {
   remoteAccess:"REMOTE ACCESS", remoteAccessTitle:"Remote clients", remoteAccessHelp:"LAN clients never consume a remote seat. Phones, tablets and Windows Clients consume one seat only when Remote Access is enabled.",
   subscription:"Subscription", serverBinding:"Server binding", remoteClients:"Remote clients", lastSync:"Last sync", bindRemoteAccess:"Bind Remote Access", syncNow:"Sync now", remoteAccessLocalNote:"Local runtime and LAN access never depend on this cloud connection.",
-  remoteNotPurchased:"Not included", remoteLanOnly:"LAN only", remoteCloudPending:"Cloud pending", remoteSeat:"remote seat", remoteSeats:"remote seats", revokeRemote:"Revoke Remote", noRemoteClients:"No Remote Access clients are consuming seats on this Server."
+  remoteNotPurchased:"Not included", remoteLanOnly:"LAN only", remoteCloudPending:"Cloud pending", remoteSeat:"remote seat", remoteSeats:"remote seats", revokeRemote:"Revoke Remote", remoteEnableOnDevice:"Turn on in the PROGNODE app on this device", noRemoteClients:"No Remote Access clients are consuming seats on this Server."
 });
 
 
@@ -953,10 +953,11 @@ function renderRemoteAccess() {
     return;
   }
   list.innerHTML = clients.map(client => {
-    const canEnable = entitled && bound && active && Boolean(client.devicePublicKey) && canMutateConfiguration();
+    // Remote Access is turned on from the device itself: it proves its key and receives its own
+    // off-site credential, which never passes through this page.
     const action = client.remoteEnabled
       ? `<button class="ghost-button remote-revoke" data-client-id="${escapeHtml(client.localClientId)}" ${canMutateConfiguration() ? "" : "disabled"}>${escapeHtml(t("revokeRemote"))}</button>`
-      : `<button class="ghost-button remote-enable" data-client-id="${escapeHtml(client.localClientId)}" ${canEnable ? "" : "disabled"}>${escapeHtml("Enable Remote")}</button>`;
+      : (entitled && bound && active ? `<small class="remote-enable-hint">${escapeHtml(t("remoteEnableOnDevice"))}</small>` : "");
     return `
       <div class="remote-client-row">
         <div><strong>${escapeHtml(client.deviceName || "Client")}</strong><small>${escapeHtml(client.platform || "Unknown")} · ${client.remoteEnabled ? escapeHtml(client.userDisplayName || client.userId || "Remote") : escapeHtml(t("remoteLanOnly"))}</small></div>
@@ -967,18 +968,6 @@ function renderRemoteAccess() {
     try {
       await api(`/api/remote-access/clients/${button.dataset.clientId}`, {method:"DELETE"});
       showToast("Remote seat released.");
-      await loadRemoteAccess();
-    } catch (error) { showToast(error.message); }
-  }));
-  list.querySelectorAll(".remote-enable").forEach(button => button.addEventListener("click", async () => {
-    try {
-      const client = clients.find(x => String(x.localClientId) === String(button.dataset.clientId));
-      if (!client) return;
-      const result = await api("/api/remote-access/clients/register", {
-        method:"POST",
-        body:JSON.stringify({clientId:client.localClientId, devicePublicKey:client.devicePublicKey, platform:client.platform})
-      });
-      showToast(result.message || ("Remote Access enabled."));
       await loadRemoteAccess();
     } catch (error) { showToast(error.message); }
   }));

@@ -269,27 +269,17 @@ builder.Services.AddSingleton(new CoreCloudLicenseStateStore(dataRoot));
 builder.Services.AddHostedService<CoreCloudLicenseHostedService>();
 
 // REMOTE_ACCESS is an optional paid add-on. It never participates in the local runtime/login decision.
-// When BaseUrl is empty, all local/LAN functionality continues normally and no cloud calls are attempted.
+// The relay lives on the same PROGNODE Cloud host as activation (Prognode:CloudLicense:BaseUrl) and
+// authenticates with the license activation token. Without activation no cloud calls are attempted.
 var remoteSection = builder.Configuration.GetSection("Prognode:RemoteAccess");
 var remoteAccessOptions = new RemoteAccessOptions
 {
-    BaseUrl = remoteSection["BaseUrl"] ?? string.Empty,
-    StatusPath = remoteSection["StatusPath"] ?? "/api/v1/remote-access/status",
-    BindServerPath = remoteSection["BindServerPath"] ?? "/api/v1/remote-access/bind-server",
-    RegisterClientPath = remoteSection["RegisterClientPath"] ?? "/api/v1/remote-access/register-client",
-    PushTokenPath = remoteSection["PushTokenPath"] ?? "/api/v1/remote-access/push-token",
-    RevokeClientPath = remoteSection["RevokeClientPath"] ?? "/api/v1/remote-access/revoke-client",
-    PublishNotificationPath = remoteSection["PublishNotificationPath"] ?? "/api/v1/remote-access/notifications",
-    CommandsPath = remoteSection["CommandsPath"] ?? "/api/v1/remote-access/commands",
-    CompleteCommandPath = remoteSection["CompleteCommandPath"] ?? "/api/v1/remote-access/commands/complete",
     SyncIntervalSeconds = remoteSection.GetValue<int?>("SyncIntervalSeconds") ?? 300
 };
 builder.Services.AddSingleton(remoteAccessOptions);
-var remoteHttpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
-if (remoteAccessOptions.IsConfigured)
-    remoteHttpClient.BaseAddress = new Uri(remoteAccessOptions.BaseUrl.TrimEnd('/') + "/");
-builder.Services.AddSingleton(remoteHttpClient);
-builder.Services.AddSingleton<RemoteAccessCloudClient>();
+builder.Services.AddSingleton(sp => new RemoteAccessCloudClient(
+    new HttpClient { Timeout = TimeSpan.FromSeconds(20) },
+    sp.GetRequiredService<CoreCloudLicenseOptions>()));
 builder.Services.AddSingleton(new RemoteAccessStateStore(dataRoot));
 builder.Services.AddSingleton(new RemoteNotificationOutboxStore(databasePath,dataRoot));
 builder.Services.AddSingleton(new RemoteAckAuditStore(dataRoot));

@@ -233,9 +233,96 @@ if (OperatingSystem.IsWindows())
     Console.WriteLine("PASS Windows MachineGuid fingerprint is readable and stable");
 }
 
+// --- Remote Access relay client: speaks the PROGNODE Cloud contract with the activation token ---------
+{
+    var handler = new RecordingHandler();
+    var relay = new Prognode.RemoteAccess.RemoteAccessCloudClient(
+        new HttpClient(handler),
+        new CoreCloudLicenseOptions { BaseUrl = CoreCloudLicenseOptions.ProductionBaseUrl });
+    var occurrence = Guid.NewGuid();
+
+    handler.Reply = _ => ("{\"ok\":true,\"eventId\":\"" + occurrence + "\"}", 200);
+    var published = await relay.PublishNotificationAsync("activation-token", new Prognode.Contracts.Notifications.NotificationEvent(
+        42, "HIGH", "Tank 3 high level", "Level 97.4 % at 10:15", DateTimeOffset.Parse("2026-10-08T10:15:00Z"),
+        RequiresAcknowledgement: true, RepeatSequence: 2, OccurrenceId: occurrence, EventType: "ALARM_ACTIVE", SourceName: "Tank 3 high level"));
+    var sent = handler.Requests[^1];
+    Check(published, "A relay ACK for the same event id counts as delivered.");
+    Check(sent.Url == "https://account.prognode.io/api/remote-access/alarms/events" && sent.Auth == "Bearer activation-token",
+        "Alarm events go to PROGNODE Cloud with the Core activation token.");
+    var eventBody = JsonNode.Parse(sent.Body!)!.AsObject();
+    Check(eventBody["eventId"]!.GetValue<string>() == occurrence.ToString() && eventBody["state"]!.GetValue<string>() == "ACTIVE" &&
+          eventBody["severity"]!.GetValue<string>() == "HIGH" && eventBody["displayMetadata"]!["repeatSequence"]!.GetValue<int>() == 2,
+        "The event carries the occurrence id, state, severity and reminder number.");
+    Check(!sent.Body!.Contains("97.4") && !eventBody.ContainsKey("message"), "Process values in the message text never leave the site.");
+
+    handler.Reply = _ => ("<html>login</html>", 200);
+    Check(!await relay.PublishNotificationAsync("activation-token", new Prognode.Contracts.Notifications.NotificationEvent(1, "LOW", "x", "", DateTimeOffset.UtcNow)),
+        "An HTML page is never mistaken for a relay ACK.");
+
+    var commandId = Guid.NewGuid();
+    var remoteClientId = Guid.NewGuid();
+    handler.Reply = _ => ($"{{\"commands\":[{{\"commandId\":\"{commandId}\",\"type\":\"ACK_ALARM\",\"alarmEventId\":\"{occurrence}\",\"requestedAtUtc\":\"2026-10-08T10:16:00Z\",\"remoteClient\":{{\"id\":\"{remoteClientId}\",\"userId\":\"user-7\",\"deviceName\":\"Pixel\"}}}}]}}", 200);
+    var commands = await relay.GetCommandsAsync("activation-token");
+    Check(handler.Requests[^1].Url == "https://account.prognode.io/api/remote-access/commands?limit=25", "Core polls the cloud command queue.");
+    Check(commands.Count == 1 && commands[0].CommandId == commandId.ToString() && commands[0].OccurrenceId == occurrence &&
+          commands[0].UserId == "user-7" && commands[0].RemoteClientId == remoteClientId && commands[0].IssuedAtUtc == DateTimeOffset.Parse("2026-10-08T10:16:00Z"),
+        "Remote ACK commands map to the occurrence, user and device that sent them.");
+
+    handler.Reply = _ => ("{\"ok\":true}", 200);
+    Check(await relay.CompleteCommandAsync("activation-token", commandId.ToString(), false, "STALE_OCCURRENCE"), "A completed command is reported.");
+    var complete = JsonNode.Parse(handler.Requests[^1].Body!)!;
+    Check(handler.Requests[^1].Url.EndsWith($"/api/remote-access/commands/{commandId}/complete") &&
+          complete["status"]!.GetValue<string>() == "REJECTED" && complete["result"]!["code"]!.GetValue<string>() == "STALE_OCCURRENCE",
+        "A refused ACK is reported as REJECTED with its reason.");
+    handler.Reply = _ => ("{\"error\":\"command_not_found\"}", 404);
+    Check(await relay.CompleteCommandAsync("activation-token", commandId.ToString(), true, "ACKNOWLEDGED"), "An already completed command is not retried forever.");
+    Check(!await relay.CompleteCommandAsync("activation-token", "not-a-guid", true, "ACKNOWLEDGED"), "Malformed command ids are never sent.");
+
+    var challengeId = Guid.NewGuid();
+    handler.Reply = _ => ($"{{\"challengeId\":\"{challengeId}\",\"challenge\":\"prognode-remote-challenge\",\"expiresAtUtc\":\"2026-10-08T10:20:00Z\"}}", 200);
+    var challenge = await relay.CreateChallengeAsync("activation-token");
+    Check(challenge.ChallengeId == challengeId && challenge.Challenge == "prognode-remote-challenge", "A registration challenge is parsed.");
+
+    var rawKey = Convert.ToBase64String(new byte[32].Select((_, i) => (byte)(i + 1)).ToArray()).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+    var newId = Guid.NewGuid();
+    handler.Reply = _ => ($"{{\"ok\":true,\"remoteClientId\":\"{newId}\",\"remoteClientToken\":\"device-token\",\"tokenExpiresAtUtc\":\"2026-11-07T10:15:00Z\"}}", 200);
+    var registered = await relay.RegisterClientAsync("activation-token", "Pixel 9", "ANDROID_PHONE", rawKey, challengeId, "c2lnbmF0dXJl", null);
+    var register = JsonNode.Parse(handler.Requests[^1].Body!)!;
+    var spkiText = register["devicePublicKey"]!.GetValue<string>().Replace('-', '+').Replace('_', '/');
+    var spki = Convert.FromBase64String(spkiText.PadRight(spkiText.Length + (4 - spkiText.Length % 4) % 4, '='));
+    Check(spki.Length == 44 && spki[0] == 0x30 && spki[^1] == 32, "A raw 32-byte Ed25519 device key is sent as SPKI.");
+    Check(register["platform"]!.GetValue<string>() == "ANDROID" && register["challengeId"]!.GetValue<string>() == challengeId.ToString() &&
+          register["deviceSignature"]!.GetValue<string>() == "c2lnbmF0dXJl", "Registration sends the platform and the signed challenge.");
+    Check(registered.Success && registered.RemoteClientId == newId && registered.RemoteClientToken == "device-token" &&
+          registered.RemoteClientTokenExpiresAtUtc == DateTimeOffset.Parse("2026-11-07T10:15:00Z"), "The device credential is returned for the paired device.");
+
+    handler.Reply = _ => ("{\"error\":\"remote_client_limit_reached\"}", 409);
+    var full = await relay.RegisterClientAsync("activation-token", "Pixel 9", "IOS", rawKey, challengeId, "c2lnbmF0dXJl", null);
+    Check(!full.Success && full.Code == "REMOTE_CLIENT_LIMIT_REACHED" && full.Message.Contains("seats"), "A full Remote Access plan is reported clearly.");
+    Check(Prognode.RemoteAccess.RemoteAccessCloudClient.CloudPlatform("iPhone") == "IOS" &&
+          Prognode.RemoteAccess.RemoteAccessCloudClient.CloudPlatform("Windows client") == "WINDOWS" &&
+          Prognode.RemoteAccess.RemoteAccessCloudClient.CloudPlatform("") == "OTHER", "Device platforms map to the cloud set.");
+    Console.WriteLine("PASS Remote Access relay: activation-token auth, alarm metadata only, remote ACK commands, signed device registration");
+}
+
 Console.WriteLine("Licensing contract checks passed.");
 
 sealed class FixedMachine(string fingerprint) : IMachineFingerprintProvider
 {
     public string GetFingerprint() => fingerprint;
+}
+
+sealed class RecordingHandler : HttpMessageHandler
+{
+    public List<(string Url, string? Auth, string? Body)> Requests { get; } = [];
+    public Func<HttpRequestMessage, (string Body, int Status)> Reply { get; set; } = _ => ("{}", 200);
+
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        var body = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
+        Requests.Add((request.RequestUri!.ToString(), request.Headers.Authorization?.ToString(), body));
+        var (text, status) = Reply(request);
+        var mediaType = text.TrimStart().StartsWith('<') ? "text/html" : "application/json";
+        return new HttpResponseMessage((System.Net.HttpStatusCode)status) { Content = new StringContent(text, Encoding.UTF8, mediaType) };
+    }
 }
