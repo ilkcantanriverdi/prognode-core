@@ -36,6 +36,7 @@ public sealed class LocalAccessSessionService(
         string Email);
 
     private readonly ConcurrentDictionary<string, Session> _sessions = new(StringComparer.Ordinal);
+    private readonly LoginAttemptLimiter _limiter = new();
 
     public LocalAccessSessionResult GetStatus(string? token)
     {
@@ -78,8 +79,10 @@ public sealed class LocalAccessSessionService(
         }
     }
 
-    public LocalAccessSessionResult Login(LocalAccessLoginRequest request)
+    public LocalAccessSessionResult Login(LocalAccessLoginRequest request, string? source = null)
     {
+        var attemptSource = string.IsNullOrWhiteSpace(source) ? "unknown" : source;
+        _limiter.EnsureAllowed(attemptSource);
         var snapshot = provider.GetCurrent();
         if (!snapshot.IsValid)
             throw new InvalidOperationException("Import a valid signed PROGNODE license before signing in.");
@@ -94,7 +97,11 @@ public sealed class LocalAccessSessionService(
 
         // 10-15 email normalization + Argon2id + constant-time compare.
         if (!credentialVerifier.Verify(file.Payload, request.Email, request.Password))
+        {
+            _limiter.RecordFailure(attemptSource);
             throw new InvalidOperationException("Email or password is incorrect.");
+        }
+        _limiter.RecordSuccess(attemptSource);
 
         // 16 local session only.
         var token = Base64UrlNoPadding.Encode(RandomNumberGenerator.GetBytes(32));

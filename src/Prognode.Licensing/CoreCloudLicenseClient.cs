@@ -7,6 +7,9 @@ namespace Prognode.Licensing;
 
 public sealed class CoreCloudLicenseOptions
 {
+    /// <summary>Production license API. Release builds always use it, whatever the configuration says.</summary>
+    public const string ProductionBaseUrl = "https://account.prognode.io";
+
     public string BaseUrl { get; set; } = string.Empty;
     public string[] FallbackBaseUrls { get; set; } = Array.Empty<string>();
     public string ActivatePath { get; set; } = "/api/core/activate";
@@ -16,16 +19,32 @@ public sealed class CoreCloudLicenseOptions
     public IReadOnlyList<string> CandidateBaseUrls =>
         new[] { BaseUrl }
             .Concat(FallbackBaseUrls ?? Array.Empty<string>())
+#if !DEBUG
+            .Append(ProductionBaseUrl)
+#endif
             .Where(IsAllowedBaseUrl)
-            .Select(x => x.Trim().TrimEnd('/'))
+            .Select(x => x!.Trim().TrimEnd('/'))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
     public bool IsConfigured => CandidateBaseUrls.Count > 0;
 
-    private static bool IsAllowedBaseUrl(string? value) =>
-        Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
-        (uri.Scheme == Uri.UriSchemeHttps || uri.IsLoopback);
+    /// <summary>
+    /// Release builds talk only to HTTPS PROGNODE hosts, so editing appsettings cannot point Core at a
+    /// look-alike server that answers ACTIVE and clears a revocation. Debug builds also allow loopback.
+    /// </summary>
+    internal static bool IsAllowedBaseUrl(string? value)
+    {
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri))
+            return false;
+#if DEBUG
+        if (uri.IsLoopback)
+            return true;
+#endif
+        return uri.Scheme == Uri.UriSchemeHttps &&
+            (string.Equals(uri.Host, "prognode.io", StringComparison.OrdinalIgnoreCase) ||
+             uri.Host.EndsWith(".prognode.io", StringComparison.OrdinalIgnoreCase));
+    }
 }
 
 public sealed record CoreCloudLicenseStatus(
@@ -107,8 +126,7 @@ public sealed class CoreCloudLicenseClient
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    var error = new InvalidOperationException(
-                        $"PROGNODE Cloud license API {baseUrl} returned HTTP {(int)response.StatusCode}.");
+                    var error = new InvalidOperationException(DescribeError(baseUrl, response.StatusCode, raw));
 
                     // A missing route means this PROGNODE host is not the Cloud API owner.
                     // Try the next trusted production host. Validation failures should stop here.
@@ -205,6 +223,30 @@ public sealed class CoreCloudLicenseClient
             responseLicenseId,
             revoked,
             revokedAtUtc);
+    }
+
+    /// <summary>Turns a structured Cloud error into a message the Core UI can show as-is.</summary>
+    private static string DescribeError(string baseUrl, HttpStatusCode statusCode, string raw)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(raw);
+            var root = document.RootElement;
+            var code = GetString(root, "error");
+            var details = GetString(root, "details");
+            if (code == "installation_limit_reached")
+            {
+                var machine = GetString(root, "activeMachineName");
+                return $"installation_limit_reached: This license is already active on another PROGNODE Core{(string.IsNullOrWhiteSpace(machine) ? "" : $" ({machine})")}. Release it in PROGNODE Account, then activate this PC.";
+            }
+            if (!string.IsNullOrWhiteSpace(code))
+                return string.IsNullOrWhiteSpace(details) ? code : $"{code}: {details}";
+        }
+        catch (JsonException)
+        {
+            // Not a PROGNODE JSON error (proxy page, HTML); fall through to the status code.
+        }
+        return $"PROGNODE Cloud license API {baseUrl} returned HTTP {(int)statusCode}.";
     }
 
     private static string? GetString(JsonElement root, string name) =>

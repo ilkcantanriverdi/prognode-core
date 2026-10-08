@@ -587,11 +587,16 @@ public static class EndpointExtensions
 
         endpoints.MapPost(
             "/api/access/login",
-            (LocalAccessLoginRequest request, LocalAccessSessionService sessions) =>
+            (HttpContext context, LocalAccessLoginRequest request, LocalAccessSessionService sessions) =>
             {
                 try
                 {
-                    return Results.Ok(sessions.Login(request));
+                    return Results.Ok(sessions.Login(request, context.Connection.RemoteIpAddress?.ToString()));
+                }
+                catch (LoginThrottledException ex)
+                {
+                    context.Response.Headers.RetryAfter = ((int)Math.Ceiling(ex.RetryAfter.TotalSeconds)).ToString();
+                    return Results.Json(new { message = ex.Message }, statusCode: StatusCodes.Status429TooManyRequests);
                 }
                 catch (InvalidOperationException ex)
                 {
