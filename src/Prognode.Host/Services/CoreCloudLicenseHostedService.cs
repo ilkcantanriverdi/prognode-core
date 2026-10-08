@@ -19,6 +19,7 @@ public sealed class CoreCloudLicenseHostedService(
     LocalLicenseStore localLicenseStore,
     ServerAccessService serverAccess,
     IMachineFingerprintProvider machine,
+    TrustedClock clock,
     ILogger<CoreCloudLicenseHostedService> logger) : BackgroundService
 {
     // Cloud codes meaning this installation is no longer allowed to run the license.
@@ -82,7 +83,10 @@ public sealed class CoreCloudLicenseHostedService(
                     stoppingToken);
 
                 if (!string.IsNullOrWhiteSpace(result.ActivationCertificate))
-                    provider.ImportActivation(Encoding.UTF8.GetBytes(result.ActivationCertificate));
+                {
+                    var certificate = provider.ImportActivation(Encoding.UTF8.GetBytes(result.ActivationCertificate));
+                    clock.ObserveSigned(certificate.IssuedAtUtc);
+                }
             }
             else if (heartbeatDue)
             {
@@ -94,7 +98,12 @@ public sealed class CoreCloudLicenseHostedService(
             }
 
             if (result is not null)
+            {
+                // Time from PROGNODE Cloud (pinned HTTPS) keeps the license clock honest.
+                if (result.ServerTimeUtc is { } serverTime)
+                    clock.SynchronizeFromCloud(serverTime);
                 stateStore.Save(result with { ActivationCertificate = null });
+            }
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {

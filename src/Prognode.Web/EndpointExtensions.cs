@@ -525,11 +525,11 @@ public static class EndpointExtensions
         // --- Activation (allowed while signed out: a license cannot be used until activated) -------
         endpoints.MapGet(
             "/api/license/activation",
-            (FileBackedLicenseProvider provider, CoreCloudLicenseStateStore cloudState) =>
+            (FileBackedLicenseProvider provider, CoreCloudLicenseStateStore cloudState, TrustedClock clock) =>
             {
                 var activation = provider.GetActivation();
                 if (activation is null)
-                    return Results.Ok(new { licenseInstalled = false, activated = false });
+                    return Results.Ok(new { licenseInstalled = false, activated = false, clockRollbackDetected = clock.RollbackDetected });
                 var cloud = cloudState.Load(configured: true);
                 return Results.Ok(new
                 {
@@ -538,6 +538,7 @@ public static class EndpointExtensions
                     reason = activation.Reason,
                     activatedAtUtc = activation.Activated ? activation.Certificate?.ActivatedAtUtc : null,
                     lastError = activation.Activated ? null : cloud.LastError,
+                    clockRollbackDetected = clock.RollbackDetected,
                 });
             });
 
@@ -559,7 +560,7 @@ public static class EndpointExtensions
 
         endpoints.MapPost(
             "/api/license/activation/import",
-            async (HttpRequest request, FileBackedLicenseProvider provider, CoreCloudLicenseStateStore cloudState, CancellationToken ct) =>
+            async (HttpRequest request, FileBackedLicenseProvider provider, CoreCloudLicenseStateStore cloudState, TrustedClock clock, CancellationToken ct) =>
             {
                 try
                 {
@@ -572,6 +573,7 @@ public static class EndpointExtensions
                     await using var stream = new MemoryStream();
                     await file.CopyToAsync(stream, ct);
                     var certificate = provider.ImportActivation(stream.ToArray());
+                    clock.ObserveSigned(certificate.IssuedAtUtc);
                     var previous = cloudState.Load(configured: true);
                     cloudState.Save(previous with { LastError = null });
                     return Results.Ok(new { activated = true, activatedAtUtc = certificate.ActivatedAtUtc });

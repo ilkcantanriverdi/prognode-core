@@ -59,7 +59,8 @@ public sealed record CoreCloudLicenseStatus(
     string? LicenseId = null,
     bool Revoked = false,
     DateTimeOffset? RevokedAtUtc = null,
-    string? ActivationCertificate = null);
+    string? ActivationCertificate = null,
+    DateTimeOffset? ServerTimeUtc = null);
 
 /// <summary>A structured refusal from PROGNODE Cloud (e.g. installation_revoked); never retried on another host.</summary>
 public sealed class CloudLicenseRejectedException(string code, string message) : InvalidOperationException(message)
@@ -229,6 +230,7 @@ public sealed class CoreCloudLicenseClient
             ?? GetTimestamp(root, "revokedAtUtc") ?? GetTimestamp(root, "revokedAt");
 
         var activationCertificate = GetString(payload, "activationCertificate") ?? GetString(root, "activationCertificate");
+        var serverTime = GetTimestamp(payload, "serverTime") ?? GetTimestamp(root, "serverTime");
 
         if (!string.Equals(responseLicenseId, expectedLicenseId, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("PROGNODE Cloud returned a licenseId that does not match the local signed license.");
@@ -245,7 +247,8 @@ public sealed class CoreCloudLicenseClient
             responseLicenseId,
             revoked,
             revokedAtUtc,
-            activationCertificate);
+            activationCertificate,
+            serverTime);
     }
 
     private static string? TryGetErrorCode(string raw)
