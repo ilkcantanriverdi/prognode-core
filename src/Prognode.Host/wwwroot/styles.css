@@ -5575,3 +5575,9 @@ body.theme-light .qr-enroll-card,body[data-theme="light"] .qr-enroll-card{backgr
 .account-activation-actions { grid-template-columns: 1fr; }
 .account-activation-actions a.secondary { text-align: center; text-decoration: none; }
 .account-activation-step { color: var(--muted); font-size: 10px; line-height: 1.5; }
+
+/* License import: native file input and secondary action match the panel */
+.license-file-input { font:inherit; font-size:12.5px; cursor:pointer; }
+.license-file-input::file-selector-button { font:inherit; font-size:12px; font-weight:800; margin-right:10px; padding:7px 12px; border-radius:8px; border:1px solid var(--line); background:var(--panel); color:var(--text); cursor:pointer; }
+.license-file-input::file-selector-button:hover { border-color:var(--accent, #18d3c4); }
+button.secondary.license-action-full { font-size:13px; font-weight:800; letter-spacing:.01em; }
