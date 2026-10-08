@@ -10,7 +10,8 @@ try {
         'tests/ManualPairingContract/ManualPairingContract.csproj',
         'tests/MobileDeviceAckContract/MobileDeviceAckContract.csproj',
         'tests/CapacityContract/CapacityContract.csproj',
-        'tests/ProtocolContract/ProtocolContract.csproj'
+        'tests/ProtocolContract/ProtocolContract.csproj',
+        'tests/LicensingContract/LicensingContract.csproj'
     )
     $restoreArgs = @('restore', 'PROGNODE.sln', '--nologo')
     if (-not $UpdateLockFile) { $restoreArgs += '--locked-mode' }
@@ -28,5 +29,5 @@ try {
         & dotnet run --project $project -c Release --no-restore
         if ($LASTEXITCODE -ne 0) { throw "Contract failed: $project" }
     }
-    Write-Host 'PASS: Release build and six console contract suites.'
+    Write-Host 'PASS: Release build and seven console contract suites.'
 } finally { Pop-Location }
