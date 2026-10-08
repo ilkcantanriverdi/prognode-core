@@ -5,10 +5,11 @@ using Prognode.Licensing;
 namespace Prognode.Host.Services;
 
 /// <summary>
-/// Web V1.8 Cloud activation/heartbeat. Signed local entitlements remain usable offline until the
-/// server has positively reported REVOKED for the exact licenseId. That revoke is persisted across
-/// restarts/outages and can only be cleared by a later successful ACTIVE response or a new license import.
-/// Local checks remain frequent while network heartbeats are throttled.
+/// Web V1.8 Cloud activation/heartbeat. A signed license only runs on the Core and machine it was
+/// activated for: activation returns a certificate signed by PROGNODE Cloud, stored next to the
+/// license and checked locally (offline). A server-reported REVOKED for the exact licenseId is
+/// persisted; a released installation loses its activation. Cloud unavailability never invents a
+/// revocation, and an activated Core keeps running offline.
 /// </summary>
 public sealed class CoreCloudLicenseHostedService(
     CoreCloudLicenseClient cloud,
@@ -17,8 +18,15 @@ public sealed class CoreCloudLicenseHostedService(
     FileBackedLicenseProvider provider,
     LocalLicenseStore localLicenseStore,
     ServerAccessService serverAccess,
+    IMachineFingerprintProvider machine,
     ILogger<CoreCloudLicenseHostedService> logger) : BackgroundService
 {
+    // Cloud codes meaning this installation is no longer allowed to run the license.
+    private static readonly HashSet<string> InstallationEndedCodes = new(StringComparer.Ordinal)
+    {
+        "installation_revoked", "installation_released", "installation_machine_mismatch"
+    };
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await Task.Delay(TimeSpan.FromSeconds(3), stoppingToken);
@@ -28,8 +36,8 @@ public sealed class CoreCloudLicenseHostedService(
             if (cloud.IsConfigured)
                 await TrySyncAsync(stoppingToken);
 
-            // Short local check interval lets a freshly imported license appear in Control Center
-            // quickly. Heartbeat network calls themselves are still limited by HeartbeatIntervalSeconds.
+            // Short local check interval lets a freshly imported license activate quickly. Heartbeat
+            // network calls themselves are still limited by HeartbeatIntervalSeconds.
             await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
         }
     }
@@ -51,12 +59,17 @@ public sealed class CoreCloudLicenseHostedService(
                 cached = stateStore.Load(configured: true);
             }
 
+            var activation = provider.GetActivation();
+            var needsActivation = string.IsNullOrWhiteSpace(cached.ActivationToken) || activation is { Activated: false };
             var heartbeatSeconds = Math.Clamp(options.HeartbeatIntervalSeconds, 60, 3600);
             var heartbeatDue = cached.LastSyncedAtUtc is null ||
                 DateTimeOffset.UtcNow - cached.LastSyncedAtUtc.Value >= TimeSpan.FromSeconds(heartbeatSeconds);
+            // Do not hammer Cloud with activation attempts that keep failing (e.g. limit reached).
+            if (needsActivation && !heartbeatDue && cached.LastError is not null)
+                return;
 
             CoreCloudLicenseStatus? result = null;
-            if (string.IsNullOrWhiteSpace(cached.ActivationToken))
+            if (needsActivation)
             {
                 var signed = Encoding.UTF8.GetString(localLicenseStore.ReadAllBytes());
                 result = await cloud.ActivateAsync(
@@ -64,28 +77,52 @@ public sealed class CoreCloudLicenseHostedService(
                     signed,
                     serverAccess.Identity.ServerId,
                     serverAccess.Identity.DisplayName,
+                    machine.GetFingerprint(),
+                    CoreVersionInfo.Current,
                     stoppingToken);
+
+                if (!string.IsNullOrWhiteSpace(result.ActivationCertificate))
+                    provider.ImportActivation(Encoding.UTF8.GetBytes(result.ActivationCertificate));
             }
             else if (heartbeatDue)
             {
                 result = await cloud.HeartbeatAsync(
-                    cached.ActivationToken,
+                    cached.ActivationToken!,
                     local.LicenseId,
                     serverAccess.Identity.ServerId,
                     stoppingToken);
             }
 
             if (result is not null)
-                stateStore.Save(result);
+                stateStore.Save(result with { ActivationCertificate = null });
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
             return;
         }
+        catch (CloudLicenseRejectedException ex)
+        {
+            var previous = stateStore.Load(configured: true);
+            if (InstallationEndedCodes.Contains(ex.Code))
+            {
+                // Released in PROGNODE Account or revoked in Control: this PC is no longer licensed.
+                provider.ClearActivation();
+                stateStore.Save(previous with { ActivationToken = null, LastError = ex.Message, LastSyncedAtUtc = DateTimeOffset.UtcNow });
+            }
+            else if (ex.Code == "unauthorized")
+            {
+                // Stale activation token: activate again on the next pass.
+                stateStore.Save(previous with { ActivationToken = null, LastError = null });
+            }
+            else
+            {
+                stateStore.Save(previous with { LastError = ex.Message, LastSyncedAtUtc = DateTimeOffset.UtcNow });
+            }
+            logger.LogWarning("PROGNODE Cloud refused license synchronization: {Code}", ex.Code);
+        }
         catch (Exception ex)
         {
-            // Cloud sync is diagnostic/commercial metadata only. A malformed response, temporary
-            // DNS/TLS issue or Web deployment error must never stop the local PROGNODE runtime.
+            // Network/TLS/deployment problems never stop the local runtime of an activated Core.
             var previous = stateStore.Load(configured: true);
             stateStore.Save(previous with
             {

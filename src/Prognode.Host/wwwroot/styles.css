@@ -5569,3 +5569,9 @@ body.theme-light .qr-enroll-card,body[data-theme="light"] .qr-enroll-card{backgr
 .lan-wizard-approval pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.8rem;margin-top:9px}
 #lanWizardPhoneUrl{font-weight:600;user-select:text}
 @media(max-width:700px){.lan-wizard-panel{grid-column:auto}.lan-wizard-actions>*{flex:1}}
+
+/* Activation step (license must be activated on this Core/PC before sign-in) */
+.account-activation { border-color: color-mix(in srgb, var(--amber, #ffbe55) 38%, var(--line)); }
+.account-activation-actions { grid-template-columns: 1fr; }
+.account-activation-actions a.secondary { text-align: center; text-decoration: none; }
+.account-activation-step { color: var(--muted); font-size: 10px; line-height: 1.5; }

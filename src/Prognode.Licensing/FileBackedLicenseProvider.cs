@@ -5,8 +5,11 @@ namespace Prognode.Licensing;
 public sealed class FileBackedLicenseProvider(
     LocalLicenseStore store,
     LicenseSignatureVerifier verifier,
-    LicenseEntitlementService entitlementService) : ILicenseProvider
+    LicenseEntitlementService entitlementService,
+    LicenseActivationService? activation = null) : ILicenseProvider
 {
+    /// <summary>Status of a valid, signed license that has no activation for this Core and machine.</summary>
+    public const string ActivationRequiredStatus = "ACTIVATION_REQUIRED";
     private readonly MissingLicenseProvider _missing = new();
 
     public string LicensePath => store.LicensePath;
@@ -26,6 +29,41 @@ public sealed class FileBackedLicenseProvider(
         }
     }
 
+    /// <summary>Activation of the installed license on this Core; null when no valid license is installed.</summary>
+    public LicenseActivationState? GetActivation()
+    {
+        if (activation is null || !store.Exists)
+            return null;
+        try
+        {
+            var payload = GetVerifiedCurrent().Payload;
+            return activation.Evaluate(payload.LicenseId, payload.LicenseKey);
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Verifies and stores an activation certificate for the installed license.</summary>
+    public ActivationCertificateV1 ImportActivation(byte[] certificateBytes)
+    {
+        if (activation is null)
+            throw new InvalidOperationException("Activation is not configured on this Core.");
+        var payload = GetVerifiedCurrent().Payload;
+        return activation.Import(certificateBytes, payload.LicenseId, payload.LicenseKey);
+    }
+
+    public void ClearActivation() => activation?.Clear();
+
+    public ActivationRequestV1 CreateActivationRequest(string serverName, string coreVersion)
+    {
+        if (activation is null)
+            throw new InvalidOperationException("Activation is not configured on this Core.");
+        var payload = GetVerifiedCurrent().Payload;
+        return activation.CreateRequest(payload.LicenseId, payload.LicenseKey, serverName, coreVersion);
+    }
+
     internal PgnLicenseFileV2 GetVerifiedCurrent()
     {
         var rawBytes = store.ReadAllBytes();
@@ -40,6 +78,13 @@ public sealed class FileBackedLicenseProvider(
         var tagCapacity = entitlementService.GetTagCapacity(payload);
         var status = entitlementService.GetLicenseStatus(payload);
         var localOperational = status is "ACTIVE" or "EXPIRING_SOON" or "GRACE";
+        // A signed license only runs on the Core and machine it was activated for.
+        if (localOperational && activation is not null &&
+            !activation.Evaluate(payload.LicenseId, payload.LicenseKey).Activated)
+        {
+            status = ActivationRequiredStatus;
+            localOperational = false;
+        }
         var remoteExpiry = remoteAccess.ExpiresAtUtc ?? payload.Subscription.ExpiresAtUtc;
 
         return new LicenseSnapshot(

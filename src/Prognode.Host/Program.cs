@@ -206,15 +206,25 @@ var licenseSignatureVerifier = new LicenseSignatureVerifier(licenseVerificationO
 var localLicenseStore = new LocalLicenseStore(licensePath);
 var licenseEntitlementService = new LicenseEntitlementService();
 var offlineCredentialVerifier = new OfflineCredentialVerifier();
+// A license runs only on the Core and machine named in its Cloud-signed activation certificate.
+var machineFingerprintProvider = new OsMachineFingerprintProvider();
+var licenseActivationService = new LicenseActivationService(
+    licenseSignatureVerifier,
+    new LicenseActivationStore(Path.Combine(dataRoot, "license", "activation.pgnact")),
+    machineFingerprintProvider,
+    () => serverAccess.Identity.ServerId);
 var fileLicenseProvider = new FileBackedLicenseProvider(
     localLicenseStore,
     licenseSignatureVerifier,
-    licenseEntitlementService);
+    licenseEntitlementService,
+    licenseActivationService);
 builder.Services.AddSingleton(licenseVerificationOptions);
 builder.Services.AddSingleton(licenseSignatureVerifier);
 builder.Services.AddSingleton(localLicenseStore);
 builder.Services.AddSingleton(licenseEntitlementService);
 builder.Services.AddSingleton(offlineCredentialVerifier);
+builder.Services.AddSingleton<IMachineFingerprintProvider>(machineFingerprintProvider);
+builder.Services.AddSingleton(licenseActivationService);
 builder.Services.AddSingleton(fileLicenseProvider);
 builder.Services.AddSingleton<ILicenseProvider>(fileLicenseProvider);
 builder.Services.AddSingleton<LicenseImportService>();

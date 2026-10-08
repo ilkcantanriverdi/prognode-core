@@ -85,7 +85,9 @@ public sealed class LocalAccessSessionService(
         _limiter.EnsureAllowed(attemptSource);
         var snapshot = provider.GetCurrent();
         if (!snapshot.IsValid)
-            throw new InvalidOperationException("Import a valid signed PROGNODE license before signing in.");
+            throw new InvalidOperationException(snapshot.Status == FileBackedLicenseProvider.ActivationRequiredStatus
+                ? "Activate this PROGNODE Core before signing in."
+                : "Import a valid signed PROGNODE license before signing in.");
 
 
         // Exact offline decision chain. There is deliberately no HTTP/API/cloud call here.
@@ -142,8 +144,10 @@ public sealed class LocalAccessSessionService(
     private static LocalAccessSessionResult Anonymous(LicenseSnapshot snapshot)
     {
         var installed = snapshot.LicenseId is not ("NONE" or "INVALID");
-        return new(false, null, null, null, null, null,
-            null, installed ? "SIGN_IN_REQUIRED" : snapshot.Status, null, null);
+        var status = !installed ? snapshot.Status
+            : snapshot.Status == FileBackedLicenseProvider.ActivationRequiredStatus ? snapshot.Status
+            : "SIGN_IN_REQUIRED";
+        return new(false, null, null, null, null, null, null, status, null, null);
     }
 
     private void CleanupExpired()

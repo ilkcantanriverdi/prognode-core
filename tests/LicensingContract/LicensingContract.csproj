@@ -3,4 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/Prognode.Licensing/Prognode.Licensing.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="fixtures/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

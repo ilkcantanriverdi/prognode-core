@@ -58,7 +58,14 @@ public sealed record CoreCloudLicenseStatus(
     string? LastError,
     string? LicenseId = null,
     bool Revoked = false,
-    DateTimeOffset? RevokedAtUtc = null);
+    DateTimeOffset? RevokedAtUtc = null,
+    string? ActivationCertificate = null);
+
+/// <summary>A structured refusal from PROGNODE Cloud (e.g. installation_revoked); never retried on another host.</summary>
+public sealed class CloudLicenseRejectedException(string code, string message) : InvalidOperationException(message)
+{
+    public string Code { get; } = code;
+}
 
 public sealed class CoreCloudLicenseClient
 {
@@ -78,13 +85,17 @@ public sealed class CoreCloudLicenseClient
         string signedLicenseDocument,
         Guid serverId,
         string serverName,
+        string machineFingerprint,
+        string coreVersion,
         CancellationToken cancellationToken = default) =>
         SendAsync(options.ActivatePath, null, licenseId, new
         {
             licenseId,
             signedLicenseDocument,
             serverId,
-            serverName
+            serverName,
+            machineFingerprint,
+            coreVersion
         }, cancellationToken);
 
     public Task<CoreCloudLicenseStatus> HeartbeatAsync(
@@ -126,6 +137,11 @@ public sealed class CoreCloudLicenseClient
 
                 if (!response.IsSuccessStatusCode)
                 {
+                    // A structured PROGNODE error is an authoritative answer: do not try another host.
+                    var code = TryGetErrorCode(raw);
+                    if (code is not null && response.StatusCode is not (HttpStatusCode.NotFound or HttpStatusCode.MethodNotAllowed))
+                        throw new CloudLicenseRejectedException(code, DescribeError(baseUrl, response.StatusCode, raw));
+
                     var error = new InvalidOperationException(DescribeError(baseUrl, response.StatusCode, raw));
 
                     // A missing route means this PROGNODE host is not the Cloud API owner.
@@ -140,6 +156,10 @@ public sealed class CoreCloudLicenseClient
                 }
 
                 return ParseStatus(raw, token, expectedLicenseId);
+            }
+            catch (CloudLicenseRejectedException)
+            {
+                throw;
             }
             catch (HttpRequestException ex)
             {
@@ -208,6 +228,8 @@ public sealed class CoreCloudLicenseClient
             ?? GetTimestamp(payload, "revokedAtUtc") ?? GetTimestamp(payload, "revokedAt")
             ?? GetTimestamp(root, "revokedAtUtc") ?? GetTimestamp(root, "revokedAt");
 
+        var activationCertificate = GetString(payload, "activationCertificate") ?? GetString(root, "activationCertificate");
+
         if (!string.Equals(responseLicenseId, expectedLicenseId, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("PROGNODE Cloud returned a licenseId that does not match the local signed license.");
 
@@ -222,7 +244,21 @@ public sealed class CoreCloudLicenseClient
             null,
             responseLicenseId,
             revoked,
-            revokedAtUtc);
+            revokedAtUtc,
+            activationCertificate);
+    }
+
+    private static string? TryGetErrorCode(string raw)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(raw);
+            return document.RootElement.ValueKind == JsonValueKind.Object ? GetString(document.RootElement, "error") : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     /// <summary>Turns a structured Cloud error into a message the Core UI can show as-is.</summary>
