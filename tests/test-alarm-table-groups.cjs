@@ -15,7 +15,7 @@ assert(css.includes('.alarm-group-body.collapsed'));
 function section(start,end){const a=source.indexOf(start),b=source.indexOf(end,a+start.length);assert(a>=0&&b>a);return source.slice(a,b)}
 const elements=new Map();
 function $(id){if(!elements.has(id))elements.set(id,{value:'',innerHTML:'',textContent:'',disabled:false,dataset:{},
-  classList:{toggle:()=>{},remove:()=>{}},addEventListener:()=>{}});return elements.get(id)}
+  classList:{toggle:()=>{},remove:()=>{}},addEventListener:()=>{},querySelectorAll:()=>[],closest:()=>null});return elements.get(id)}
 const devices=[{id:'d1',name:'Line 1'}],tags=[{id:'t1',deviceId:'d1',name:'Pressure'}];
 const definitions=Array.from({length:27},(_,i)=>({id:`a${i}`,tagId:'t1',text:`Alarm ${i}`,priority:i%2?'High':'Low',condition:'GreaterThan',threshold:10,deadband:0,delayOnMs:0,delayOffMs:0}));
 const active=Array.from({length:13},(_,i)=>({alarmKey:`k${i}`,deviceId:'d1',sourceName:'Pressure',text:`Active ${i}`,priority:i%2?'Critical':'High',state:i%3?'Active':'Acknowledged',activeSince:'2026-09-30T10:00:00Z'}));
@@ -23,7 +23,7 @@ const history=Array.from({length:31},(_,i)=>({deviceId:'d1',sourceName:'Pressure
 const state={language:'en',devices,tags,alarmDefinitions:definitions,activeAlarms:active,
   alarmHistory:history.slice(0,10),alarmHistoryCount:31,alarmHistoryFilteredCount:31,
   alarmActivePage:1,alarmDefinitionPage:1,alarmHistoryPage:1};
-const context={state,$,document:{querySelectorAll:()=>[],title:''},escapeHtml:x=>String(x),t:x=>x,Date,console,applyAccessMode:()=>{context.accessReapplied=(context.accessReapplied||0)+1}};
+const context={state,$,document:{querySelectorAll:()=>[],title:'',getElementById:()=>({id:'',className:'',innerHTML:'',classList:{toggle(){}},querySelector:()=>({}),querySelectorAll:()=>[]}),createElement:()=>({id:'',className:'',innerHTML:'',classList:{toggle(){}},querySelector:()=>({}),querySelectorAll:()=>[]})},escapeHtml:x=>String(x),t:x=>x,Date,console,applyAccessMode:()=>{context.accessReapplied=(context.accessReapplied||0)+1}};
 vm.createContext(context);
 vm.runInContext(section('function tablePage(', 'function renderDevices('),context);
 vm.runInContext(section('function alarmTag(', 'function populateAlarmTagSelect('),context);

@@ -21,3 +21,11 @@ jobs:
       - name: Release build and contract suites
         shell: pwsh
         run: ./scripts/Validate-Baseline.ps1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Node UI and static regression tests
+        run: node tests/run-node-tests.cjs
