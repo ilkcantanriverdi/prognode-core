@@ -62,7 +62,8 @@ public sealed class TrustedClock
     public DateTimeOffset HighWaterMark { get { lock (_gate) return _mark; } }
 
     /// <summary>True when the system clock is well behind time this machine has already seen.</summary>
-    public bool RollbackDetected { get { lock (_gate) return _system() < _mark - RollbackTolerance; } }
+    // Written as system + tolerance so a brand-new machine (mark = MinValue) cannot underflow.
+    public bool RollbackDetected { get { lock (_gate) return _system() + RollbackTolerance < _mark; } }
 
     /// <summary>Raises the mark to a signed timestamp (license or activation issue time). Never lowers it.</summary>
     public void ObserveSigned(DateTimeOffset signedUtc)
