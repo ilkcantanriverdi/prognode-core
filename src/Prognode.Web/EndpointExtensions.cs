@@ -2661,7 +2661,6 @@ public static class EndpointExtensions
         DateTimeOffset from, DateTimeOffset to, CancellationToken ct)
     {
         await using var writer = new StreamWriter(output, new UTF8Encoding(true), 8192, leaveOpen: true);
-        await writer.WriteLineAsync("sep=;");
         await writer.WriteLineAsync("Timestamp UTC;Tag;Value;Quality");
         for (var cursor = from; cursor < to;)
         {
@@ -2730,7 +2729,6 @@ public static class EndpointExtensions
                         if (writer is not null) await writer.DisposeAsync();
                         writer = new StreamWriter(archive.CreateEntry($"historian_part_{++part:D4}.csv", CompressionLevel.Fastest).Open(),
                             new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
-                        await writer.WriteLineAsync("sep=;");
                         await writer.WriteLineAsync("Timestamp UTC;Tag;Value;Quality");
                         rows = 0;
                     }
@@ -2742,7 +2740,6 @@ public static class EndpointExtensions
             if (writer is null)
             {
                 await using var empty = new StreamWriter(archive.CreateEntry("historian_part_0001.csv").Open(), new UTF8Encoding(true));
-                await empty.WriteLineAsync("sep=;");
                 await empty.WriteLineAsync("Timestamp UTC;Tag;Value;Quality");
             }
         }
@@ -2754,7 +2751,8 @@ public static class EndpointExtensions
         string fileName)
     {
         var preamble = Encoding.UTF8.GetPreamble();
-        var normalized = csv.ToString().StartsWith("sep=;", StringComparison.OrdinalIgnoreCase) ? csv.ToString() : "sep=;\n" + csv;
+        // UTF-8 BOM, no "sep=" line: Excel ignores the BOM when that line is present and breaks non-ASCII text.
+        var normalized = System.Text.RegularExpressions.Regex.Replace(csv.ToString(), @"^sep=[^\r\n]*\r?\n", "");
         var content = Encoding.UTF8.GetBytes(normalized);
         var bytes = new byte[preamble.Length + content.Length];
         Buffer.BlockCopy(preamble, 0, bytes, 0, preamble.Length);

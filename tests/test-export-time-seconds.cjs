@@ -19,7 +19,8 @@ for(const file of ['trend-studio.js','trend-studio-fullscreen.js','trend-hf3plus
   assert(source.includes("toISOString().slice(0,19).replace('T',' ')"),`${file} visible CSV must stop at seconds without Z`);
   assert(/\\uFEFF/i.test(source),`${file} visible CSV must emit a UTF-8 BOM`);
 }
-assert(fs.readFileSync(path.join(root,'trend-studio.js'),'utf8').includes("'\\ufeffsep=;\\r\\n'"),'Trend Studio visible CSV must declare its semicolon delimiter for Excel');
+for(const file of ['trend-studio.js','trend-studio-fullscreen.js','trend-hf3plus.js','app.js'])
+  assert(!/['"`]\\u[fF][eE][fF][fF]sep=/.test(fs.readFileSync(path.join(root,file),'utf8')),`${file}: no sep= line after the BOM (Excel then ignores the BOM and breaks Turkish characters)`);
 const sample=new Date('2026-09-30T12:34:56.789Z').toISOString().slice(0,19).replace('T',' ');
 assert.equal(sample,'2026-09-30 12:34:56');
 console.log('PASS: Core and visible Trend CSV/XLSX clock timestamps stop at seconds');
