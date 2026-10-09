@@ -178,6 +178,8 @@ static void Check(bool condition, string message)
     try
     {
         var clock = new TrustedClock(paths, machine, () => system);
+        var fresh = new TrustedClock([Path.Combine(folder, "fresh", "clock.dat")], machine, () => system);
+        Check(!fresh.RollbackDetected, "A machine with no clock history reports no rollback (and does not throw).");
         Check(clock.UtcNow == system, "The clock follows the system clock while it moves forward.");
         system = system.AddDays(-30); // user sets Windows back a month
         Check(clock.UtcNow == system.AddDays(30), "A clock set back never moves license time backwards.");
