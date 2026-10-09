@@ -36,7 +36,7 @@ public sealed class CoreCloudLicenseOptions
     /// Release builds talk only to HTTPS PROGNODE hosts, so editing appsettings cannot point Core at a
     /// look-alike server that answers ACTIVE and clears a revocation. Debug builds also allow loopback.
     /// </summary>
-    internal static bool IsAllowedBaseUrl(string? value)
+    public static bool IsAllowedBaseUrl(string? value)
     {
         if (!Uri.TryCreate(value, UriKind.Absolute, out var uri))
             return false;

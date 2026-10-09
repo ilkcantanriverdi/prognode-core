@@ -37,6 +37,9 @@ UninstallDisplayIcon={app}\Agent\PROGNODE.Agent.exe
 UninstallDisplayName=PROGNODE Core
 LicenseFile=license.txt
 WizardStyle=modern
+ShowLanguageDialog=no
+WizardImageFile=branding\wizard-large.bmp,branding\wizard-large-200.bmp
+WizardSmallImageFile=branding\wizard-small.bmp,branding\wizard-small-200.bmp
 Compression=lzma2/ultra64
 SolidCompression=yes
 CloseApplications=yes
@@ -44,7 +47,6 @@ RestartApplications=no
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
-Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
@@ -75,6 +77,10 @@ Filename: "{app}\PROGNODE.url"; Description: "Open PROGNODE"; Flags: shellexec n
 [UninstallRun]
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\Setup\uninstall-service.ps1"""; Flags: runhidden waituntilterminated; RunOnceId: "RemovePrognodeService"
 
+[UninstallDelete]
+; Files Core or the tray agent created next to the program after installation.
+Type: filesandordirs; Name: "{app}"
+
 [Code]
 // Stop the running service and tray agent before files are replaced on an upgrade.
 function PrepareToInstall(var NeedsRestart: Boolean): String;
@@ -87,9 +93,39 @@ begin
   Result := '';
 end;
 
+var
+  RemoveData: Boolean;
+
+// Asked once before anything is removed. Keeping data is the default (and the silent-uninstall behaviour).
+function InitializeUninstall(): Boolean;
+begin
+  RemoveData := False;
+  if not UninstallSilent then
+    RemoveData := MsgBox('Also delete PROGNODE data from this PC?' + #13#10 + #13#10 +
+      'Yes: configuration, license, recorded history and the LAN certificate are deleted.' + #13#10 +
+      'No: they are kept in ' + ExpandConstant('{commonappdata}\PROGNODE') + ' so a reinstall continues where you left off.',
+      mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES;
+  Result := True;
+end;
+
+procedure RunPowerShell(const Command: String);
+var
+  ResultCode: Integer;
+begin
+  Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
+    '-NoProfile -ExecutionPolicy Bypass -Command "' + Command + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
-  if CurUninstallStep = usPostUninstall then
-    MsgBox('PROGNODE Core was removed. Your configuration, license and recorded history are kept in ' +
-      ExpandConstant('{commonappdata}\PROGNODE') + ' so a reinstall continues where you left off.', mbInformation, MB_OK);
+  if CurUninstallStep <> usPostUninstall then Exit;
+  // Never leave LAN ports open for a program that is gone.
+  RunPowerShell('Get-NetFirewallRule -Name ''PROGNODE-*'' -ErrorAction SilentlyContinue | Remove-NetFirewallRule');
+  if RemoveData then
+  begin
+    RunPowerShell('Get-ChildItem Cert:\LocalMachine\My | Where-Object { $_.FriendlyName -eq ''PROGNODE LAN Core HTTPS'' } | Remove-Item');
+    DelTree(ExpandConstant('{commonappdata}\PROGNODE'), True, True, True);
+  end
+  else if not UninstallSilent then
+    MsgBox('PROGNODE Core was removed. Your data is kept in ' + ExpandConstant('{commonappdata}\PROGNODE') + '.', mbInformation, MB_OK);
 end;

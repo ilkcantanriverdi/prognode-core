@@ -266,6 +266,8 @@ var cloudLicenseOptions = new CoreCloudLicenseOptions
 builder.Services.AddSingleton(cloudLicenseOptions);
 builder.Services.AddSingleton<CoreCloudLicenseClient>();
 builder.Services.AddSingleton<CoreLinkService>();
+builder.Services.AddSingleton<UpdateCheckService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<UpdateCheckService>());
 builder.Services.AddSingleton<ILicenseRefreshSource, CloudLicenseRefreshSource>();
 builder.Services.AddSingleton(new CoreCloudLicenseStateStore(dataRoot));
 builder.Services.AddHostedService<CoreCloudLicenseHostedService>();
@@ -379,6 +381,8 @@ app.Use(async (context, next) =>
     var mutating = !(HttpMethods.IsGet(method) || HttpMethods.IsHead(method) || HttpMethods.IsOptions(method));
     var exempt =
         path.StartsWithSegments("/api/license/import") ||
+        // Only asks PROGNODE Account for the newest version; changes nothing.
+        string.Equals(path.Value, "/api/system/update/check", StringComparison.OrdinalIgnoreCase) ||
         // Connecting to an account installs a license; once one is valid this needs a signed-in session.
         (path.StartsWithSegments("/api/license/link") && !fileLicenseProvider.GetCurrent().IsValid) ||
         path.StartsWithSegments("/api/access/login") ||
@@ -479,6 +483,14 @@ static IResult? BackupAdmin(HttpContext context, LocalAccessSessionService sessi
         return Results.Json(new { message="An administrator account is required." },statusCode:403);
     return null;
 }
+// Newer PROGNODE Core release, as announced by PROGNODE Account (information only, never auto-installed).
+app.MapGet("/api/system/update", (UpdateCheckService updates) => Results.Ok(updates.Current));
+app.MapPost("/api/system/update/check", async (UpdateCheckService updates, CancellationToken ct) => Results.Ok(await updates.CheckAsync(ct)));
+app.MapPost("/api/system/update/install", (HttpContext ctx, LocalAccessSessionService sessions, UpdateCheckService updates) =>
+    sessions.Validate(ctx.Request.Headers["X-PROGNODE-Session"].ToString())
+        ? Results.Ok(updates.StartInstall())
+        : Results.Json(new { message = "Sign in to install the update." }, statusCode: StatusCodes.Status401Unauthorized));
+
 // Connect this Core to a PROGNODE account (free trial or an own license) instead of importing a file.
 app.MapPost("/api/license/link/start", async (CoreLinkService link, CancellationToken ct) => Results.Ok(await link.StartAsync(ct)));
 app.MapGet("/api/license/link/status", (CoreLinkService link, LicenseService license) =>
