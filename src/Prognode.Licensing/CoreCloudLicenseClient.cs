@@ -15,6 +15,8 @@ public sealed class CoreCloudLicenseOptions
     public string ActivatePath { get; set; } = "/api/core/activate";
     public string HeartbeatPath { get; set; } = "/api/core/heartbeat";
     public string LicenseDownloadPath { get; set; } = "/api/core/license";
+    public string LinkStartPath { get; set; } = "/api/core/link/start";
+    public string LinkPollPath { get; set; } = "/api/core/link/poll";
     public int HeartbeatIntervalSeconds { get; set; } = 60;
 
     public IReadOnlyList<string> CandidateBaseUrls =>
@@ -63,6 +65,12 @@ public sealed record CoreCloudLicenseStatus(
     string? ActivationCertificate = null,
     DateTimeOffset? ServerTimeUtc = null,
     int? LicenseRevision = null);
+
+/// <summary>Code shown in Core while the user connects it to a PROGNODE account in the browser.</summary>
+public sealed record CoreLinkTicket(string BaseUrl, string DeviceCode, string UserCode, string VerificationUriComplete, DateTimeOffset ExpiresAtUtc, int IntervalSeconds);
+
+/// <summary>Poll answer: pending, slow_down, denied, expired, or approved with the signed license.</summary>
+public sealed record CoreLinkPoll(string Status, string? LicenseId, byte[]? SignedLicenseDocument);
 
 /// <summary>A structured refusal from PROGNODE Cloud (e.g. installation_revoked); never retried on another host.</summary>
 public sealed class CloudLicenseRejectedException(string code, string message) : InvalidOperationException(message)
@@ -162,6 +170,57 @@ public sealed class CoreCloudLicenseClient
             }
         }
         return null;
+    }
+
+    /// <summary>Asks PROGNODE Cloud for a connect code (device authorization) on the first reachable host.</summary>
+    public async Task<CoreLinkTicket> StartLinkAsync(
+        Guid serverId, string serverName, string machineFingerprint, string coreVersion, CancellationToken cancellationToken = default)
+    {
+        Exception? lastError = null;
+        foreach (var baseUrl in options.CandidateBaseUrls)
+        {
+            try
+            {
+                using var response = await httpClient.PostAsJsonAsync(
+                    new Uri(new Uri(baseUrl + "/"), options.LinkStartPath.TrimStart('/')),
+                    new { serverId, serverName, machineFingerprint, coreVersion }, cancellationToken);
+                var raw = await response.Content.ReadAsStringAsync(cancellationToken);
+                if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.MethodNotAllowed) continue;
+                if (!response.IsSuccessStatusCode)
+                    throw new CloudLicenseRejectedException(TryGetErrorCode(raw) ?? "link_unavailable", DescribeError(baseUrl, response.StatusCode, raw));
+                using var document = JsonDocument.Parse(raw);
+                var root = document.RootElement;
+                var deviceCode = GetString(root, "deviceCode");
+                var userCode = GetString(root, "userCode");
+                var uri = GetString(root, "verificationUriComplete");
+                // The browser is sent only to the PROGNODE host Core already trusts.
+                if (deviceCode is null || userCode is null || uri is null || !CoreCloudLicenseOptions.IsAllowedBaseUrl(uri) ||
+                    !Uri.TryCreate(uri, UriKind.Absolute, out var page) || !string.Equals(page.Host, new Uri(baseUrl).Host, StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException("PROGNODE Cloud returned an invalid connect code.");
+                var expiresIn = root.TryGetProperty("expiresIn", out var e) && e.TryGetInt32(out var seconds) ? seconds : 900;
+                var interval = root.TryGetProperty("interval", out var i) && i.TryGetInt32(out var every) ? Math.Clamp(every, 2, 30) : 5;
+                return new CoreLinkTicket(baseUrl, deviceCode, userCode, uri, DateTimeOffset.UtcNow.AddSeconds(expiresIn), interval);
+            }
+            catch (HttpRequestException ex) { lastError = ex; }
+            catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested) { lastError = ex; }
+        }
+        throw new InvalidOperationException($"PROGNODE Cloud could not be reached. Check the internet connection of this PC. {lastError?.Message}", lastError);
+    }
+
+    public async Task<CoreLinkPoll> PollLinkAsync(CoreLinkTicket ticket, CancellationToken cancellationToken = default)
+    {
+        using var response = await httpClient.PostAsJsonAsync(
+            new Uri(new Uri(ticket.BaseUrl + "/"), options.LinkPollPath.TrimStart('/')),
+            new { deviceCode = ticket.DeviceCode }, cancellationToken);
+        var raw = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException(DescribeError(ticket.BaseUrl, response.StatusCode, raw));
+        using var document = JsonDocument.Parse(raw);
+        var root = document.RootElement;
+        var status = GetString(root, "status") ?? "pending";
+        var signed = GetString(root, "signedLicenseDocument");
+        return new CoreLinkPoll(status, GetString(root, "licenseId"),
+            status == "approved" && !string.IsNullOrWhiteSpace(signed) ? System.Text.Encoding.UTF8.GetBytes(signed) : null);
     }
 
     private async Task<CoreCloudLicenseStatus> SendAsync(
