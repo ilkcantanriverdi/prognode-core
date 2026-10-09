@@ -68,8 +68,8 @@ const translations = {
     tagsText:"Create live Tags from Modbus registers and verify value, datatype, status and engineering display.", addTagPlus:"+ Add Tag", noTagsYet:"No tags yet", noTagsText:"Add a Modbus Tag (for example 40001 or 30001) and PROGNODE will begin polling it immediately.",
     tag:"Tag", address:"Address", datatype:"Datatype", value:"Value", dataStatus:"Status", updated:"Updated", edit:"Edit",
     alarmsPlaceholder:"Alarm definitions will reference existing Tags. BOOL and integer WORD Tags can be selected as digital alarm sources and assigned alarm text.", trendsPlaceholder:"Fast local trends with time-range-aware historian queries.", historianPlaceholder:"Retention, storage health, CSV export and recorded tag configuration.", diagnosticsPlaceholder:"Connection latency, last poll, retry count, communication errors and device health.", modbusDiagnosticsSoon:"Connection health, polling and communication diagnostics.", nextMilestone:"System detail",
-    notificationsText:"Browser-independent Windows desktop notifications through the PROGNODE Agent.", sendTestNotification:"Send Windows Test Notification", agentStatus:"AGENT STATUS",
-    agentHelp:"Run the Windows Agent project. It stays in the system tray and receives local notification events even when the browser is closed.", coreNotificationApi:"Core Notification API", trayAgent:"Tray Agent", runSeparately:"Run separately", recentEvents:"RECENT EVENTS",
+    notificationsText:"Alarm notifications on the PCs of your plant network, through the PROGNODE Windows Client.", sendTestNotification:"Send test notification", agentStatus:"WINDOWS CLIENT",
+    agentHelp:"The Windows Client runs in the system tray and shows alarm notifications even when the browser is closed. Download it from PROGNODE Account.", coreNotificationApi:"Core Notification API", trayAgent:"Windows Client on this PC", runSeparately:"Run separately", recentEvents:"RECENT EVENTS",
     entitlements:"ENTITLEMENTS", licenseText:"Your signed offline license controls enabled PROGNODE modules while runtime data remains local.", currentLicense:"CURRENT LICENSE", plan:"Plan", alarmDefinitions:"Alarm Definitions", recordedTags:"Recorded Tags", features:"FEATURES", licensedProtocols:"Licensed Protocols",
     settingsPlaceholder:"Users, backup/restore, network, update, security and data-flow settings will live here.",
     commissioning:"COMMISSIONING", configure:"Configuration", chooseProtocolText:"Choose how PROGNODE will communicate with the industrial device.", backProtocols:"← Back to protocols", selectedProtocol:"Selected protocol", deviceName:"PLC / Asset name", deviceNameHelp:"Use a globally clear equipment name, e.g. Boiler PLC, Main Pump PLC or Packaging Line PLC.", mockInfo:"Protocol-specific settings are stored in the local configuration database.",
@@ -148,7 +148,7 @@ Object.assign(translations.en, {
   historianEmpty:"No Tags are being recorded. Add a Tag to Historian to start.", historianTagHelp:"Adding a Tag here starts persistent local recording.",
   historianModalInfo:"Historian continues recording even if a Trend is deleted or the browser is closed.", save:"Save",
   stopRecording:"Stop", keepHistory:"Stop recording and keep history? Cancel = delete history too.", openTrend:"Open Trend",
-  historianText:"Add Tags here to start persistent local recording. Trend definitions no longer control recording.", historianArrow:"Open Historian →"
+  historianText:"Choose the Tags to record. Values are stored on this PC and power Trend Studio and exports.", historianArrow:"Open Historian →"
 });
 
 
@@ -175,7 +175,7 @@ Object.assign(translations.en, {
   notificationCenterStored:"Events available in PROGNODE", critical:"Critical", priorityEvents:"Critical / high priority events",
   modbusNowAvailable:"Modbus TCP is available", runtimeSignalNext:"Tag runtime engine is active",
   systemOverview:"System Overview", operational:"OPERATIONAL", openAlarms:"Open Alarms", noActiveAlarmsNow:"No active alarms",
-  localRecording:"Persistent local samples", importReady:"Ready to validate CSV", importedRows:"rows imported", checkingAgent:"Checking Windows Agent",
+  localRecording:"Persistent local samples", importReady:"Ready to validate CSV", importedRows:"rows imported", checkingAgent:"Checking Windows Client",
   actionCenter:"Windows Action Center", actionCenterHelp:"Native Windows notifications are registered under the PROGNODE identity.",
   partialImport:"Valid rows are imported independently; invalid rows remain listed for correction."
 });
@@ -229,7 +229,7 @@ Object.assign(translations.en, {
 
 
 Object.assign(translations.en, {
-  tagRuntime:"TAG RUNTIME", alarmEngine:"ALARM ENGINE", historicalVisualization:"HISTORICAL VISUALIZATION", localHistorian:"LOCAL HISTORIAN", windowsAgent:"WINDOWS AGENT",
+  tagRuntime:"TAG RUNTIME", alarmEngine:"ALARM ENGINE", historicalVisualization:"HISTORICAL VISUALIZATION", localHistorian:"LOCAL HISTORIAN", windowsAgent:"ALARM NOTIFICATIONS",
   settingsActualHelp:"Server identity, LAN discovery and one-time client pairing.", clientAccess:"CLIENT ACCESS", lanAutoDiscovery:"LAN AUTO-DISCOVERY", clientDiscoveryHelp:"Supported PROGNODE clients can discover this Server automatically and remember its stable Server ID instead of a changing IP address.",
   serverName:"Server Name", serverId:"Server ID", clientApi:"Client API", discovery:"Discovery", pairNewClient:"PAIR NEW CLIENT", pairingHelp:"On a supported PROGNODE client, choose this discovered Server and enter the pairing code once. No IP address is required.",
   dataBoundary:"DATA BOUNDARY", localFirstRuntime:"Local-first runtime", processConfiguration:"Process configuration", processData:"Process data", lanClientApi:"LAN client API", cloudDependency:"Cloud dependency", serverOnly:"Server only", localPairedAccess:"Local / paired access", notRequired:"Not required", identityLicenseOnly:"Identity + license only"
@@ -4637,9 +4637,9 @@ function renderAgentStatus() {
     detail.textContent = `${machine}${version}`;
   } else if (state.agentStatus?.lastSeenUtc) {
     const lastSeen = new Date(state.agentStatus.lastSeenUtc).toLocaleString("en-US");
-    detail.textContent = `Last seen: ${lastSeen}. Start PROGNODE Host + Agent.`;
+    detail.textContent = `Last seen: ${lastSeen}.`;
   } else {
-    detail.textContent = "Agent is not running. Use VS Code: PROGNODE Host + Agent or START_PROGNODE_WITH_AGENT.cmd.";
+    detail.textContent = "Not running on this PC. Install the Windows Client from PROGNODE Account › Downloads.";
   }
 }
 
@@ -4714,7 +4714,7 @@ async function sendTestNotification() {
           body:JSON.stringify({
             title:"PROGNODE",
             message:
-              "Windows Agent notification path is working."
+              "Windows Client notifications are working."
           })
         });
 
@@ -4726,7 +4726,7 @@ async function sendTestNotification() {
     if (state.agentStatus?.isOnline) {
       showToast(t("testNotificationQueued"));
     } else {
-      showToast("Notification was queued in Core, but Windows Agent is not running.");
+      showToast("Notification was queued in Core, but the Windows Client is not running on this PC.");
     }
   }
   catch(error) {
@@ -5064,14 +5064,14 @@ function renderAgentStatus() {
     const lastSeen = new Date(state.agentStatus.lastSeenUtc).toLocaleString("en-US");
     detailText = `Last seen: ${lastSeen}`;
   } else {
-    detailText = "Agent is not running. Start PROGNODE Host + Agent.";
+    detailText = "Not running on this PC. Install the Windows Client from PROGNODE Account › Downloads.";
   }
   if (detail) detail.textContent = detailText;
 
   if ($("notificationAgentMetric")) $("notificationAgentMetric").textContent = online ? t("agentOnline") : t("agentOffline");
   if ($("notificationAgentMetricSub")) $("notificationAgentMetricSub").textContent = detailText;
   if ($("notificationDeliveryBadge")) {
-    const mode = state.agentStatus?.notificationMode || (online ? "Windows Agent" : "LOCAL ONLY");
+    const mode = state.agentStatus?.notificationMode || (online ? "Windows Client" : "LOCAL ONLY");
     $("notificationDeliveryBadge").textContent = mode.toUpperCase();
     $("notificationDeliveryBadge").classList.toggle("active", online && mode.toLowerCase().includes("action"));
   }
@@ -5497,7 +5497,8 @@ const dev3Templates = {
 };
 
 function downloadCsvText(filename, text) {
-  const normalized = String(text || "").startsWith("sep=;") ? String(text || "") : `sep=;\n${String(text || "")}`;
+  // UTF-8 BOM without a "sep=" line: Excel ignores the BOM when that line is present (breaks ş, ğ, İ...).
+  const normalized = String(text || "").replace(/^sep=[^\r\n]*\r?\n/i, "");
   const blob = new Blob(["\uFEFF", normalized], {type:"text/csv;charset=utf-8"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

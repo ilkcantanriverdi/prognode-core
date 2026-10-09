@@ -534,7 +534,7 @@ const csvButton=byId('export-csv');if(csvButton)csvButton.onclick=()=>{
  if(S.charts.some(c=>metaById.get(c.id)?.summarized))return toast('Summarized range: export full CSV from Historian or zoom in.');
  const rows=[['Device / Tag','Time (UTC)','Value','Quality','Unit']];
  for(const c of S.charts){const d=signalDefs.find(s=>s.id===c.id);for(const p of visible(c))rows.push([name(d),new Date(p.t).toISOString().slice(0,19).replace('T',' '),p.v??'',p.quality,d.unit])}
- const csv='\uFEFFsep=;\r\n'+rows.map(row=>row.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(';')).join('\r\n');
+ const csv='\uFEFF'+rows.map(row=>row.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(';')).join('\r\n');
  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='PROGNODE_Trend_Studio.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),5000);
 };
 byId('reset-layout').onclick=async()=>{

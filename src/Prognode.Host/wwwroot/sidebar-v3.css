@@ -1,0 +1,51 @@
+/* Sidebar v3: two states only (expanded / collapsed), switched by the toggle in the sidebar.
+   No hover peeking, so the sidebar never slides over the page content. Loaded last. */
+
+.sidebar { position: relative; }
+.app-shell.sidebar-peeking .sidebar { box-shadow: none !important; }
+
+.sidebar-toggle {
+  position: absolute; top: 22px; right: 12px; z-index: 5;
+  width: 30px; height: 30px; display: grid; place-items: center; padding: 0;
+  border-radius: 9px; border: 1px solid rgba(120, 190, 215, .22);
+  background: rgba(10, 32, 48, .85); color: #8fd8e4; cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease;
+}
+.sidebar-toggle:hover, .sidebar-toggle:focus-visible { background: rgba(22, 207, 187, .14); border-color: rgba(22, 207, 187, .55); color: #e9fbff; outline: none; }
+.sidebar-toggle svg { width: 17px; height: 17px; }
+.sidebar-toggle .chev { transition: transform .2s ease; transform-origin: 15px 12px; }
+.sidebar-collapsed .sidebar-toggle .chev { transform: scaleX(-1); }
+html[data-theme="light"] .sidebar-toggle { background: #fff; color: #0b6f76; border-color: #cfe3ea; }
+
+/* Collapsed: the toggle sits under the logo, centered */
+.app-shell.sidebar-collapsed .sidebar-toggle { position: static; margin: -6px auto 10px; }
+
+/* Collapsed: view-only notice becomes one compact license button (no overlapping text) */
+.app-shell.sidebar-collapsed #readOnlyBanner:not(.hidden) { display: flex !important; justify-content: center; padding: 0 !important; margin: 0 auto 10px !important; border: 0 !important; background: none !important; width: auto !important; min-height: 0 !important; }
+.app-shell.sidebar-collapsed #readOnlyBanner > div { display: none !important; }
+.app-shell.sidebar-collapsed #bannerOpenLicense {
+  width: 40px !important; height: 40px !important; min-height: 40px !important; padding: 0 !important; margin: 0 !important;
+  border-radius: 11px !important; font-size: 0 !important; color: transparent !important; position: relative;
+  border: 1px solid rgba(233, 185, 73, .45) !important; background: rgba(233, 185, 73, .10) !important;
+}
+.app-shell.sidebar-collapsed #bannerOpenLicense::before {
+  content: ""; position: absolute; inset: 0; margin: auto; width: 18px; height: 18px; background: #f0c45c;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='11' width='14' height='10' rx='2'/%3E%3Cpath d='M8 11V7a4 4 0 0 1 8 0v4'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='11' width='14' height='10' rx='2'/%3E%3Cpath d='M8 11V7a4 4 0 0 1 8 0v4'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* Signed out: a sign-in icon instead of an empty avatar box */
+#accountButton .account-signin-icon { display: none; width: 18px; height: 18px; color: #f0c45c; flex: 0 0 18px; }
+#accountButton.signed-out .account-signin-icon { display: block; }
+.app-shell.sidebar-collapsed #accountButton.signed-out { border-color: rgba(233, 185, 73, .45) !important; background: rgba(233, 185, 73, .10) !important; }
+
+/* Cordara Labs credit */
+.sidebar-credit { display: block; margin-top: 3px; font-size: 10px; letter-spacing: .02em; color: rgba(150, 180, 196, .72); text-decoration: none; }
+.sidebar-credit b { font-weight: 700; color: rgba(205, 228, 238, .9); }
+.sidebar-credit:hover b { color: #fff; }
+.app-shell.sidebar-collapsed .sidebar-credit { display: none; }
+html[data-theme="light"] .sidebar-credit { color: #6c8592; }
+html[data-theme="light"] .sidebar-credit b { color: #24414f; }
+
+@media (max-width: 850px) { .sidebar-toggle { display: none; } }
+.sidebar-utility .sidebar-credit { text-align: center; margin-top: 2px; }
