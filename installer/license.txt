@@ -1,0 +1,15 @@
+PROGNODE Core
+Copyright (c) Cordara Labs, Izmir, Turkiye. PROGNODE is a product of Cordara Labs.
+
+By installing or using PROGNODE Core you agree to the PROGNODE Terms of Service
+(https://prognode.io/terms) and acknowledge the Privacy Policy (https://prognode.io/privacy).
+
+PROGNODE Core runs on this computer and keeps your process data on site. A valid PROGNODE
+license is required for configuration and licensed functions; it is activated to one computer.
+
+PROGNODE is a monitoring product. It does not replace safety instrumented systems, interlocks
+or emergency shutdown functions, and must not be used as the only means of protecting people,
+equipment or the environment.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXCEPT AS EXPRESSLY STATED IN
+THE PROGNODE TERMS OF SERVICE.

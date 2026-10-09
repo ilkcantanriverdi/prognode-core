@@ -53,9 +53,9 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.Data.Sqlite": "[10.0.12, )",
-          "Prognode.Contracts": "[1.0.0, )",
-          "Prognode.Core": "[1.0.0, )",
-          "Prognode.Notifications": "[1.0.0, )"
+          "Prognode.Contracts": "[1.0.0-dev, )",
+          "Prognode.Core": "[1.0.0-dev, )",
+          "Prognode.Notifications": "[1.0.0-dev, )"
         }
       },
       "prognode.contracts": {
@@ -64,36 +64,43 @@
       "prognode.core": {
         "type": "Project",
         "dependencies": {
-          "Prognode.Contracts": "[1.0.0, )",
-          "Prognode.Protocols.Abstractions": "[1.0.0, )"
+          "Prognode.Contracts": "[1.0.0-dev, )",
+          "Prognode.Protocols.Abstractions": "[1.0.0-dev, )"
         }
       },
       "prognode.historian": {
         "type": "Project",
         "dependencies": {
-          "Prognode.Contracts": "[1.0.0, )",
-          "Prognode.Core": "[1.0.0, )"
+          "Prognode.Contracts": "[1.0.0-dev, )",
+          "Prognode.Core": "[1.0.0-dev, )"
         }
       },
       "prognode.notifications": {
         "type": "Project",
         "dependencies": {
           "Microsoft.Data.Sqlite": "[10.0.12, )",
-          "Prognode.Contracts": "[1.0.0, )"
+          "Prognode.Contracts": "[1.0.0-dev, )"
         }
       },
       "prognode.protocols.abstractions": {
         "type": "Project",
         "dependencies": {
-          "Prognode.Contracts": "[1.0.0, )"
+          "Prognode.Contracts": "[1.0.0-dev, )"
         }
       },
       "prognode.trends": {
         "type": "Project",
         "dependencies": {
-          "Prognode.Contracts": "[1.0.0, )",
-          "Prognode.Core": "[1.0.0, )"
+          "Prognode.Contracts": "[1.0.0-dev, )",
+          "Prognode.Core": "[1.0.0-dev, )"
         }
+      }
+    },
+    "net10.0/win-x64": {
+      "SQLitePCLRaw.lib.e_sqlite3": {
+        "type": "Transitive",
+        "resolved": "2.1.13",
+        "contentHash": "D2UAuiGxFYBqeRXjjjGgvJ5UQifzn6wefmSqeKU7XcNGKLbJRP6X7kcPZ6opOBJGdCIlgbSxTvDpBbLvsN594A=="
       }
     }
   }

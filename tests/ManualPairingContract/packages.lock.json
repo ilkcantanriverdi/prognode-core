@@ -8,16 +8,17 @@
       "prognode.core": {
         "type": "Project",
         "dependencies": {
-          "Prognode.Contracts": "[1.0.0, )",
-          "Prognode.Protocols.Abstractions": "[1.0.0, )"
+          "Prognode.Contracts": "[1.0.0-dev, )",
+          "Prognode.Protocols.Abstractions": "[1.0.0-dev, )"
         }
       },
       "prognode.protocols.abstractions": {
         "type": "Project",
         "dependencies": {
-          "Prognode.Contracts": "[1.0.0, )"
+          "Prognode.Contracts": "[1.0.0-dev, )"
         }
       }
-    }
+    },
+    "net10.0/win-x64": {}
   }
 }

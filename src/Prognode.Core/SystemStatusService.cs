@@ -5,7 +5,7 @@ public sealed class SystemStatusService
     public object GetSnapshot() => new
     {
         product = "PROGNODE",
-        coreVersion = "0.7.2-rc6.4.7-hf6.3-auto-lan-trend",
+        coreVersion = Prognode.Contracts.ProductVersion.Current,
         status = "Running",
         architecture = "Modular Monolith",
         runtime = ".NET 10",

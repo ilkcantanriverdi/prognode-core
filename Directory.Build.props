@@ -4,6 +4,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
+    <!-- installer/build.ps1 overrides with the release version. -->
+    <Version>1.0.0-dev</Version>
+    <!-- Lock files also cover the self-contained win-x64 installer publish. -->
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>

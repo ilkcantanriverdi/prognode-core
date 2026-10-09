@@ -50,7 +50,7 @@ public sealed class ProjectBackupService
             var name = $"PROGNODE-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.pgnbackup";
             output = Path.Combine(BackupRoot, name);
             var result = await Task.Run(() => BackupArchive.Create(_dataRoot,
-                output, password, "0.7.2-rc6.4.7-hf6.5-manual-pairing",
+                output, password, Prognode.Contracts.ProductVersion.Current,
                 _configurationPath), ct);
             // An encrypted snapshot is not marked successful until its manifest and each file hash validates.
             await Task.Run(() => BackupArchive.Verify(output, password), ct);
@@ -77,7 +77,7 @@ public sealed class ProjectBackupService
         try
         {
             await Task.Run(() => BackupArchive.Create(_dataRoot, output, password,
-                "0.7.2-rc6.4.7-hf6.5-manual-pairing", _configurationPath), ct);
+                Prognode.Contracts.ProductVersion.Current, _configurationPath), ct);
             await Task.Run(() => BackupArchive.Verify(output, password), ct);
             Audit("CORE", "AUTO_BACKUP_CREATED", "backup/automatic", true);
             PruneAutoBackups();
