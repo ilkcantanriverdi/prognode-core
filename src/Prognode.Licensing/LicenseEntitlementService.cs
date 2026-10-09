@@ -47,10 +47,10 @@ public sealed class LicenseEntitlementService
                 payload.Subscription.Product != "ALARM_HISTORIAN" ||
                 payload.Subscription.ExpiresAtUtc != payload.Subscription.ValidFromUtc.AddDays(14) ||
                 payload.Subscription.GraceUntilUtc != payload.Subscription.ExpiresAtUtc ||
-                payload.Entitlements.MaxTags != 10 || payload.Subscription.MaxTags != 10 ||
+                payload.Entitlements.MaxTags != LicenseSignatureVerifier.TrialMaxTags || payload.Subscription.MaxTags != LicenseSignatureVerifier.TrialMaxTags ||
                 payload.Entitlements.UnlimitedTags || payload.Subscription.UnlimitedTags ||
                 !string.Equals(payload.Entitlements.Devices, "1", StringComparison.Ordinal))
-                throw new InvalidOperationException("Signed TRIAL capacity and duration must be 1 device, 10 Tags and 14 days.");
+                throw new InvalidOperationException("Signed TRIAL capacity and duration must be 1 device, 20 Tags and 14 days.");
         }
 
         // Device count is deliberately not a commercial capacity dimension in V1.8.
@@ -183,6 +183,11 @@ public sealed class LicenseEntitlementService
                 throw new InvalidOperationException("Web V1.8 Remote Access does not offer unlimited client capacity; use 5, 10 or 25 clients.");
             if (remote.MaxClients is not null)
                 throw new InvalidOperationException("Remote Access entitlement cannot set both unlimitedClients and maxClients.");
+        }
+        else if (string.Equals(payload.LicenseType, "TRIAL", StringComparison.OrdinalIgnoreCase))
+        {
+            if (remote.MaxClients != LicenseSignatureVerifier.TrialRemoteClients)
+                throw new InvalidOperationException("TRIAL Remote Access maxClients must be 2.");
         }
         else if (remote.MaxClients is not (5 or 10 or 25))
         {

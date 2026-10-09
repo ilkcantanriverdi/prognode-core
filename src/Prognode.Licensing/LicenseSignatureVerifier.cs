@@ -202,6 +202,10 @@ public sealed class LicenseSignatureVerifier(LicenseVerificationOptions options)
         return (der, der.AsSpan(expectedPrefix.Length, 32).ToArray());
     }
 
+    /// <summary>Free trial: 14 days, 1 Core PC, 20 Tags, both modules and Remote Access for 2 devices.</summary>
+    public const int TrialMaxTags = 20;
+    public const int TrialRemoteClients = 2;
+
     private static LicensePayloadV2 ParseVerifiedPayload(JsonElement payload)
     {
         var schema = RequiredExactString(payload, "schema");
@@ -253,7 +257,7 @@ public sealed class LicenseSignatureVerifier(LicenseVerificationOptions options)
 
         var validFromUtc = OptionalUtcTimestamp(subscriptionElement, "validFromUtc") ?? issuedAtUtc;
         var expiresAtUtc = ReadExpiresAtUtc(subscriptionElement, legacyV17);
-        var graceUntilUtc = ReadGraceUntilUtc(subscriptionElement, expiresAtUtc, legacyV17);
+        var graceUntilUtc = ReadGraceUntilUtc(subscriptionElement, expiresAtUtc, legacyV17, isTrial);
         if (expiresAtUtc <= validFromUtc)
             throw new InvalidOperationException("License subscription.expiresAtUtc must be later than validFromUtc.");
         // Strict 14-day, zero-grace trial; a signed commercial license retains its own grace.
@@ -283,13 +287,17 @@ public sealed class LicenseSignatureVerifier(LicenseVerificationOptions options)
         // must state which one; older signed documents remain verifiable as issued.
         var remoteBillingRequired = !legacyV17 && !customMaxTagsAllowed &&
             issuedAtUtc >= new DateTimeOffset(2026,9,26,19,0,0,TimeSpan.Zero);
-        var remoteAccessAddon = ParseRemoteAccessAddon(payload, legacyV17, remoteBillingRequired);
+        var remoteAccessAddon = ParseRemoteAccessAddon(payload, legacyV17, remoteBillingRequired, isTrial);
         var entitlements = ParseEntitlements(
             RequiredObject(payload, "entitlements"),
             legacyV17,
             expiresAtUtc,
             remoteAccessAddon,
-            customMaxTagsAllowed);
+            customMaxTagsAllowed,
+            isTrial);
+        // Trial Remote Access ends with the trial itself.
+        if (isTrial && remoteAccessAddon.Enabled && remoteAccessAddon.ExpiresAtUtc != expiresAtUtc)
+            throw new InvalidOperationException("TRIAL Remote Access must end with the trial.");
 
         if (subscriptionTags.Unlimited != entitlements.UnlimitedTags ||
             subscriptionTags.MaxTags != entitlements.MaxTags)
@@ -359,7 +367,10 @@ public sealed class LicenseSignatureVerifier(LicenseVerificationOptions options)
         bool UnlimitedClients,
         DateTimeOffset? ExpiresAtUtc);
 
-    private static ParsedRemoteAccessAddon ParseRemoteAccessAddon(JsonElement payload, bool legacyV17, bool billingRequired)
+    private static bool RemoteClientsAllowed(int? maxClients, bool isTrial) =>
+        isTrial ? maxClients == TrialRemoteClients : maxClients is 5 or 10 or 25;
+
+    private static ParsedRemoteAccessAddon ParseRemoteAccessAddon(JsonElement payload, bool legacyV17, bool billingRequired, bool isTrial)
     {
         if (!payload.TryGetProperty("addons", out var addonsElement) || addonsElement.ValueKind == JsonValueKind.Null)
             return new ParsedRemoteAccessAddon(false, false, null, false, null);
@@ -398,8 +409,10 @@ public sealed class LicenseSignatureVerifier(LicenseVerificationOptions options)
             }
         }
 
-        if (enabled && !unlimited && maxClients is not (5 or 10 or 25))
-            throw new InvalidOperationException("Remote Access add-on maxClients must be 5, 10 or 25.");
+        if (enabled && !unlimited && !RemoteClientsAllowed(maxClients, isTrial))
+            throw new InvalidOperationException(isTrial ? "TRIAL Remote Access maxClients must be 2." : "Remote Access add-on maxClients must be 5, 10 or 25.");
+        if (enabled && isTrial && unlimited)
+            throw new InvalidOperationException("TRIAL Remote Access maxClients must be 2.");
 
         var billingPeriod = OptionalExactString(remoteElement, "billingPeriod");
         if(enabled && billingRequired && billingPeriod is not ("MONTHLY" or "YEARLY"))
@@ -421,7 +434,8 @@ public sealed class LicenseSignatureVerifier(LicenseVerificationOptions options)
         bool legacyV17,
         DateTimeOffset baseExpiresAtUtc,
         ParsedRemoteAccessAddon remoteAccessAddon,
-        bool customMaxTagsAllowed)
+        bool customMaxTagsAllowed,
+        bool isTrial)
     {
         LicenseRemoteAccessClaimV1? remoteAccess = null;
         if (element.TryGetProperty("remoteAccess", out var remoteElement))
@@ -454,8 +468,8 @@ public sealed class LicenseSignatureVerifier(LicenseVerificationOptions options)
                 }
             }
 
-            if (enabled && !unlimited && maxClients is not (5 or 10 or 25))
-                throw new InvalidOperationException("Remote Access entitlement maxClients must be 5, 10 or 25.");
+            if (enabled && !unlimited && !RemoteClientsAllowed(maxClients, isTrial))
+                throw new InvalidOperationException(isTrial ? "TRIAL Remote Access maxClients must be 2." : "Remote Access entitlement maxClients must be 5, 10 or 25.");
 
             var entitlementExpiry = OptionalUtcTimestamp(remoteElement, "expiresAtUtc");
 
@@ -577,9 +591,13 @@ public sealed class LicenseSignatureVerifier(LicenseVerificationOptions options)
     private static DateTimeOffset ReadGraceUntilUtc(
         JsonElement subscription,
         DateTimeOffset expiresAtUtc,
-        bool legacyV17)
+        bool legacyV17,
+        bool isTrial)
     {
         var signedGrace = OptionalUtcTimestamp(subscription, "graceUntilUtc");
+        // A trial has no grace; the TRIAL rule below requires graceUntilUtc == expiresAtUtc.
+        if (isTrial && signedGrace is not null)
+            return signedGrace.Value;
         var expected = expiresAtUtc.AddDays(LicenseEntitlementService.GracePeriodDays);
 
         if (signedGrace is null)

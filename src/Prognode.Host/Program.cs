@@ -265,6 +265,7 @@ var cloudLicenseOptions = new CoreCloudLicenseOptions
 };
 builder.Services.AddSingleton(cloudLicenseOptions);
 builder.Services.AddSingleton<CoreCloudLicenseClient>();
+builder.Services.AddSingleton<CoreLinkService>();
 builder.Services.AddSingleton<ILicenseRefreshSource, CloudLicenseRefreshSource>();
 builder.Services.AddSingleton(new CoreCloudLicenseStateStore(dataRoot));
 builder.Services.AddHostedService<CoreCloudLicenseHostedService>();
@@ -378,6 +379,8 @@ app.Use(async (context, next) =>
     var mutating = !(HttpMethods.IsGet(method) || HttpMethods.IsHead(method) || HttpMethods.IsOptions(method));
     var exempt =
         path.StartsWithSegments("/api/license/import") ||
+        // Connecting to an account installs a license; once one is valid this needs a signed-in session.
+        (path.StartsWithSegments("/api/license/link") && !fileLicenseProvider.GetCurrent().IsValid) ||
         path.StartsWithSegments("/api/access/login") ||
         path.StartsWithSegments("/api/access/logout") ||
         (string.Equals(path.Value, "/api/client/pair", StringComparison.OrdinalIgnoreCase) ||
@@ -476,6 +479,18 @@ static IResult? BackupAdmin(HttpContext context, LocalAccessSessionService sessi
         return Results.Json(new { message="An administrator account is required." },statusCode:403);
     return null;
 }
+// Connect this Core to a PROGNODE account (free trial or an own license) instead of importing a file.
+app.MapPost("/api/license/link/start", async (CoreLinkService link, CancellationToken ct) => Results.Ok(await link.StartAsync(ct)));
+app.MapGet("/api/license/link/status", (CoreLinkService link, LicenseService license) =>
+{
+    var status = link.Current;
+    // Same account hint the file import returns, so sign-in can be prefilled.
+    return status.State == "CONNECTED"
+        ? Results.Ok(new { status.State, assignedUserName = license.Current.AssignedUserName, assignedUserEmail = license.Current.AssignedUserEmail })
+        : Results.Ok(status);
+});
+app.MapPost("/api/license/link/cancel", (CoreLinkService link) => { link.Cancel(); return Results.Ok(link.Current); });
+
 app.MapGet("/api/backup/status", (HttpContext ctx, LocalAccessSessionService sessions, ProjectBackupService backup) =>
 {
     var denied=BackupAdmin(ctx,sessions);ctx.Response.Headers.CacheControl="no-store";

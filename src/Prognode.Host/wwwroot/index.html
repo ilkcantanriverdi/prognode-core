@@ -153,7 +153,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
             <div class="customer-heading"><div><div class="customer-eyebrow" data-customer-en="YOUR WORKSPACE">YOUR WORKSPACE</div><h1 data-customer-en="Overview">Overview</h1><p data-customer-en="One clear view of your local industrial monitoring system.">One clear view of your local industrial monitoring system.</p></div><div class="customer-heading-actions"><span class="customer-signal"><span class="health-dot ok"></span><span id="customerLiveStatus">Local monitoring</span></span></div></div>
             <div class="customer-intro customer-intro-empty" id="customerIntroEmpty">
               <div class="customer-intro-copy"><span class="customer-intro-kicker">✦ <span data-customer-en="QUICK START">QUICK START</span></span><h2 data-customer-en="Your monitoring journey starts here.">Your monitoring journey starts here.</h2><p data-customer-en="Connect your first PLC, select important signals and turn live plant data into actionable alarms, history and trends. Your data stays on this PC.">Connect your first PLC, select important signals and turn live plant data into actionable alarms, history and trends. Your data stays on this PC.</p><div class="customer-intro-actions"><button type="button" class="customer-primary" id="customerAddFirstDevice" data-customer-en="Connect a device →">Connect a device →</button><button type="button" id="customerGuidedSetup" class="customer-intro-link" data-customer-en="Guided setup · Around 15 minutes →">Guided setup · Around 15 minutes →</button></div></div>
-              <div class="customer-steps"><div><span class="customer-step-index">01</span><span><strong data-customer-en="Activate your license">Activate your license</strong><small data-customer-en="Import your signed .pgnlicense">Import your signed .pgnlicense</small></span><b id="customerStepLicense">—</b></div><div><span class="customer-step-index">02</span><span><strong data-customer-en="Connect a device">Connect a device</strong><small data-customer-en="PLC or supported industrial source">PLC or supported industrial source</small></span><b id="customerStepDevice">—</b></div><div><span class="customer-step-index">03</span><span><strong data-customer-en="Select live signals">Select live signals</strong><small data-customer-en="Tags, alarm and recording rules">Tags, alarm and recording rules</small></span><b id="customerStepSignals">—</b></div></div>
+              <div class="customer-steps"><div><span class="customer-step-index">01</span><span><strong data-customer-en="Activate your license">Activate your license</strong><small data-customer-en="Start the free trial or connect your account">Start the free trial or connect your account</small></span><b id="customerStepLicense">—</b></div><div><span class="customer-step-index">02</span><span><strong data-customer-en="Connect a device">Connect a device</strong><small data-customer-en="PLC or supported industrial source">PLC or supported industrial source</small></span><b id="customerStepDevice">—</b></div><div><span class="customer-step-index">03</span><span><strong data-customer-en="Select live signals">Select live signals</strong><small data-customer-en="Tags, alarm and recording rules">Tags, alarm and recording rules</small></span><b id="customerStepSignals">—</b></div></div>
             </div>
             <div class="customer-intro customer-intro-ready" id="customerIntroReady" hidden><div><span class="customer-intro-kicker">● <span data-customer-en="ON-SITE MONITORING">ON-SITE MONITORING</span></span><h2 data-customer-en="A clear picture of your critical processes.">A clear picture of your critical processes.</h2><p data-customer-en="Your local devices, live signals and alarms. No cloud connection required.">Your local devices, live signals and alarms. No cloud connection required.</p></div><button id="customerOpenTrends" class="customer-primary" type="button" data-customer-en="Open Trend Studio →">Open Trend Studio →</button></div>
             <div class="customer-kpis"><button class="customer-kpi" data-customer-page="devices" type="button"><span class="customer-kpi-top"><span data-customer-en="CONNECTED DEVICES">CONNECTED DEVICES</span><span class="customer-kpi-icon">▣</span></span><strong id="customerDeviceCount">0</strong><small data-customer-en="Your local device connections">Your local device connections</small></button><button class="customer-kpi" data-customer-page="alarms" type="button"><span class="customer-kpi-top"><span data-customer-en="ACTIVE ALARMS">ACTIVE ALARMS</span><span class="customer-kpi-icon">△</span></span><strong id="customerAlarmCount">0</strong><small data-customer-en="Conditions requiring attention">Conditions requiring attention</small></button><button class="customer-kpi" data-customer-page="historian" type="button"><span class="customer-kpi-top"><span>HISTORIAN</span><span class="customer-kpi-icon">▤</span></span><strong id="customerRecordingCount">—</strong><small id="customerHistorianHelp" data-customer-en="Set up local signal recording">Set up local signal recording</small></button></div>
@@ -845,7 +845,8 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
               <span class="panel-kicker" data-i18n="licenseActions">LICENSE ACTIONS</span>
               <h3 data-i18n="manageLicense">Manage your license</h3>
               <p class="panel-copy" data-i18n="manageLicenseHelp">Buy, renew or change your plan in PROGNODE Account. An activated Core with internet installs renewed licenses automatically; offline sites import the new file here.</p>
-              <a class="primary license-action-full" href="https://account.prognode.io/subscription" target="_blank" rel="noopener noreferrer" data-i18n="openPrognodeStore">Open PROGNODE Account ↗</a>
+              <button class="primary license-action-full" id="licenseConnectButton">Start free trial / Connect account</button>
+              <a class="secondary license-action-full" href="https://account.prognode.io/subscription" target="_blank" rel="noopener noreferrer" data-i18n="openPrognodeStore">Open PROGNODE Account ↗</a>
               <div class="license-divider"><span data-i18n="orImportLicense">OR IMPORT A LICENSE</span></div>
               <input id="licenseImportFile" class="license-file-input" type="file" accept=".pgnlicense,application/json" />
               <button class="secondary license-action-full" id="licenseImportButton" data-i18n="importLicense">Import License</button>
@@ -1656,6 +1657,26 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
       </div>
 
       <div class="account-access-stack">
+        <section class="account-connect" id="accountConnectSection">
+          <div id="accountConnectStart">
+            <span class="panel-kicker">GET STARTED</span>
+            <strong>Start your 14-day free trial</strong>
+            <small>Connect this Core to your PROGNODE account. Alarm + Historian, 20 Tags and Remote Access for 2 phones. No payment details, no license file. Already have a license? Choose it on the same page.</small>
+            <button class="primary" id="accountConnectButton">Start free trial / Connect account</button>
+          </div>
+          <div id="accountConnectWaiting" class="hidden">
+            <span class="panel-kicker">WAITING FOR PROGNODE ACCOUNT</span>
+            <strong>Finish in your browser</strong>
+            <small>Sign in or create your account, then confirm this code. Core installs the license by itself.</small>
+            <div class="account-connect-code" id="accountConnectCode">—</div>
+            <div class="account-connect-actions">
+              <a class="secondary" id="accountConnectOpen" href="https://account.prognode.io/link" target="_blank" rel="noopener noreferrer">Open PROGNODE Account ↗</a>
+              <button class="ghost" id="accountConnectCancel">Cancel</button>
+            </div>
+          </div>
+          <small class="account-connect-message hidden" id="accountConnectMessage"></small>
+        </section>
+
         <section class="account-license-import" id="accountLicenseImportSection">
           <div class="account-license-import-copy">
             <span class="panel-kicker" data-i18n="offlineLicense">OFFLINE LICENSE</span>
