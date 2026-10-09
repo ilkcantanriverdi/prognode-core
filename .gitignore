@@ -20,3 +20,4 @@ credentials/
 !*.example
 
 artifacts/
+.pgn-data-*.lock
