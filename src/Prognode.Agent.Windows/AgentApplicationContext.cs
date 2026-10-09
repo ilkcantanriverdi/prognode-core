@@ -124,7 +124,7 @@ public sealed class AgentApplicationContext : ApplicationContext
                     new
                     {
                         machineName = Environment.MachineName,
-                        version = "0.7.2-rc6.4.7-hf6-customer-ui",
+                        version = Prognode.Contracts.ProductVersion.Current,
                         notificationMode = _windowsNotifications.IsAvailable
                             ? "Windows Action Center"
                             : "Tray Fallback"

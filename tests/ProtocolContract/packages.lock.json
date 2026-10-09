@@ -122,46 +122,47 @@
       "prognode.core": {
         "type": "Project",
         "dependencies": {
-          "Prognode.Contracts": "[1.0.0, )",
-          "Prognode.Protocols.Abstractions": "[1.0.0, )"
+          "Prognode.Contracts": "[1.0.0-dev, )",
+          "Prognode.Protocols.Abstractions": "[1.0.0-dev, )"
         }
       },
       "prognode.protocols.abstractions": {
         "type": "Project",
         "dependencies": {
-          "Prognode.Contracts": "[1.0.0, )"
+          "Prognode.Contracts": "[1.0.0-dev, )"
         }
       },
       "prognode.protocols.modbus": {
         "type": "Project",
         "dependencies": {
-          "Prognode.Contracts": "[1.0.0, )",
-          "Prognode.Protocols.Abstractions": "[1.0.0, )"
+          "Prognode.Contracts": "[1.0.0-dev, )",
+          "Prognode.Protocols.Abstractions": "[1.0.0-dev, )"
         }
       },
       "prognode.protocols.mqtt": {
         "type": "Project",
         "dependencies": {
           "MQTTnet": "[5.2.0.1603, )",
-          "Prognode.Contracts": "[1.0.0, )",
-          "Prognode.Protocols.Abstractions": "[1.0.0, )"
+          "Prognode.Contracts": "[1.0.0-dev, )",
+          "Prognode.Protocols.Abstractions": "[1.0.0-dev, )"
         }
       },
       "prognode.protocols.opcua": {
         "type": "Project",
         "dependencies": {
           "OPCFoundation.NetStandard.Opc.Ua.Client": "[1.5.378.176, )",
-          "Prognode.Contracts": "[1.0.0, )",
-          "Prognode.Protocols.Abstractions": "[1.0.0, )"
+          "Prognode.Contracts": "[1.0.0-dev, )",
+          "Prognode.Protocols.Abstractions": "[1.0.0-dev, )"
         }
       },
       "prognode.protocols.s7": {
         "type": "Project",
         "dependencies": {
-          "Prognode.Contracts": "[1.0.0, )",
-          "Prognode.Protocols.Abstractions": "[1.0.0, )"
+          "Prognode.Contracts": "[1.0.0-dev, )",
+          "Prognode.Protocols.Abstractions": "[1.0.0-dev, )"
         }
       }
-    }
+    },
+    "net10.0/win-x64": {}
   }
 }

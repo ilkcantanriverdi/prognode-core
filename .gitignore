@@ -18,3 +18,5 @@ credentials/
 .env
 .env.*
 !*.example
+
+artifacts/

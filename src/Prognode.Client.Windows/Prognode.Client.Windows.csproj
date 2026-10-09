@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <WindowsPackageType>None</WindowsPackageType>
+    <AssemblyName>PROGNODE.Client</AssemblyName>
+    <RootNamespace>Prognode.Client.Windows</RootNamespace>
+    <AssemblyTitle>PROGNODE Client</AssemblyTitle>
+    <Product>PROGNODE</Product>
+    <Description>PROGNODE Windows Client: alarm notifications and acknowledgement on the plant network</Description>
+    <Company>Cordara Labs</Company>
+    <ApplicationIcon>Assets\prognode.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Prognode.Contracts\Prognode.Contracts.csproj" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260804001" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets\prognode.ico"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
+    <Content Include="Assets\prognode.png"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
+  </ItemGroup>
+</Project>

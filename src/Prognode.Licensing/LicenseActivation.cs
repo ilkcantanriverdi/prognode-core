@@ -199,10 +199,5 @@ public sealed class LicenseActivationService(
 /// <summary>Version of the running Core, reported to Cloud and written into activation requests.</summary>
 public static class CoreVersionInfo
 {
-    public static string Current { get; } =
-        System.Reflection.Assembly.GetEntryAssembly()
-            ?.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
-            .OfType<System.Reflection.AssemblyInformationalVersionAttribute>().FirstOrDefault()?.InformationalVersion
-        ?? System.Reflection.Assembly.GetEntryAssembly()?.GetName().Version?.ToString()
-        ?? "unknown";
+    public static string Current => Prognode.Contracts.ProductVersion.Current;
 }

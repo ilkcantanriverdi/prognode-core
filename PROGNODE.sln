@@ -61,6 +61,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolContract", "tests\P
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LicensingContract", "tests\LicensingContract\LicensingContract.csproj", "{9B09639B-7338-4CCA-8B3A-AA081AC8D614}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prognode.Client.Windows", "src\Prognode.Client.Windows\Prognode.Client.Windows.csproj", "{B389E98B-CA09-4582-8FAA-6D0F078638CF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -395,6 +397,18 @@ Global
 		{9B09639B-7338-4CCA-8B3A-AA081AC8D614}.Release|x64.Build.0 = Release|Any CPU
 		{9B09639B-7338-4CCA-8B3A-AA081AC8D614}.Release|x86.ActiveCfg = Release|Any CPU
 		{9B09639B-7338-4CCA-8B3A-AA081AC8D614}.Release|x86.Build.0 = Release|Any CPU
+		{B389E98B-CA09-4582-8FAA-6D0F078638CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B389E98B-CA09-4582-8FAA-6D0F078638CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B389E98B-CA09-4582-8FAA-6D0F078638CF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B389E98B-CA09-4582-8FAA-6D0F078638CF}.Debug|x64.Build.0 = Debug|Any CPU
+		{B389E98B-CA09-4582-8FAA-6D0F078638CF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B389E98B-CA09-4582-8FAA-6D0F078638CF}.Debug|x86.Build.0 = Debug|Any CPU
+		{B389E98B-CA09-4582-8FAA-6D0F078638CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B389E98B-CA09-4582-8FAA-6D0F078638CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B389E98B-CA09-4582-8FAA-6D0F078638CF}.Release|x64.ActiveCfg = Release|Any CPU
+		{B389E98B-CA09-4582-8FAA-6D0F078638CF}.Release|x64.Build.0 = Release|Any CPU
+		{B389E98B-CA09-4582-8FAA-6D0F078638CF}.Release|x86.ActiveCfg = Release|Any CPU
+		{B389E98B-CA09-4582-8FAA-6D0F078638CF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -408,5 +422,6 @@ Global
 		{C5EBCCC9-EF71-4775-8AA2-234FED7212F7} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{AD2D87D5-9777-4B2B-B6FA-E929161EE694} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{9B09639B-7338-4CCA-8B3A-AA081AC8D614} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{B389E98B-CA09-4582-8FAA-6D0F078638CF} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

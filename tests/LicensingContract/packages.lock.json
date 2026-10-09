@@ -79,8 +79,8 @@
       "prognode.core": {
         "type": "Project",
         "dependencies": {
-          "Prognode.Contracts": "[1.0.0, )",
-          "Prognode.Protocols.Abstractions": "[1.0.0, )"
+          "Prognode.Contracts": "[1.0.0-dev, )",
+          "Prognode.Protocols.Abstractions": "[1.0.0-dev, )"
         }
       },
       "prognode.licensing": {
@@ -88,23 +88,35 @@
         "dependencies": {
           "Konscious.Security.Cryptography.Argon2": "[1.3.1, )",
           "NSec.Cryptography": "[26.4.0, )",
-          "Prognode.Contracts": "[1.0.0, )"
+          "Prognode.Contracts": "[1.0.0-dev, )"
         }
       },
       "prognode.protocols.abstractions": {
         "type": "Project",
         "dependencies": {
-          "Prognode.Contracts": "[1.0.0, )"
+          "Prognode.Contracts": "[1.0.0-dev, )"
         }
       },
       "prognode.remoteaccess": {
         "type": "Project",
         "dependencies": {
           "Microsoft.Data.Sqlite": "[10.0.12, )",
-          "Prognode.Contracts": "[1.0.0, )",
-          "Prognode.Core": "[1.0.0, )",
-          "Prognode.Licensing": "[1.0.0, )"
+          "Prognode.Contracts": "[1.0.0-dev, )",
+          "Prognode.Core": "[1.0.0-dev, )",
+          "Prognode.Licensing": "[1.0.0-dev, )"
         }
+      }
+    },
+    "net10.0/win-x64": {
+      "libsodium": {
+        "type": "Transitive",
+        "resolved": "1.0.22",
+        "contentHash": "KPD9SloJFclrsjnhABu7dzWrcyYkwPbvx5l1gRSPAX/0n+OBtSiVCKtGFv4n+ecWUHU0tCG9LSSwoZZx673zBQ=="
+      },
+      "SQLitePCLRaw.lib.e_sqlite3": {
+        "type": "Transitive",
+        "resolved": "2.1.12",
+        "contentHash": "fWi8Dbknuhgg72fWinIdjXVaqO1hHL4YBBwVLnr7e1c9TAZwJ0QE38j9syW1hwx6HaqEVTwI+O07WPdZn8Rp0w=="
       }
     }
   }
