@@ -14,6 +14,7 @@ public sealed class CoreCloudLicenseOptions
     public string[] FallbackBaseUrls { get; set; } = Array.Empty<string>();
     public string ActivatePath { get; set; } = "/api/core/activate";
     public string HeartbeatPath { get; set; } = "/api/core/heartbeat";
+    public string LicenseDownloadPath { get; set; } = "/api/core/license";
     public int HeartbeatIntervalSeconds { get; set; } = 60;
 
     public IReadOnlyList<string> CandidateBaseUrls =>
@@ -60,7 +61,8 @@ public sealed record CoreCloudLicenseStatus(
     bool Revoked = false,
     DateTimeOffset? RevokedAtUtc = null,
     string? ActivationCertificate = null,
-    DateTimeOffset? ServerTimeUtc = null);
+    DateTimeOffset? ServerTimeUtc = null,
+    int? LicenseRevision = null);
 
 /// <summary>A structured refusal from PROGNODE Cloud (e.g. installation_revoked); never retried on another host.</summary>
 public sealed class CloudLicenseRejectedException(string code, string message) : InvalidOperationException(message)
@@ -77,6 +79,13 @@ public sealed class CoreCloudLicenseClient
     {
         this.options = options;
         httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
+    }
+
+    /// <summary>Contract tests supply a recording handler.</summary>
+    internal CoreCloudLicenseClient(CoreCloudLicenseOptions options, HttpClient httpClient)
+    {
+        this.options = options;
+        this.httpClient = httpClient;
     }
 
     public bool IsConfigured => options.IsConfigured;
@@ -109,6 +118,51 @@ public sealed class CoreCloudLicenseClient
             licenseId,
             serverId
         }, cancellationToken);
+
+    /// <summary>
+    /// Downloads the current signed license of this activated installation. A renewal, a plan change
+    /// or an added Remote Access subscription is issued as a higher licenseRevision. The bytes are
+    /// verified and imported locally; PROGNODE Cloud is never trusted blindly.
+    /// </summary>
+    public async Task<(int Revision, byte[] Document)?> DownloadLicenseAsync(
+        string activationToken,
+        string licenseId,
+        CancellationToken cancellationToken = default)
+    {
+        foreach (var baseUrl in options.CandidateBaseUrls)
+        {
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Post,
+                    new Uri(new Uri(baseUrl + "/"), options.LicenseDownloadPath.TrimStart('/')));
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", activationToken);
+                request.Content = JsonContent.Create(new { licenseId });
+                using var response = await httpClient.SendAsync(request, cancellationToken);
+                if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.MethodNotAllowed)
+                    continue;
+                if (!response.IsSuccessStatusCode)
+                    return null;
+                using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+                var root = document.RootElement;
+                if (!string.Equals(GetString(root, "licenseId"), licenseId, StringComparison.OrdinalIgnoreCase))
+                    return null;
+                var signed = GetString(root, "signedLicenseDocument");
+                if (string.IsNullOrWhiteSpace(signed) ||
+                    !root.TryGetProperty("licenseRevision", out var revision) || !revision.TryGetInt32(out var value))
+                    return null;
+                return (value, System.Text.Encoding.UTF8.GetBytes(signed));
+            }
+            catch (HttpRequestException)
+            {
+                // Try the next trusted host.
+            }
+            catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                // Try the next trusted host.
+            }
+        }
+        return null;
+    }
 
     private async Task<CoreCloudLicenseStatus> SendAsync(
         string path,
@@ -231,6 +285,16 @@ public sealed class CoreCloudLicenseClient
 
         var activationCertificate = GetString(payload, "activationCertificate") ?? GetString(root, "activationCertificate");
         var serverTime = GetTimestamp(payload, "serverTime") ?? GetTimestamp(root, "serverTime");
+        int? licenseRevision = null;
+        foreach (var container in new[] { payload, root })
+        {
+            if (container.ValueKind == JsonValueKind.Object && container.TryGetProperty("licenseRevision", out var rev) &&
+                rev.ValueKind == JsonValueKind.Number && rev.TryGetInt32(out var parsedRevision))
+            {
+                licenseRevision = parsedRevision;
+                break;
+            }
+        }
 
         if (!string.Equals(responseLicenseId, expectedLicenseId, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("PROGNODE Cloud returned a licenseId that does not match the local signed license.");
@@ -248,7 +312,8 @@ public sealed class CoreCloudLicenseClient
             revoked,
             revokedAtUtc,
             activationCertificate,
-            serverTime);
+            serverTime,
+            licenseRevision);
     }
 
     private static string? TryGetErrorCode(string raw)

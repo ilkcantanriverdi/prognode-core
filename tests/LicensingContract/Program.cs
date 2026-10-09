@@ -305,6 +305,46 @@ if (OperatingSystem.IsWindows())
     Console.WriteLine("PASS Remote Access relay: activation-token auth, alarm metadata only, remote ACK commands, signed device registration");
 }
 
+// --- License auto-refresh: a higher licenseRevision from PROGNODE Cloud is downloaded ----------------
+{
+    var folder = Path.Combine(Path.GetTempPath(), "pgn-refresh-" + Guid.NewGuid().ToString("N"));
+    try
+    {
+        var handler = new RecordingHandler();
+        var options = new CoreCloudLicenseOptions { BaseUrl = CoreCloudLicenseOptions.ProductionBaseUrl };
+        var client = new CoreCloudLicenseClient(options, new HttpClient(handler));
+        var state = new CoreCloudLicenseStateStore(folder);
+        var source = new CloudLicenseRefreshSource(client, state);
+
+        Check(await source.TryGetNewerLicenseAsync("lic-1", 1) is null, "No activation token means no download.");
+        Check(handler.Requests.Count == 0, "Nothing is requested before activation.");
+
+        state.Save(new CoreCloudLicenseStatus(true, "ACTIVE", null, null, null, "activation-token", DateTimeOffset.UtcNow, null, "lic-1"));
+        handler.Reply = _ => ("{\"ok\":true,\"licenseId\":\"lic-1\",\"licenseRevision\":3,\"signedLicenseDocument\":\"{\\\"signed\\\":true}\"}", 200);
+        var newer = await source.TryGetNewerLicenseAsync("lic-1", 2);
+        var sent = handler.Requests[^1];
+        Check(sent.Url == "https://account.prognode.io/api/core/license" && sent.Auth == "Bearer activation-token" &&
+              JsonNode.Parse(sent.Body!)!["licenseId"]!.GetValue<string>() == "lic-1",
+            "The current license is requested with the activation token.");
+        Check(newer is not null && Encoding.UTF8.GetString(newer) == "{\"signed\":true}", "A higher revision returns the exact signed document.");
+        Check(await source.TryGetNewerLicenseAsync("lic-1", 3) is null, "The same revision is not re-imported.");
+
+        handler.Reply = _ => ("{\"ok\":true,\"licenseId\":\"another\",\"licenseRevision\":9,\"signedLicenseDocument\":\"{}\"}", 200);
+        Check(await source.TryGetNewerLicenseAsync("lic-1", 1) is null, "A document for another license is ignored.");
+        handler.Reply = _ => ("{\"error\":\"installation_revoked\"}", 403);
+        Check(await source.TryGetNewerLicenseAsync("lic-1", 1) is null, "A refused download leaves the installed license untouched.");
+
+        handler.Reply = _ => ("{\"ok\":true,\"licenseId\":\"lic-1\",\"licenseStatus\":\"ACTIVE\",\"licenseRevision\":4,\"serverTime\":\"2026-10-08T10:00:00Z\"}", 200);
+        var heartbeat = await client.HeartbeatAsync("activation-token", "lic-1", Guid.NewGuid());
+        Check(heartbeat.LicenseRevision == 4, "The heartbeat reports the cloud licenseRevision.");
+        Console.WriteLine("PASS license auto-refresh: heartbeat revision, authenticated download, only newer revisions");
+    }
+    finally
+    {
+        if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
+    }
+}
+
 Console.WriteLine("Licensing contract checks passed.");
 
 sealed class FixedMachine(string fingerprint) : IMachineFingerprintProvider

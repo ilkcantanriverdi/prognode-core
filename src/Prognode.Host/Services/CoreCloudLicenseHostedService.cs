@@ -20,6 +20,8 @@ public sealed class CoreCloudLicenseHostedService(
     ServerAccessService serverAccess,
     IMachineFingerprintProvider machine,
     TrustedClock clock,
+    LicenseSignatureVerifier verifier,
+    LicenseRefreshCoordinator refresher,
     ILogger<CoreCloudLicenseHostedService> logger) : BackgroundService
 {
     // Cloud codes meaning this installation is no longer allowed to run the license.
@@ -40,6 +42,32 @@ public sealed class CoreCloudLicenseHostedService(
             // Short local check interval lets a freshly imported license activate quickly. Heartbeat
             // network calls themselves are still limited by HeartbeatIntervalSeconds.
             await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+        }
+    }
+
+    /// <summary>
+    /// A renewal, a plan change or an added Remote Access subscription is issued as a higher
+    /// licenseRevision. It is installed automatically, so the customer never re-imports the file.
+    /// </summary>
+    private async Task TryInstallNewerLicenseAsync(CoreCloudLicenseStatus result, CancellationToken stoppingToken)
+    {
+        if (result.Revoked || result.LicenseRevision is not { } cloudRevision || !localLicenseStore.Exists)
+            return;
+        try
+        {
+            var installed = verifier.Verify(localLicenseStore.ReadAllBytes());
+            if (cloudRevision <= installed.Payload.LicenseRevision)
+                return;
+            if (await refresher.TryRefreshAsync(installed, stoppingToken))
+            {
+                var updated = verifier.Verify(localLicenseStore.ReadAllBytes());
+                logger.LogInformation("Installed PROGNODE license revision {Revision} from PROGNODE Cloud.", updated.Payload.LicenseRevision);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // The installed license keeps working; the next heartbeat retries.
+            logger.LogWarning(ex, "A newer PROGNODE license could not be installed. The current license remains active.");
         }
     }
 
@@ -103,6 +131,7 @@ public sealed class CoreCloudLicenseHostedService(
                 if (result.ServerTimeUtc is { } serverTime)
                     clock.SynchronizeFromCloud(serverTime);
                 stateStore.Save(result with { ActivationCertificate = null });
+                await TryInstallNewerLicenseAsync(result, stoppingToken);
             }
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
