@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Win32;
+using NSec.Cryptography;
 
 namespace Prognode.Client.Windows;
 
@@ -38,6 +39,37 @@ public static class ClientStore
         File.WriteAllBytes(temp, cipher);
         File.Move(temp, FilePath, overwrite: true);
     }
+
+    private static readonly string KeyPath = Path.Combine(Folder, "device-key.dat");
+    private static readonly byte[] KeyEntropy = Encoding.UTF8.GetBytes("PROGNODE-CLIENT-DEVICE-KEY-V1");
+
+    /// <summary>
+    /// This PC's Ed25519 device identity (public key, base64url without padding, as the mobile app
+    /// sends it). Created once per Windows user and kept across re-pairing; the private key stays DPAPI protected.
+    /// </summary>
+    public static string DevicePublicKey()
+    {
+        try
+        {
+            if (File.Exists(KeyPath))
+            {
+                var stored = JsonSerializer.Deserialize<Dictionary<string, string>>(
+                    ProtectedData.Unprotect(File.ReadAllBytes(KeyPath), KeyEntropy, DataProtectionScope.CurrentUser));
+                if (stored is not null && stored.TryGetValue("publicKey", out var existing) && existing.Length == 43) return existing;
+            }
+        }
+        catch (Exception ex) when (ex is CryptographicException or JsonException or IOException) { }
+
+        var algorithm = SignatureAlgorithm.Ed25519;
+        using var key = Key.Create(algorithm, new KeyCreationParameters { ExportPolicy = KeyExportPolicies.AllowPlaintextExport });
+        var publicKey = Base64Url(key.PublicKey.Export(KeyBlobFormat.RawPublicKey));
+        var record = new Dictionary<string, string> { ["privateKey"] = Base64Url(key.Export(KeyBlobFormat.RawPrivateKey)), ["publicKey"] = publicKey };
+        Directory.CreateDirectory(Folder);
+        File.WriteAllBytes(KeyPath, ProtectedData.Protect(JsonSerializer.SerializeToUtf8Bytes(record), KeyEntropy, DataProtectionScope.CurrentUser));
+        return publicKey;
+    }
+
+    private static string Base64Url(byte[] bytes) => Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
     public static void Clear()
     {

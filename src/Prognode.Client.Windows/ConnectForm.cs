@@ -142,7 +142,7 @@ public sealed class ConnectForm : Form
         {
             using var core = new CoreConnection(_candidate.Host, _candidate.Port, _candidate.CertificateSha256);
             var name = string.IsNullOrWhiteSpace(_name.Text) ? Environment.MachineName : _name.Text.Trim();
-            var (clientId, token) = await core.PairAsync(_candidate.ServerId, name, _pairingCode.Text);
+            var (clientId, token) = await core.PairAsync(_candidate.ServerId, name, _pairingCode.Text, ClientStore.DevicePublicKey());
             Result = new PairingRecord(_candidate.ServerId, _candidate.DisplayName, _candidate.Host, _candidate.Port, _candidate.CertificateSha256, clientId, token);
             DialogResult = DialogResult.OK;
             Close();

@@ -142,11 +142,13 @@ public sealed class ClientContext : ApplicationContext
             }
             if (e.EventType is not ("ACTIVE" or "REMINDER") || shown >= 5) continue;
             var critical = string.Equals(e.Severity, "Critical", StringComparison.OrdinalIgnoreCase);
-            var body = string.IsNullOrWhiteSpace(e.SourceName) ? e.Severity : $"{e.SourceName} · {e.Severity}";
+            // Core puts "<device> • <alarm text>" in Message and the priority/ACK state in Title.
+            var title = string.IsNullOrWhiteSpace(e.Message) ? e.Title : e.Message;
+            var body = e.Title;
             if (_toasts.Available)
-                _toasts.Show(e.Title, body, e.OccurrenceId, critical, _access?.DeviceAck == true && e.OccurrenceId is not null);
+                _toasts.Show(title, body, e.OccurrenceId, critical, _access?.DeviceAck == true && e.OccurrenceId is not null);
             else
-                _tray.ShowBalloonTip(8000, e.Title, body, critical ? ToolTipIcon.Error : ToolTipIcon.Warning);
+                _tray.ShowBalloonTip(8000, Truncate(title, 63), body, critical ? ToolTipIcon.Error : ToolTipIcon.Warning);
             shown++;
         }
     }

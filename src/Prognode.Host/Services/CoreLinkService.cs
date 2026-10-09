@@ -43,9 +43,14 @@ public sealed class CoreLinkService(
         catch (Exception ex) when (ex is InvalidOperationException or HttpRequestException)
         {
             logger.LogWarning(ex, "PROGNODE account connect could not start.");
-            var message = ex is CloudLicenseRejectedException { Code: "too_many_requests" }
-                ? "Too many attempts. Wait a few minutes and try again."
-                : "PROGNODE Cloud could not be reached. Check the internet connection of this PC and try again.";
+            // A structured answer means the internet works and PROGNODE Account refused or failed.
+            var message = ex switch
+            {
+                CloudLicenseRejectedException { Code: "too_many_requests" } => "Too many attempts. Wait a few minutes and try again.",
+                CloudLicenseRejectedException rejected =>
+                    $"PROGNODE Account could not start the connection ({rejected.Code}). Try again in a few minutes; if it continues, contact hello@prognode.io.",
+                _ => "PROGNODE Cloud could not be reached. Check the internet connection of this PC and try again.",
+            };
             return Set(new Status("FAILED", null, null, null, message));
         }
     }

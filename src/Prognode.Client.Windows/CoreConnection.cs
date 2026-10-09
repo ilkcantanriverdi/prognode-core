@@ -72,16 +72,26 @@ public sealed class CoreConnection : IDisposable
                 var result = await udp.ReceiveAsync(window.Token);
                 using var doc = JsonDocument.Parse(result.Buffer);
                 var root = doc.RootElement;
-                if (!root.TryGetProperty("type", out var type) || type.GetString() != "PROGNODE_SERVER_V1") continue;
-                var id = root.GetProperty("serverId").GetGuid();
-                var port = root.TryGetProperty("secureApiPort", out var sp) && sp.ValueKind == JsonValueKind.Number ? sp.GetInt32() : 5443;
+                // Core answers with PascalCase identity fields ("ServerId"); match names case-insensitively.
+                if (Field(root, "type")?.GetString() != "PROGNODE_SERVER_V1") continue;
+                if (Field(root, "serverId") is not { ValueKind: JsonValueKind.String } idElement || !idElement.TryGetGuid(out var id)) continue;
+                var port = Field(root, "secureApiPort") is { ValueKind: JsonValueKind.Number } sp ? sp.GetInt32() : 5443;
                 if (found.Any(x => x.ServerId == id)) continue;
-                found.Add(new DiscoveredCore(id, root.GetProperty("displayName").GetString() ?? "PROGNODE Core", result.RemoteEndPoint.Address, port));
+                var name = Field(root, "displayName") is { ValueKind: JsonValueKind.String } dn ? dn.GetString() : null;
+                found.Add(new DiscoveredCore(id, string.IsNullOrWhiteSpace(name) ? "PROGNODE Core" : name, result.RemoteEndPoint.Address, port));
             }
             catch (OperationCanceledException) { break; }
-            catch (JsonException) { }
+            catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { }
         }
         return found;
+    }
+
+    private static JsonElement? Field(JsonElement root, string name)
+    {
+        if (root.ValueKind != JsonValueKind.Object) return null;
+        foreach (var property in root.EnumerateObject())
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase)) return property.Value;
+        return null;
     }
 
     /// <summary>
@@ -130,7 +140,8 @@ public sealed class CoreConnection : IDisposable
         return $"{raw[..4]}-{raw[4..8]}-{raw[8..12]}";
     }
 
-    public async Task<(Guid ClientId, string Token)> PairAsync(Guid serverId, string clientName, string pairingCode, CancellationToken ct = default)
+    /// <param name="devicePublicKey">This PC's Ed25519 identity; Core requires it before an administrator can allow ACK.</param>
+    public async Task<(Guid ClientId, string Token)> PairAsync(Guid serverId, string clientName, string pairingCode, string devicePublicKey, CancellationToken ct = default)
     {
         using var response = await _http.PostAsJsonAsync("api/client/pair", new
         {
@@ -138,6 +149,7 @@ public sealed class CoreConnection : IDisposable
             clientName,
             pairingCode = pairingCode.Trim(),
             platform = "Windows",
+            devicePublicKey,
         }, ct);
         var body = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
         if (!response.IsSuccessStatusCode)
