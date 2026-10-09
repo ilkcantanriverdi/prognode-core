@@ -39,6 +39,9 @@ UninstallDisplayIcon={app}\PROGNODE.Client.exe
 UninstallDisplayName=PROGNODE Client
 LicenseFile=license.txt
 WizardStyle=modern
+ShowLanguageDialog=no
+WizardImageFile=branding\wizard-large.bmp,branding\wizard-large-200.bmp
+WizardSmallImageFile=branding\wizard-small.bmp,branding\wizard-small-200.bmp
 Compression=lzma2/ultra64
 SolidCompression=yes
 CloseApplications=yes
@@ -46,7 +49,6 @@ RestartApplications=no
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
-Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"

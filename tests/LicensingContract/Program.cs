@@ -10,6 +10,22 @@ static void Check(bool condition, string message)
     if (!condition) throw new InvalidOperationException(message);
 }
 
+// --- Update check version order -------------------------------------------------------------
+{
+    var ordered = new[] { "1.0.0-beta.2", "1.0.0-beta.3", "1.0.0-beta.10", "1.0.0-rc.1", "1.0.0", "1.0.1", "1.1.0", "2.0.0" };
+    for (var i = 0; i < ordered.Length - 1; i++)
+    {
+        Check(Prognode.Contracts.ProductVersion.Compare(ordered[i], ordered[i + 1]) < 0, $"{ordered[i]} must sort before {ordered[i + 1]}.");
+        Check(Prognode.Contracts.ProductVersion.Compare(ordered[i + 1], ordered[i]) > 0, $"{ordered[i + 1]} must sort after {ordered[i]}.");
+    }
+    Check(Prognode.Contracts.ProductVersion.Compare("1.0.0-beta.3", "1.0.0-beta.3+abc123") == 0, "Build metadata is ignored.");
+    Check(Prognode.Contracts.ProductVersion.Compare("latest", "1.0.0") is null, "Unparseable versions never announce an update.");
+    Check(Prognode.Contracts.ProductVersion.IsDevelopmentBuild("1.0.0-dev"), "Development builds do not check for updates.");
+    Check(CoreCloudLicenseOptions.IsAllowedBaseUrl("https://account.prognode.io/downloads") &&
+          !CoreCloudLicenseOptions.IsAllowedBaseUrl("https://prognode.io.evil.example/downloads"), "Update links only point at PROGNODE.");
+    Console.WriteLine("PASS update check: semantic version order, dev builds skipped, PROGNODE-only download link");
+}
+
 // --- Cloud license host selection (Release build) -------------------------------------------
 {
     var options = new CoreCloudLicenseOptions

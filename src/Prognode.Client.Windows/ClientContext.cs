@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Prognode.Contracts;
 using Prognode.Contracts.Notifications;
 
 namespace Prognode.Client.Windows;
@@ -10,6 +12,13 @@ public sealed class ClientContext : ApplicationContext
 {
     private readonly NotifyIcon _tray;
     private readonly System.Windows.Forms.Timer _timer = new() { Interval = 4000 };
+    private readonly System.Windows.Forms.Timer _updateTimer = new() { Interval = 12 * 60 * 60 * 1000 };
+    private const string ReleasesUrl = "https://account.prognode.io/api/releases/latest";
+    private const string DownloadsUrl = "https://account.prognode.io/downloads";
+    private ToolStripMenuItem? _updateItem;
+    private string? _announcedVersion;
+    private (string Version, Uri Url, string Sha256)? _update;
+    private bool _updating;
     private readonly SynchronizationContext _ui;
     private readonly Toasts _toasts;
     private MainForm? _window;
@@ -33,6 +42,9 @@ public sealed class ClientContext : ApplicationContext
             ContextMenuStrip = new ContextMenuStrip(),
         };
         _tray.ContextMenuStrip.Items.Add("Open PROGNODE", null, (_, _) => OpenWindow(null));
+        _updateItem = new ToolStripMenuItem("Update available", null, async (_, _) => await InstallUpdateAsync()) { Visible = false };
+        _tray.ContextMenuStrip.Items.Add(_updateItem);
+        _tray.BalloonTipClicked += async (_, _) => { if (_announcedVersion is not null && !_updating) await InstallUpdateAsync(); };
         _tray.ContextMenuStrip.Items.Add(new ToolStripSeparator());
         _tray.ContextMenuStrip.Items.Add("Exit", null, (_, _) => ExitThread());
         _tray.DoubleClick += (_, _) => OpenWindow(null);
@@ -44,6 +56,9 @@ public sealed class ClientContext : ApplicationContext
         if (!background) OpenWindow(null);
         _ = PollAsync(initial: true);
         _timer.Start();
+        _updateTimer.Tick += async (_, _) => await CheckForUpdateAsync();
+        _updateTimer.Start();
+        _ = CheckForUpdateAsync();
     }
 
     private bool Pair()
@@ -194,9 +209,72 @@ public sealed class ClientContext : ApplicationContext
 
     private static string Truncate(string value, int max) => value.Length <= max ? value : value[..max];
 
+    /// <summary>Tells the user once per version that a newer PROGNODE Client is available; never installs by itself.</summary>
+    private async Task CheckForUpdateAsync()
+    {
+        if (ProductVersion.IsDevelopmentBuild(ProductVersion.Current)) return;
+        try
+        {
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+            using var document = JsonDocument.Parse(await http.GetStringAsync(ReleasesUrl));
+            if (!document.RootElement.TryGetProperty("client", out var client) || client.ValueKind != JsonValueKind.Object ||
+                !client.TryGetProperty("version", out var version) || version.GetString() is not { } latest) return;
+            if (ProductVersion.Compare(latest, ProductVersion.Current) is not > 0 || latest == _announcedVersion) return;
+            _announcedVersion = latest;
+            _update = Uri.TryCreate(client.TryGetProperty("url", out var u) ? u.GetString() : null, UriKind.Absolute, out var url) &&
+                url.Scheme == Uri.UriSchemeHttps && url.Host.EndsWith(".public.blob.vercel-storage.com", StringComparison.OrdinalIgnoreCase) &&
+                client.TryGetProperty("sha256", out var s) && s.GetString() is { Length: 64 } sha
+                ? (latest, url, sha.ToLowerInvariant()) : null;
+            if (_updateItem is not null) { _updateItem.Text = $"Install update v{latest}"; _updateItem.Visible = true; }
+            _tray.ShowBalloonTip(10000, "PROGNODE Client update", $"Version {latest} is available. Click to install it; alarms continue right after.", ToolTipIcon.Info);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            // No internet on the plant network is normal; alarms keep working.
+        }
+    }
+
+    /// <summary>
+    /// Downloads the announced installer, checks its SHA-256 against the release feed, installs it silently
+    /// for this Windows user and starts the new version. Without a verified download it opens the Downloads page.
+    /// </summary>
+    private async Task InstallUpdateAsync()
+    {
+        if (_updating) return;
+        if (_update is not { } update) { OpenDownloads(); return; }
+        _updating = true;
+        if (_updateItem is not null) _updateItem.Enabled = false;
+        var file = Path.Combine(Path.GetTempPath(), $"PROGNODE-Client-Setup-{update.Version}.exe");
+        try
+        {
+            using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
+            var bytes = await http.GetByteArrayAsync(update.Url);
+            if (!string.Equals(Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(bytes)), update.Sha256, StringComparison.Ordinal))
+                throw new InvalidDataException("The download does not match the published SHA-256.");
+            await File.WriteAllBytesAsync(file, bytes);
+            var exe = Environment.ProcessPath!;
+            // Setup closes this app, installs, then the new version starts in the background (tray).
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd.exe",
+                $"/c \"\"{file}\" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART && start \"\" \"{exe}\" --background\"")
+            { UseShellExecute = false, CreateNoWindow = true });
+            ExitThread();
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidDataException or IOException)
+        {
+            try { File.Delete(file); } catch (IOException) { }
+            _tray.ShowBalloonTip(8000, "Update not installed", ex.Message, ToolTipIcon.Warning);
+            _updating = false;
+            if (_updateItem is not null) _updateItem.Enabled = true;
+        }
+    }
+
+    private static void OpenDownloads() =>
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(DownloadsUrl) { UseShellExecute = true });
+
     protected override void ExitThreadCore()
     {
         _timer.Stop();
+        _updateTimer.Stop();
         _tray.Visible = false;
         _tray.Dispose();
         _toasts.Dispose();

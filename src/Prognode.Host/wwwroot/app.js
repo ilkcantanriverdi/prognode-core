@@ -1112,6 +1112,49 @@ async function importActivationFromFile(file) {
   showToast("PROGNODE Core activated. Sign in with your password.");
 }
 
+// A newer Core release announced by PROGNODE Account. A signed-in user installs it when it suits the
+// plant: monitoring pauses for about a minute while the service is replaced; data and settings stay.
+let updateNoticeShown = false;
+let updateState = null;
+async function renderUpdateNotice() {
+  const update = await fetch('/api/system/update').then(r => r.ok ? r.json() : null).catch(() => null);
+  updateState = update;
+  const button = $("sidebarUpdate");
+  if (!button) return;
+  const busy = update?.state === 'DOWNLOADING' || update?.state === 'INSTALLING';
+  button.classList.toggle('hidden', !update?.updateAvailable && !busy);
+  if (!update?.updateAvailable && !busy) return;
+  button.disabled = busy;
+  button.textContent = update.state === 'DOWNLOADING' ? `Downloading update… ${update.progress ?? 0}%`
+    : update.state === 'INSTALLING' ? 'Installing update…'
+    : `Install update v${update.latestVersion}`;
+  button.title = `PROGNODE Core ${update.latestVersion} is available. Monitoring pauses for about a minute while it installs; settings, license and history are kept.`;
+  if (update.state === 'FAILED' && update.message) showToast(update.message);
+  if (!updateNoticeShown && !busy) {
+    updateNoticeShown = true;
+    showToast(`PROGNODE Core ${update.latestVersion} is available. Click "Install update" in the sidebar when convenient.`);
+  }
+}
+
+async function installCoreUpdate() {
+  if (!isLocalUserSignedIn()) { showToast('Sign in to install the update.'); openAccountModal(); return; }
+  const version = updateState?.latestVersion || '';
+  if (!confirm(`Install PROGNODE Core ${version} now?\n\nMonitoring pauses for about a minute while PROGNODE restarts. Settings, license and recorded history are kept.`)) return;
+  const response = await fetch('/api/system/update/install', { method:'POST', headers: { 'X-PROGNODE-Session': sessionStorage.getItem('prognode.accessSession') || '' } }).catch(() => null);
+  const result = await response?.json().catch(() => null);
+  if (!response?.ok || result?.state === 'FAILED') { showToast(result?.message || 'The update could not be started.'); return; }
+  const fromVersion = state.health?.coreVersion;
+  const timer = setInterval(async () => {
+    await renderUpdateNotice();
+    const health = await fetch('/api/health').then(r => r.ok ? r.json() : null).catch(() => null);
+    if (health?.coreVersion && fromVersion && health.coreVersion !== fromVersion) {
+      clearInterval(timer);
+      showToast(`PROGNODE Core updated to ${health.coreVersion}.`);
+      setTimeout(() => location.reload(), 1500);
+    }
+  }, 3000);
+}
+
 async function loadHealthAndLicense() {
   const [health, license, licenseUsage] =
     await Promise.all([
@@ -1126,6 +1169,7 @@ async function loadHealthAndLicense() {
   await loadActivationStatus();
 
   $("sidebarVersion").textContent = `v${health.coreVersion}`;
+  renderUpdateNotice();
   $("metricCoreVersion").textContent = `PROGNODE ${health.coreVersion}`;
   if ($("topLicensePlan")) $("topLicensePlan").textContent = licenseProductLabel(license.plan);
 
@@ -5892,6 +5936,7 @@ function wireEvents() {
     });
 
   $("accountConnectButton")?.addEventListener("click", startAccountConnect);
+  $("sidebarUpdate")?.addEventListener("click", installCoreUpdate);
   $("licenseConnectButton")?.addEventListener("click", () => { openAccountModal(); startAccountConnect(); });
   $("accountConnectCancel")?.addEventListener("click", cancelAccountConnect);
 
