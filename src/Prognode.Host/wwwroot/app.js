@@ -546,6 +546,7 @@ function renderAccount() {
   // Once a valid license is imported/installed, remove the import step from this access popup.
   // License replacement remains available on the dedicated License page.
   $("accountLicenseImportSection")?.classList.toggle('hidden', activated);
+  $("accountConnectSection")?.classList.toggle('hidden', activated);
   $("accountSignedLicense")?.classList.toggle('hidden', !authenticated);
   $("accountCredentials")?.classList.toggle('hidden', authenticated);
   $("accountSignIn")?.classList.toggle('hidden', authenticated);
@@ -672,7 +673,13 @@ async function importLicenseFromFile(file) {
   const response = await fetch("/api/license/import", { method:"POST", body:form });
   const body = await response.json().catch(() => null);
   if (!response.ok) throw new Error(body?.message || `License import failed (${response.status})`);
+  await applyInstalledLicense(body);
+  const who = body?.assignedUserName || body?.assignedUserEmail || '';
+  showToast(`License imported successfully${who ? ` • ${who}` : ''}. Sign in with your password.`);
+}
 
+/** UI state after a verified license was stored (file import or account connect). */
+async function applyInstalledLicense(body) {
   sessionStorage.removeItem('prognode.accessSession');
   state.accessSession = null;
   state.importedAccount = {
@@ -723,9 +730,63 @@ async function importLicenseFromFile(file) {
   }
 
   $("accountEmail")?.focus();
+}
 
-  const who = body?.assignedUserName || body?.assignedUserEmail || '';
-  showToast(`License imported successfully${who ? ` • ${who}` : ''}. Sign in with your password.`);
+// Connect this Core to a PROGNODE account: free trial or an own license, no file handling.
+let accountConnectTimer = null;
+
+function renderAccountConnect(status) {
+  const waiting = status?.state === 'WAITING';
+  $("accountConnectStart")?.classList.toggle('hidden', waiting);
+  $("accountConnectWaiting")?.classList.toggle('hidden', !waiting);
+  if (waiting) {
+    if ($("accountConnectCode")) $("accountConnectCode").textContent = status.userCode || '';
+    if ($("accountConnectOpen")) $("accountConnectOpen").href = status.verificationUri || 'https://account.prognode.io/link';
+  }
+  if ($("accountConnectMessage")) {
+    $("accountConnectMessage").textContent = status?.message || '';
+    $("accountConnectMessage").classList.toggle('hidden', !status?.message);
+  }
+}
+
+async function startAccountConnect() {
+  const button = $("accountConnectButton");
+  if (button) button.disabled = true;
+  try {
+    const response = await fetch('/api/license/link/start', { method:'POST' });
+    const status = await response.json().catch(() => null);
+    if (!response.ok || !status) throw new Error(status?.message || 'PROGNODE Account could not be reached.');
+    renderAccountConnect(status);
+    if (status.state === 'WAITING') {
+      window.open(status.verificationUri, '_blank', 'noopener');
+      watchAccountConnect();
+    }
+  } catch (error) {
+    renderAccountConnect({ state:'FAILED', message:error.message });
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+function watchAccountConnect() {
+  clearInterval(accountConnectTimer);
+  accountConnectTimer = setInterval(async () => {
+    const status = await fetch('/api/license/link/status').then(r => r.ok ? r.json() : null).catch(() => null);
+    if (!status || status.state === 'WAITING') return;
+    clearInterval(accountConnectTimer);
+    renderAccountConnect(status.state === 'CONNECTED' ? { state:'IDLE' } : status);
+    if (status.state !== 'CONNECTED') return;
+    await applyInstalledLicense({ assignedUserName: status.assignedUserName, assignedUserEmail: status.assignedUserEmail });
+    showToast('PROGNODE Account connected. Sign in with your PROGNODE password.');
+    renderAccount();
+    await waitForActivation();
+  }, 2000);
+}
+
+async function cancelAccountConnect() {
+  clearInterval(accountConnectTimer);
+  const status = await fetch('/api/license/link/cancel', { method:'POST' }).then(r => r.json()).catch(() => ({ state:'IDLE' }));
+  renderAccountConnect(status);
 }
 
 function applyAccessMode() {
@@ -5829,6 +5890,10 @@ function wireEvents() {
         await waitForActivation();
       } catch (error) { showToast(error.message); }
     });
+
+  $("accountConnectButton")?.addEventListener("click", startAccountConnect);
+  $("licenseConnectButton")?.addEventListener("click", () => { openAccountModal(); startAccountConnect(); });
+  $("accountConnectCancel")?.addEventListener("click", cancelAccountConnect);
 
   $("accountImportActivation")
     ?.addEventListener("click", async () => {

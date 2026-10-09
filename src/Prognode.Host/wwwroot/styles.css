@@ -5581,3 +5581,15 @@ body.theme-light .qr-enroll-card,body[data-theme="light"] .qr-enroll-card{backgr
 .license-file-input::file-selector-button { font:inherit; font-size:12px; font-weight:800; margin-right:10px; padding:7px 12px; border-radius:8px; border:1px solid var(--line); background:var(--panel); color:var(--text); cursor:pointer; }
 .license-file-input::file-selector-button:hover { border-color:var(--accent, #18d3c4); }
 button.secondary.license-action-full { font-size:13px; font-weight:800; letter-spacing:.01em; }
+
+/* Account connect: free trial or own license without a license file */
+.account-connect { border:1px solid color-mix(in srgb, var(--cyan) 45%, var(--line)); border-radius:13px; background:color-mix(in srgb, var(--cyan) 7%, var(--panel-2)); padding:14px; display:grid; gap:10px; }
+.account-connect > div { display:grid; gap:6px; }
+.account-connect strong { font-size:14px; color:var(--text); }
+.account-connect small { color:var(--muted); font-size:10px; line-height:1.5; }
+.account-connect button.primary { margin-top:4px; min-height:38px; }
+.account-connect-code { font:700 26px/1.2 Consolas, "Cascadia Mono", monospace; letter-spacing:.12em; color:var(--cyan); padding:6px 0; }
+.account-connect-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.account-connect-actions a { text-decoration:none; }
+.account-connect-message { color:var(--yellow) !important; }
+.license-actions-card .license-action-full + .license-action-full { margin-top:8px; }
