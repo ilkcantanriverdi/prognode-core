@@ -14,7 +14,7 @@
  <button class="btn danger" id="clear-all-charts" type="button" data-hf61-en="× Remove all trends">× Remove all trends</button>
  <label class="hf62-layout-control"><span data-hf61-en="Layout">Layout</span>
  <select id="hf62-layout-select" aria-label="Trend Studio layout">
-  <option value="auto" selected data-hf61-en="Auto">Otomatik</option>
+  <option value="auto" selected data-hf61-en="Auto">Auto</option>
   <option value="rows" data-hf61-en="Stacked">Alt alta</option>
   <option value="columns" data-hf61-en="2 columns">2 columns</option>
   <option value="three" data-hf61-en="3 columns">3 columns</option>
@@ -34,7 +34,7 @@
 <div class="board">
 <div class="board-top"><span class="boardstatus"><b id="board-count">0</b> <span data-hf61-en="open charts">open charts</span> <span style="margin:0 8px;color:var(--border)">│</span><b id="available-signal-count">0</b> <span data-hf61-en="recorded signals">recorded signals</span></span><input id="trend-open-filter" class="trend-open-filter" type="search" autocomplete="off" data-hf61-placeholder-tr="Filter open trends..." data-hf61-placeholder-en="Filter open trends..." placeholder="Filter open trends..."/><span id="sync-info" title="Synchronized actual records"></span><div class="grow"></div><span class="range-ctrl"><span data-i18n="colWidth">Left column</span><input aria-label="Left column width" id="col-width" max="70" min="30" step="1" type="range" value="50"/><span id="col-width-value">50%</span></span><div class="hidden comparebar" id="compare-actions"><span id="compare-count">0 <span data-i18n="selected">selected</span></span><button class="btn active" data-i18n="showCompare" disabled="" id="compare-open">Open comparison</button></div><span class="pill" data-i18n="multiLayout" id="layout-tag">Auto layout</span></div>
 <div aria-label="Trend grafik panelleri" class="grid" data-n="0" data-layout="rows" id="grid"></div>
-<section class="hf61-events" aria-label="Recorded process events"><div class="hf61-events-head"><h2 data-hf61-en="Process events">Process events</h2><span data-hf61-en="RECORDED DATA">RECORDED DATA</span></div><div class="hf61-table-wrap"><table><thead><tr><th data-hf61-en="TIME">ZAMAN</th><th data-hf61-en="EVENT">OLAY</th><th data-hf61-en="SIGNAL / BATCH">SIGNAL / BATCH</th><th data-hf61-en="STATE">DURUM</th></tr></thead><tbody id="hf61-events-body"><tr><td colspan="4" class="hf61-events-empty">No recorded events yet.</td></tr></tbody></table></div></section>
+<section class="hf61-events" aria-label="Recorded process events"><div class="hf61-events-head"><h2 data-hf61-en="Process events">Process events</h2><span data-hf61-en="RECORDED DATA">RECORDED DATA</span></div><div class="hf61-table-wrap"><table><thead><tr><th data-hf61-en="TIME">TIME</th><th data-hf61-en="EVENT">EVENT</th><th data-hf61-en="SIGNAL / BATCH">SIGNAL / BATCH</th><th data-hf61-en="STATE">STATE</th></tr></thead><tbody id="hf61-events-body"><tr><td colspan="4" class="hf61-events-empty">No recorded events yet.</td></tr></tbody></table></div></section>
 </div>
 <div aria-hidden="true" class="drawer hidden" id="drawer">
 <div class="drawer-head"><strong data-i18n="selectSignals">Historian sinyalleri</strong><div class="grow"></div><button aria-label="Kapat" class="small-action" id="drawer-close">✕</button></div>
