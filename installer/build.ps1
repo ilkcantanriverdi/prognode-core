@@ -29,6 +29,26 @@ if ($LASTEXITCODE -ne 0) { throw "Agent publish failed" }
 dotnet publish (Join-Path $root "src\Prognode.Client.Windows\Prognode.Client.Windows.csproj") @common "-p:WindowsAppSDKSelfContained=true" -o (Join-Path $publish "client")
 if ($LASTEXITCODE -ne 0) { throw "Client publish failed" }
 
+# libsodium.dll (NSec: license signatures in Core, the device key in the Client) links the Visual C++
+# runtime, which a clean Windows PC does not have. Ship vcruntime140.dll next to it (Microsoft's
+# app-local deployment). Source: PROGNODE_VCRUNTIME, a Visual Studio redist folder, or System32.
+$vcRuntime = $env:PROGNODE_VCRUNTIME
+if (!$vcRuntime) {
+  $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+  if (Test-Path $vswhere) {
+    $vs = & $vswhere -latest -products * -property installationPath
+    if ($vs) { $vcRuntime = Get-ChildItem (Join-Path $vs "VC\Redist\MSVC") -Recurse -Filter vcruntime140.dll -ErrorAction SilentlyContinue |
+      Where-Object FullName -match '\\x64\\Microsoft\.VC\d+\.CRT\\' | Select-Object -First 1 -ExpandProperty FullName }
+  }
+}
+if (!$vcRuntime) { $vcRuntime = Join-Path $env:SystemRoot "System32\vcruntime140.dll" }
+$vcSignature = Get-AuthenticodeSignature $vcRuntime
+if ($vcSignature.Status -ne "Valid" -or $vcSignature.SignerCertificate.Subject -notmatch "O=Microsoft Corporation") {
+  throw "vcruntime140.dll at $vcRuntime is missing or not signed by Microsoft. Install the Visual C++ Redistributable (x64) or set PROGNODE_VCRUNTIME."
+}
+foreach ($app in "core", "client") { Copy-Item $vcRuntime (Join-Path $publish $app) -Force }
+Write-Host "Bundled $vcRuntime ($((Get-Item $vcRuntime).VersionInfo.FileVersion))"
+
 # Never ship development leftovers.
 Get-ChildItem $publish -Recurse -Include "appsettings.Development.json", "*.pdb" | Remove-Item -Force
 
