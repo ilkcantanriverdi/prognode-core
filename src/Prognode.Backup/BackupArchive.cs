@@ -29,7 +29,7 @@ public static class BackupArchive
     public static BackupResult Create(string dataRoot, string outputPath, string passphrase,
         string coreVersion, string? appSettingsPath = null)
     {
-        CheckPassword(passphrase);
+        CheckNewPassword(passphrase);
         dataRoot = Path.GetFullPath(dataRoot);
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputPath))!);
         // Temp snapshot is on the local server only. The final export is always encrypted.
@@ -293,10 +293,17 @@ public static class BackupArchive
         return new BackupOverview((int)Count("devices"),(int)Count("tags"),
             (int)Count("alarm_definitions"),Count("historian_samples"),min,max);
     }
+    // A new backup needs a passphrase that meets the policy; opening one only needs a non-empty passphrase,
+    // so backups made under the earlier 12-character rule keep working.
+    static void CheckNewPassword(string passphrase)
+    {
+        if (!Prognode.Contracts.PasswordPolicy.IsValid(passphrase))
+            throw new ArgumentException("Backup passphrase must have " + Prognode.Contracts.PasswordPolicy.Requirement + ".");
+    }
     static void CheckPassword(string passphrase)
     {
-        if (string.IsNullOrWhiteSpace(passphrase) || passphrase.Length < 12)
-            throw new ArgumentException("Backup password must contain at least 12 characters.");
+        if (string.IsNullOrEmpty(passphrase) || passphrase.Length > Prognode.Contracts.PasswordPolicy.MaximumLength)
+            throw new ArgumentException("Enter the backup passphrase.");
     }
     static BackupManifest VerifyZip(string path)
     {

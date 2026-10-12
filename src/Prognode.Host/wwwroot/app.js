@@ -246,8 +246,8 @@ Object.assign(translations.en, {
 
 Object.assign(translations.en,{
   backupKicker:"PROJECT SAFETY",backupTitle:"Backup Center",backupIntro:"Encrypted factory snapshot: devices, Tags, alarms, Historian, system records and saved Trend Studio layout.",
-  backupPassword:"Backup passphrase (at least 12 characters)",backupPasswordConfirm:"Confirm passphrase",backupCreate:"Create encrypted snapshot",backupRefresh:"Refresh",backupSaved:"Available encrypted snapshots",
-  backupRestoreTitle:"Add a backup from another location",backupRestoreHelp:"Upload a .pgnbackup file to check it. It then appears in the list above, where you can restore it. Uploading changes nothing.",backupImportPassword:"Backup passphrase",backupInspect:"Verify uploaded backup",backupAuditTitle:"Recent configuration changes"
+  backupPassword:"Backup passphrase (8+ characters: A–Z, a–z, 0–9 and a symbol)",backupPasswordConfirm:"Confirm passphrase",backupCreate:"Create encrypted snapshot",backupRefresh:"Refresh",backupSaved:"Available encrypted snapshots",
+  backupRestoreTitle:"Restore a backup from another location",backupRestoreHelp:"Choose a .pgnbackup file and its passphrase. PROGNODE checks it first, then asks you to confirm the restore. Nothing changes before you confirm.",backupImportPassword:"Backup passphrase",backupInspect:"Upload and check",backupAuditTitle:"Recent configuration changes"
 });
 
 
@@ -6425,7 +6425,7 @@ async function loadBackupCenter(){
     
     $('backupScheduleNote').textContent=data.autoEnabled
       ? (`Automatic: daily after ${String(data.dailyHourLocal).padStart(2,'0')}:00 · keeps ${data.retentionDays} days.`)
-      : ('Automatic backup disabled: set PROGNODE_BACKUP_PASSWORD (12+ characters) for the Windows Core service.');
+      : ('Automatic backup disabled: set PROGNODE_BACKUP_PASSWORD for the Windows Core service (8+ characters with upper- and lower-case letters, a digit and a symbol).');
     window.__pgnBackupDirectory=data.backupDirectory;
     const list=$('backupList');list.replaceChildren();
     if(!data.backups?.length){list.textContent='No snapshots yet.';}
@@ -6530,9 +6530,13 @@ async function backupDownload(fileName){
   }catch(e){status.textContent=e.message||String(e);status.classList.add('error')}
 }
 $('backupRefresh')?.addEventListener('click',()=>{ $('backupStatusLine').textContent='';void loadBackupCenter();});
+// Same rule as Prognode.Contracts.PasswordPolicy and PROGNODE Cloud accounts.
+const pgnPasswordRule='Use at least 8 characters with an upper-case letter, a lower-case letter, a digit and a symbol.';
+const pgnPasswordOk=p=>typeof p==='string'&&p.length>=8&&p.length<=1024&&/[A-Z]/.test(p)&&/[a-z]/.test(p)&&/[0-9]/.test(p)&&/[^A-Za-z0-9\s]/.test(p);
 $('backupCreate')?.addEventListener('click',async()=>{
   const button=$('backupCreate'),status=$('backupStatusLine');const password=$('backupPassword').value;
-  if(password.length<12 || password!==$('backupPasswordConfirm').value){status.classList.add('error');status.textContent='Passphrases must match and have 12+ characters.';return;}
+  if(!pgnPasswordOk(password)){status.classList.add('error');status.textContent=pgnPasswordRule;return;}
+  if(password!==$('backupPasswordConfirm').value){status.classList.add('error');status.textContent='The two passphrases do not match.';return;}
   button.disabled=true;status.classList.remove('error');status.textContent='Creating encrypted SQLite snapshot; this may take time…';
   try{const result=await api('/api/backup/create',{method:'POST',body:JSON.stringify({passphrase:password})});
     status.classList.add('success');status.textContent=('Snapshot ready: ')+result.fileName+(result.overview?` · ${result.overview.devices} PLC · ${result.overview.tags} Tags · ${result.overview.historianSamples} Historian samples`: '');
@@ -6552,12 +6556,15 @@ $('backupInspect')?.addEventListener('click',async()=>{
     const different = Boolean(result.crossServer);
     
     out.classList.toggle('backup-cross-server',different);
-    out.textContent=('Encrypted archive verified and staged; NO data has been restored. ')+
-      `${result.fileName} • ${result.files} files • schema ${result.databaseSchema} • ${result.overview?.devices??'—'} PLC • ${result.overview?.tags??'—'} Tags • ${result.overview?.historianSamples??'—'} samples. `+
-      (different ? ('Notice: This backup is from a different Server ID. Verification PASSED. An offline identity-migration confirmation is required to restore; review license, HTTPS certificate and paired devices. ') : '')+
-      ('To restore it, choose Restore next to it in the list above. ')+
-      (window.__pgnBackupDirectory?window.__pgnBackupDirectory+'\\'+result.fileName:'');
+    out.textContent=('Backup checked; nothing has been restored yet. ')+
+      `${result.files} files • ${result.overview?.devices??'—'} PLC • ${result.overview?.tags??'—'} Tags • ${result.overview?.historianSamples??'—'} samples. `+
+      (different ? ('This backup comes from a different PROGNODE Core; restoring it takes over that Core\'s identity and paired devices. ') : '')+
+      ('Confirm the restore below.');
     await loadBackupCenter();
+    // Uploading is the first step of a restore: open the restore panel for this file, passphrase filled in.
+    backupRestoreOpen(result.fileName);
+    $('backupRestorePassword').value=password;
+    if(different)$('backupRestoreAdoptRow').classList.remove('hidden');
   }catch(error){out.textContent=error.message||String(error)}
   finally{button.disabled=false;$('backupImportPassword').value='';}
 });

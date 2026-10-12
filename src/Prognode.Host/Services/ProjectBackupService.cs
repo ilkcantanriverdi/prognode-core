@@ -24,7 +24,7 @@ public sealed class ProjectBackupService
     }
     public object GetStatus() => new
     {
-        autoEnabled = AutoPassword is { Length: >=12 },
+        autoEnabled = Prognode.Contracts.PasswordPolicy.IsValid(AutoPassword),
         autoRequiresEnvironmentVariable = "PROGNODE_BACKUP_PASSWORD",
         dailyHourLocal = DailyHourLocal, retentionDays = RetentionDays,
         backupDirectory = BackupRoot,
@@ -68,7 +68,7 @@ public sealed class ProjectBackupService
     public async Task<bool> TryRunDailyAsync(CancellationToken ct)
     {
         var password = AutoPassword;
-        if (string.IsNullOrWhiteSpace(password) || password.Length < 12) return false;
+        if (!Prognode.Contracts.PasswordPolicy.IsValid(password)) return false;
         var today = DateTime.Now.Date;
         if (DateTime.Now.Hour < DailyHourLocal || Directory.EnumerateFiles(BackupRoot, "AUTO-*.pgnbackup")
                 .Any(p => File.GetCreationTime(p).Date == today)) return false;
