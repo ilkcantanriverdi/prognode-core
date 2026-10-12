@@ -27,7 +27,7 @@ using Prognode.RemoteAccess;
 using Prognode.Trends;
 using Prognode.Web;
 
-// Offline backup mode for installed Core (used by Setup\restore-backup.ps1 with the service stopped):
+// Offline backup mode for support and recovery, with the service stopped:
 //   PROGNODE.Core.exe backup verify|restore <file.pgnbackup> --data <dataRoot> [--json|--adopt-source-identity]
 if (args.Length > 0 && args[0] == "backup")
 {
@@ -86,6 +86,9 @@ var dataRoot = !string.IsNullOrWhiteSpace(configuredDataRoot)
     : OperatingSystem.IsWindows() && !builder.Environment.IsDevelopment()
         ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "PROGNODE", "data")
         : Path.Combine(builder.Environment.ContentRootPath, "data");
+// A restore approved in Settings › Backup & audit was staged while Core ran: swap it in before
+// anything opens the data. The outcome is shown in the Backup Center.
+PendingRestore.ApplyIfPresent(dataRoot);
 Directory.CreateDirectory(dataRoot);
 // Held for the whole Core lifetime. Offline restore refuses to touch a live dataRoot,
 // regardless of HTTP port or Windows-service process name.
@@ -560,6 +563,50 @@ app.MapPost("/api/backup/create", async (HttpContext ctx, BackupCreateRequest re
     catch(ArgumentException error){return Results.BadRequest(new {message=error.Message});}
     catch(InvalidOperationException error){return Results.Json(new {message=error.Message},statusCode:409);}
 });
+// Restore from Settings › Backup & audit: verify and stage now (current data untouched), then restart
+// Core, which swaps the staged data in at start (PendingRestore) and keeps data.before-restore-*.
+app.MapPost("/api/backup/restore", async (HttpContext ctx, BackupRestoreRequest request,
+    LocalAccessSessionService sessions, ProjectBackupService backup, IHostApplicationLifetime lifetime) =>
+{
+    var denied=BackupAdmin(ctx,sessions);if(denied is not null)return denied;
+    var file=backup.GetFile(request.FileName ?? string.Empty);
+    if(file is null) return Results.NotFound(new {message="Backup file not found."});
+    if(request.Passphrase is null || request.Passphrase.Length is <12 or >1024)
+        return Results.BadRequest(new {message="Enter the backup passphrase (12 characters or more)."});
+    var actor=sessions.GetStatus(ctx.Request.Headers["X-PROGNODE-Session"].ToString()).UserEmail ?? "LOCAL_ADMIN";
+    try
+    {
+        var staged=await Task.Run(()=>BackupArchive.StageRestore(file,dataRoot,request.Passphrase,
+            adoptSourceIdentity:request.AdoptSourceIdentity),ctx.RequestAborted);
+        PendingRestore.Save(dataRoot,new PendingRestore.Request(staged.StagingPath,file,DateTimeOffset.UtcNow,actor));
+    }
+    catch(Exception e) when(e is System.Security.Cryptography.CryptographicException or InvalidDataException or EndOfStreamException)
+    {return Results.BadRequest(new {message="The passphrase is wrong or the backup file is damaged. Nothing was changed."});}
+    catch(InvalidOperationException e) when(e.Message.StartsWith("BACKUP_DIFFERENT_SERVER_ID",StringComparison.Ordinal))
+    {return Results.Json(new {code="DIFFERENT_SERVER",message="This backup comes from a different PROGNODE Core. Confirm that this PC should take over its identity and paired devices."},statusCode:409);}
+    catch(InvalidOperationException e){return Results.Json(new {message=e.Message+" Nothing was changed."},statusCode:409);}
+    backup.Audit(actor,"BACKUP_RESTORE_SCHEDULED",Path.GetFileName(file),true);
+    // Restart after this response. The Windows service restarts through its recovery actions; the helper
+    // starts it as well in case recovery is not configured. Developer runs restart from their launcher.
+    _=Task.Run(async()=>
+    {
+        await Task.Delay(1500);
+        if(Microsoft.Extensions.Hosting.WindowsServices.WindowsServiceHelpers.IsWindowsService())
+        {
+            try{System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("powershell.exe",
+                "-NoProfile -NonInteractive -WindowStyle Hidden -Command \"Start-Sleep -Seconds 15; Start-Service PROGNODECore\""){UseShellExecute=false,CreateNoWindow=true});}catch{}
+        }
+        Environment.ExitCode=1;
+        lifetime.StopApplication();
+    });
+    ctx.Response.Headers.CacheControl="no-store";
+    return Results.Ok(new {restarting=true});
+});
+app.MapGet("/api/backup/restore/last", (HttpContext ctx, LocalAccessSessionService sessions) =>
+{
+    var denied=BackupAdmin(ctx,sessions);ctx.Response.Headers.CacheControl="no-store";
+    return denied ?? Results.Ok(new { last=PendingRestore.LastResult(dataRoot), pending=PendingRestore.Read(dataRoot) is not null });
+});
 app.MapPost("/api/backup/inspect", async (HttpContext ctx, LocalAccessSessionService sessions,
     ProjectBackupService backup, ServerAccessService server) =>
 {
@@ -673,3 +720,4 @@ app.MapPrognodeEndpoints();
 app.Run();
 
 internal sealed record BackupCreateRequest(string Passphrase);
+internal sealed record BackupRestoreRequest(string? FileName, string? Passphrase, bool AdoptSourceIdentity);

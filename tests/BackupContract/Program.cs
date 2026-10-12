@@ -64,6 +64,25 @@ try
     Ensure(migrated.ServerId==manifest.ServerId,"Identity migration mismatch");
     Console.WriteLine("PASS explicit cross-server restore preserves rollback directory");
 
+    // Restore from Settings: stage while the data stays in use, swap in at the next Core start.
+    var live=Path.Combine(tmp,"live-data");Directory.CreateDirectory(live);
+    File.WriteAllText(Path.Combine(live,"server-access.json"),"{\"serverId\":\"1234-ABCD\"}");
+    File.WriteAllText(Path.Combine(live,"marker.txt"),"current");
+    var staged=BackupArchive.StageRestore(file,live,password);
+    Ensure(File.Exists(Path.Combine(live,"marker.txt")),"Staging touched the live data");
+    PendingRestore.Save(live,new PendingRestore.Request(staged.StagingPath,file,DateTimeOffset.UtcNow,"contract"));
+    var applied=PendingRestore.ApplyIfPresent(live);
+    Ensure(applied is {Success:true} && File.Exists(Path.Combine(live,"prognode.db")) && !File.Exists(Path.Combine(live,"marker.txt")),
+        "Pending restore not applied: "+applied?.Message);
+    Ensure(applied!.RollbackPath is not null && File.Exists(Path.Combine(applied.RollbackPath,"marker.txt")),"Previous data not kept");
+    Ensure(PendingRestore.ApplyIfPresent(live) is null && !File.Exists(PendingRestore.MarkerPath(live)),"Marker not consumed");
+    var outside=Path.Combine(tmp,"planted");Directory.CreateDirectory(outside);
+    PendingRestore.Save(live,new PendingRestore.Request(outside,file,DateTimeOffset.UtcNow,"attacker"));
+    var refused=PendingRestore.ApplyIfPresent(live);
+    Ensure(refused is {Success:false} && File.Exists(Path.Combine(live,"prognode.db")) && Directory.Exists(outside),
+        "A restore request pointing outside the data folder was applied");
+    Console.WriteLine("PASS staged restore applies at start, keeps previous data and refuses foreign folders");
+
     Ensure(!BackupArchive.SafeDataRelative("../escape"),"Traversal allowed");
     Ensure(!BackupArchive.SafeDataRelative("private-keys/secret.pem"),"Private key allowed");
     Ensure(!BackupArchive.SafeDataRelative("prognode.db-wal"),"Transient WAL included");

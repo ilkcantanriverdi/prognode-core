@@ -5614,3 +5614,8 @@ button.secondary.license-action-full { font-size:13px; font-weight:800; letter-s
 .historian-tag-option span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .historian-tag-option small{color:var(--muted);font-size:.78rem}
 .historian-tag-empty{margin:8px;color:var(--muted)}
+
+/* Backup restore from Settings */
+.backup-row-actions{display:flex;gap:8px;flex-wrap:wrap}
+.backup-restore{border:1px solid rgba(233,185,73,.45);background:rgba(233,185,73,.06);border-radius:12px;padding:14px;display:grid;gap:10px}
+.backup-restore-check{display:flex;gap:8px;align-items:flex-start;font-size:.85rem;line-height:1.5}

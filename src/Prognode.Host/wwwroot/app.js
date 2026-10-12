@@ -247,7 +247,7 @@ Object.assign(translations.en, {
 Object.assign(translations.en,{
   backupKicker:"PROJECT SAFETY",backupTitle:"Backup Center",backupIntro:"Encrypted factory snapshot: devices, Tags, alarms, Historian, system records and saved Trend Studio layout.",
   backupPassword:"Backup passphrase (at least 12 characters)",backupPasswordConfirm:"Confirm passphrase",backupCreate:"Create encrypted snapshot",backupRefresh:"Refresh",backupSaved:"Available encrypted snapshots",
-  backupRestoreTitle:"Verify and prepare restoration",backupRestoreHelp:"Upload an existing .pgnbackup. This only checks and stores the encrypted file; to restore it, open Start menu › PROGNODE › Restore PROGNODE Backup on this PC.",backupImportPassword:"Backup passphrase",backupInspect:"Verify uploaded backup",backupAuditTitle:"Recent configuration changes"
+  backupRestoreTitle:"Add a backup from another location",backupRestoreHelp:"Upload a .pgnbackup file to check it. It then appears in the list above, where you can restore it. Uploading changes nothing.",backupImportPassword:"Backup passphrase",backupInspect:"Verify uploaded backup",backupAuditTitle:"Recent configuration changes"
 });
 
 
@@ -6434,7 +6434,11 @@ async function loadBackupCenter(){
       const meta=document.createElement('div');const title=document.createElement('strong');title.textContent=b.fileName;
       const small=document.createElement('small');small.textContent=`${new Date(b.createdAtUtc).toLocaleString()} · ${b.sizeBytes < 1048576 ? Math.max(1,Math.round(b.sizeBytes/1024)) + ' KiB' : (b.sizeBytes/1048576).toFixed(1) + ' MiB'} ${b.automated?'· AUTO':''}`;
       meta.append(title,small);const download=document.createElement('button');download.className='secondary';download.type='button';download.textContent='Download';
-      download.addEventListener('click',()=>backupDownload(b.fileName));row.append(meta,download);list.appendChild(row);
+      download.addEventListener('click',()=>backupDownload(b.fileName));
+      const restore=document.createElement('button');restore.className='secondary';restore.type='button';restore.textContent=t('backupRestoreButton');
+      restore.addEventListener('click',()=>backupRestoreOpen(b.fileName));
+      const actions=document.createElement('div');actions.className='backup-row-actions';actions.append(restore,download);
+      row.append(meta,actions);list.appendChild(row);
     }
     const aud=$('backupAuditList');aud.replaceChildren();
     for(const item of (audit||[]).slice().reverse().slice(0,20)){
@@ -6444,8 +6448,69 @@ async function loadBackupCenter(){
       }catch{}
     }
     if(!aud.children.length)aud.textContent='No changes logged yet.';
+    void backupShowLastRestore();
     status.classList.remove('error');if(!status.textContent)status.textContent='Ready for encrypted backup.';
   }catch(error){status.classList.add('error');status.textContent=error.message||String(error)}
+}
+Object.assign(translations.en,{
+  backupRestoreButton:"Restore",backupRestorePassword:"Backup passphrase",backupRestoreRun:"Restore and restart Core",backupRestoreCancel:"Cancel",
+  backupRestoreWhat:"Core checks this backup, restarts and replaces its data with it. The current data is kept in a data.before-restore folder next to it, so nothing is lost.",
+  backupRestoreAdopt:"This backup is from another PROGNODE Core. Use its identity and paired devices on this PC (the license and HTTPS certificate of this PC are not taken over).",
+  backupRestoreChecking:"Checking the backup…",backupRestoreRestarting:"Backup checked. Core is restarting to restore it; this page reloads when Core is back.",
+  backupRestoreSlow:"Core has not come back yet. If it stays offline, start the PROGNODE Core service in Windows Services.",
+  backupRestoreAdoptNeeded:"Tick the box above to confirm, then choose Restore again.",
+  backupRestoreDone:"Last restore:",backupRestoreFailed:"Last restore failed:"
+});
+
+let backupRestoreFile=null;
+function backupRestoreOpen(fileName){
+  backupRestoreFile=fileName;
+  $('backupRestoreName').textContent=fileName;
+  $('backupRestorePassword').value='';
+  $('backupRestoreAdopt').checked=false;
+  $('backupRestoreAdoptRow').classList.add('hidden');
+  $('backupRestoreStatus').textContent='';$('backupRestoreStatus').classList.remove('error');
+  $('backupRestoreRun').disabled=false;
+  $('backupRestorePanel').classList.remove('hidden');
+  $('backupRestorePanel').scrollIntoView({behavior:'smooth',block:'center'});
+  setTimeout(()=>$('backupRestorePassword').focus(),250);
+}
+$('backupRestoreCancel')?.addEventListener('click',()=>{$('backupRestorePanel').classList.add('hidden');$('backupRestorePassword').value='';backupRestoreFile=null;});
+$('backupRestoreRun')?.addEventListener('click',async()=>{
+  const out=$('backupRestoreStatus'),button=$('backupRestoreRun');
+  out.classList.remove('error');out.textContent=t('backupRestoreChecking');button.disabled=true;
+  try{
+    const token=sessionStorage.getItem('prognode.accessSession')||'';
+    const response=await fetch('/api/backup/restore',{method:'POST',cache:'no-store',
+      headers:{'Content-Type':'application/json','X-PROGNODE-Session':token},
+      body:JSON.stringify({fileName:backupRestoreFile,passphrase:$('backupRestorePassword').value,adoptSourceIdentity:$('backupRestoreAdopt').checked})});
+    const result=await response.json().catch(()=>({}));
+    if(response.status===409&&result.code==='DIFFERENT_SERVER'){
+      $('backupRestoreAdoptRow').classList.remove('hidden');
+      throw Error(`${result.message} ${t('backupRestoreAdoptNeeded')}`);
+    }
+    if(!response.ok)throw Error(result.message||`HTTP ${response.status}`);
+    $('backupRestorePassword').value='';
+    out.textContent=t('backupRestoreRestarting');
+    // Wait for Core to stop, then for it to answer again, and reload into the restored data.
+    const started=Date.now();let wentDown=false;
+    while(Date.now()-started<180000){
+      await new Promise(r=>setTimeout(r,2000));
+      const up=await fetch('/api/server/identity',{cache:'no-store'}).then(r=>r.ok).catch(()=>false);
+      if(!up)wentDown=true;
+      else if(wentDown){location.reload();return;}
+      if(Date.now()-started>60000)out.textContent=t('backupRestoreSlow');
+    }
+  }catch(error){out.classList.add('error');out.textContent=error.message||String(error);button.disabled=false;}
+});
+async function backupShowLastRestore(){
+  const line=$('backupLastRestore');if(!line)return;
+  try{
+    const data=await api('/api/backup/restore/last');const last=data?.last;
+    line.classList.toggle('hidden',!last);if(!last)return;
+    line.classList.toggle('error',!last.success);
+    line.textContent=`${last.success?t('backupRestoreDone'):t('backupRestoreFailed')} ${new Date(last.appliedAtUtc).toLocaleString()} · ${last.message}${last.rollbackPath?' · '+last.rollbackPath:''}`;
+  }catch{line.classList.add('hidden');}
 }
 async function backupDownload(fileName){
   const status=$('backupStatusLine');
@@ -6490,7 +6555,7 @@ $('backupInspect')?.addEventListener('click',async()=>{
     out.textContent=('Encrypted archive verified and staged; NO data has been restored. ')+
       `${result.fileName} • ${result.files} files • schema ${result.databaseSchema} • ${result.overview?.devices??'—'} PLC • ${result.overview?.tags??'—'} Tags • ${result.overview?.historianSamples??'—'} samples. `+
       (different ? ('Notice: This backup is from a different Server ID. Verification PASSED. An offline identity-migration confirmation is required to restore; review license, HTTPS certificate and paired devices. ') : '')+
-      ('To restore, open Start menu › PROGNODE › Restore PROGNODE Backup on this PC; it stops Core, restores and keeps the current data. ')+
+      ('To restore it, choose Restore next to it in the list above. ')+
       (window.__pgnBackupDirectory?window.__pgnBackupDirectory+'\\'+result.fileName:'');
     await loadBackupCenter();
   }catch(error){out.textContent=error.message||String(error)}

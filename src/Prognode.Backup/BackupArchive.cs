@@ -8,6 +8,7 @@ using Microsoft.Data.Sqlite;
 namespace Prognode.Backup;
 
 public sealed record BackupFile(string Path, long Size, string Sha256);
+public sealed record StagedRestore(string StagingPath, BackupManifest Manifest);
 public sealed record BackupOverview(int Devices, int Tags, int AlarmDefinitions,
     long HistorianSamples, long? FirstSampleUnixMs, long? LastSampleUnixMs);
 public sealed record BackupManifest(int FormatVersion, string CreatedAtUtc, string ServerId,
@@ -122,10 +123,32 @@ public static class BackupArchive
         bool allowOlderSchema = false, bool adoptSourceIdentity = false)
     {
         dataRoot = Path.GetFullPath(dataRoot);
+        FileStream? restoreGuard = null;
+        try
+        {
+            var staged = StageRestore(encryptedFile, dataRoot, passphrase, allowOlderSchema, adoptSourceIdentity,
+                afterVerify: () => restoreGuard = DataRootLock.Acquire(dataRoot));
+            try { ApplyStagedRestore(staged.StagingPath, dataRoot); }
+            finally { try { if (Directory.Exists(staged.StagingPath)) Directory.Delete(staged.StagingPath, true); } catch { } }
+            // The previous data folder remains intact next to the new one for rollback.
+            return staged.Manifest;
+        }
+        finally { restoreGuard?.Dispose(); }
+    }
+
+    /// <summary>
+    /// Decrypts, verifies and extracts a backup into a staging folder next to <paramref name="dataRoot"/>
+    /// without touching the current data, so a running Core can prepare a restore and apply it
+    /// (<see cref="ApplyStagedRestore"/>) at its next start. The staging folder is removed on failure.
+    /// </summary>
+    public static StagedRestore StageRestore(string encryptedFile, string dataRoot, string passphrase,
+        bool allowOlderSchema = false, bool adoptSourceIdentity = false, Action? afterVerify = null)
+    {
+        dataRoot = Path.GetFullPath(dataRoot);
         if (Path.GetPathRoot(dataRoot) == dataRoot) throw new InvalidOperationException("Cannot restore disk root.");
         using var decrypted = DecryptToTemp(encryptedFile, passphrase);
         var manifest = VerifyZip(decrypted.Path);
-        using var restoreGuard = DataRootLock.Acquire(dataRoot);
+        afterVerify?.Invoke();
         var currentServerId=TryGetServerId(Path.Combine(dataRoot,"server-access.json"));
         if(!string.IsNullOrWhiteSpace(currentServerId) && !string.IsNullOrWhiteSpace(manifest.ServerId) &&
            !string.Equals(currentServerId,manifest.ServerId,StringComparison.OrdinalIgnoreCase) &&
@@ -136,7 +159,6 @@ public static class BackupArchive
         if (!manifest.Files.Any(x => x.Path == "data/prognode.db"))
             throw new InvalidDataException("Backup has no Core database.");
         var staging = dataRoot + ".restore-" + Guid.NewGuid().ToString("N");
-        var rollback = dataRoot + ".before-restore-" + DateTimeOffset.UtcNow.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N")[..6];
         Directory.CreateDirectory(staging);
         try
         {
@@ -174,19 +196,33 @@ public static class BackupArchive
                     using var input=configuration.Open();input.CopyTo(output);
                 }
             }
-            // The caller MUST stop Core first. This also detects active SQLite connections on Windows.
-            SqliteConnection.ClearAllPools();
-            if (Directory.Exists(dataRoot)) Directory.Move(dataRoot, rollback);
-            try { Directory.Move(staging, dataRoot); }
-            catch
-            {
-                if (Directory.Exists(rollback) && !Directory.Exists(dataRoot)) Directory.Move(rollback, dataRoot);
-                throw;
-            }
-            // The previous data folder remains intact next to the new one for rollback.
-            return manifest;
+            return new StagedRestore(staging, manifest);
         }
-        finally { try { if (Directory.Exists(staging)) Directory.Delete(staging, true); } catch { } }
+        catch
+        {
+            try { if (Directory.Exists(staging)) Directory.Delete(staging, true); } catch { }
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Swaps a staged restore in: the current data folder becomes <c>data.before-restore-…</c> and the
+    /// staging folder becomes the data folder. Core must not have the data open. Returns the rollback path.
+    /// </summary>
+    public static string ApplyStagedRestore(string staging, string dataRoot)
+    {
+        dataRoot = Path.GetFullPath(dataRoot);
+        var rollback = dataRoot + ".before-restore-" + DateTimeOffset.UtcNow.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N")[..6];
+        // The caller MUST stop Core first. This also detects active SQLite connections on Windows.
+        SqliteConnection.ClearAllPools();
+        if (Directory.Exists(dataRoot)) Directory.Move(dataRoot, rollback);
+        try { Directory.Move(staging, dataRoot); }
+        catch
+        {
+            if (Directory.Exists(rollback) && !Directory.Exists(dataRoot)) Directory.Move(rollback, dataRoot);
+            throw;
+        }
+        return rollback;
     }
 
     // The service keeps backups outside dataRoot. Exclude untrusted/redundant runtime cache,
