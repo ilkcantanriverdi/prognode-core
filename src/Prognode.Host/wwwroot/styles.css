@@ -5603,3 +5603,14 @@ button.secondary.license-action-full { font-size:13px; font-weight:800; letter-s
 .lan-auto-box{display:grid;gap:12px;line-height:1.55}
 .lan-auto-box p{margin:0}
 .lan-auto-steps{margin:0;padding-left:20px;display:grid;gap:6px}
+
+/* Add Tag to Historian: pick several Tags at once */
+.historian-tag-picker{display:grid;gap:8px}
+.historian-tag-picker-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.historian-select-all{display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer}
+.historian-tag-list{max-height:260px;overflow-y:auto;border:1px solid var(--line-soft);border-radius:10px;padding:4px}
+.historian-tag-option{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:7px 9px;border-radius:7px;cursor:pointer}
+.historian-tag-option:hover{background:rgba(62,215,232,.07)}
+.historian-tag-option span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.historian-tag-option small{color:var(--muted);font-size:.78rem}
+.historian-tag-empty{margin:8px;color:var(--muted)}

@@ -2221,9 +2221,12 @@ function resetTagForm() {
   $("tagUnit").value = "";
   $("tagDecimalPlaces").value = "0";
   $("tagOffset").value = "0";
+  $("tagCount").value = "1";
+  $("tagCountField").classList.remove("hidden");
 
   updateTagFormVisibility();
   validateTagAddressClient();
+  updateTagBulkPreview();
 }
 
 function openAddTagModal() {
@@ -2274,6 +2277,9 @@ function openEditTagModal(id) {
   $("tagOffset").value =
     String(tag.offset ?? 0);
   state.tagSuggestedAddress = null;
+  $("tagCount").value = "1";
+  $("tagCountField").classList.add("hidden");
+  $("tagBulkPreview").classList.add("hidden");
 
   updateTagFormVisibility();
   validateTagAddressClient();
@@ -2503,6 +2509,97 @@ function validateTagAddressClient() {
   return !message;
 }
 
+Object.assign(translations.en,{
+  tagCount:"How many tags",tagCountHelp:"More than 1: names are numbered and each address follows the previous one.",
+  tagCountRange:"Enter a number of tags from 1 to 200.",
+  tagBulkAddressError:"This address cannot be continued automatically. Use an address that ends with a number, or add the tags one by one.",
+  tagBulkWillAdd:"Will add",tagBulkAdded:"tags added.",tagBulkStopped:"tags added, then stopped:"
+});
+
+// Bulk add: the n-th tag (n = 0 is the form as typed). Names ending in a number continue it
+// (Temp7, Temp8 …); other names get 1, 2, 3 …
+function bulkTagName(base, n) {
+  const m = /^(.*?)(\d+)$/.exec(base);
+  return m ? m[1] + String(Number(m[2]) + n).padStart(m[2].length, "0") : `${base}${n + 1}`;
+}
+
+// The n-th address after the first, sized by the data type; null when it cannot continue.
+// Modbus: next register(s) or coil, register bits 0..15 then the next register.
+// S7: DBX bits 0..7 then the next byte, DBB +1, DBW +2, DBD +4. Others: the trailing number.
+function bulkTagAddress(address, dataType, bitIndex, protocol, n) {
+  const text = String(address || "").trim();
+  if (protocol === "Modbus TCP") {
+    const info = modbusAddressInfo(text);
+    if (!info) return null;
+    const start = Number(text), pad = s => String(s).padStart(text.length, "0");
+    if (dataType === "Bool" && !info.bitArea) {
+      const bit = Number(bitIndex || 0) + n, register = start + Math.floor(bit / 16);
+      return register > info.last ? null : { address: pad(register), bitIndex: bit % 16 };
+    }
+    const width = info.bitArea ? 1 : tagRegisterWidth(dataType), first = start + n * width;
+    return first + width - 1 > info.last ? null : { address: pad(first), bitIndex };
+  }
+  if (protocol === "Siemens S7 TCP") {
+    const m = /^DB(\d+)\.DB([XBWD])(\d+)(?:\.([0-7]))?$/i.exec(text);
+    if (!m) return null;
+    const area = m[2].toUpperCase(), offset = Number(m[3]);
+    if (area === "X") {
+      const bit = Number(m[4] || 0) + n;
+      return { address: `DB${m[1]}.DBX${offset + Math.floor(bit / 8)}.${bit % 8}`, bitIndex };
+    }
+    return { address: `DB${m[1]}.DB${area}${offset + n * { B: 1, W: 2, D: 4 }[area]}`, bitIndex };
+  }
+  const m = /^(.*?)(\d+)$/.exec(text);
+  return m ? { address: m[1] + String(Number(m[2]) + n).padStart(m[2].length, "0"), bitIndex } : null;
+}
+
+function tagFormBody() {
+  return {
+    deviceId:$("tagDevice").value,
+    name:$("tagName").value.trim(),
+    address:$("tagAddress").value.trim(),
+    dataType:$("tagDataType").value,
+    bitIndex:!tagIsS7() && !tagIsMqtt() && !tagIsOpcUa() && $("tagDataType").value === "Bool" &&
+      modbusAddressInfo($("tagAddress").value)?.area === "Holding Register"
+        ? Number($("tagBitIndex").value)
+        : null,
+    byteOrder:$("tagByteOrder").value,
+    unit:$("tagUnit").value.trim(),
+    offset:Number($("tagOffset").value || 0),
+    decimalPlaces:Number($("tagDecimalPlaces").value || 0)
+  };
+}
+
+// The tags a bulk add will create, or an error message.
+function tagBulkPlan() {
+  const count = Number($("tagCount").value || 1);
+  if (!Number.isInteger(count) || count < 1 || count > 200) return { error: t("tagCountRange") };
+  const body = tagFormBody();
+  const protocol = state.devices.find(d => d.id === body.deviceId)?.protocol;
+  const items = [];
+  for (let n = 0; n < count; n++) {
+    const next = bulkTagAddress(body.address, body.dataType, body.bitIndex, protocol, n);
+    if (!next) return { error: t("tagBulkAddressError") };
+    items.push({ ...body, name: bulkTagName(body.name, n), address: next.address, bitIndex: next.bitIndex });
+  }
+  return { items };
+}
+
+function updateTagBulkPreview() {
+  const box = $("tagBulkPreview");
+  if (!box) return;
+  const many = !state.editingTagId && Number($("tagCount").value || 1) !== 1;
+  box.classList.toggle("hidden", !many);
+  if (!many) return;
+  const plan = tagBulkPlan();
+  const label = x => `${x.name || "?"} ${x.address}${x.bitIndex != null && x.dataType === "Bool" ? "." + x.bitIndex : ""}`;
+  box.textContent = plan.error ? plan.error
+    : `${t("tagBulkWillAdd")} ${plan.items.length}: ${label(plan.items[0])} … ${label(plan.items[plan.items.length - 1])}`;
+}
+
+["tagCount","tagName","tagAddress","tagDataType","tagDevice","tagBitIndex"].forEach(id =>
+  ["input","change"].forEach(type => $(id)?.addEventListener(type, updateTagBulkPreview)));
+
 async function saveTag() {
   if (!requireConfigurationAccess()) return;
   try {
@@ -2512,22 +2609,26 @@ async function saveTag() {
     if (!validateTagAddressClient())
       return;
 
-    const body = {
-      deviceId:$("tagDevice").value,
-      name:$("tagName").value.trim(),
-      address:$("tagAddress").value.trim(),
-      dataType:$("tagDataType").value,
-      bitIndex:!tagIsS7() && !tagIsMqtt() && !tagIsOpcUa() && $("tagDataType").value === "Bool" &&
-        modbusAddressInfo($("tagAddress").value)?.area === "Holding Register"
-          ? Number($("tagBitIndex").value)
-          : null,
-      byteOrder:$("tagByteOrder").value,
-      unit:$("tagUnit").value.trim(),
-      offset:Number($("tagOffset").value || 0),
-      decimalPlaces:Number($("tagDecimalPlaces").value || 0)
-    };
+    const body = tagFormBody();
+    const bulk = !state.editingTagId && Number($("tagCount").value || 1) !== 1;
 
-    if (state.editingTagId) {
+    if (bulk) {
+      const plan = tagBulkPlan();
+      if (plan.error) throw new Error(plan.error);
+      // One request per tag, so each one gets the same checks and license limits as a single add.
+      let added = 0;
+      try {
+        for (const item of plan.items) {
+          await api("/api/tags", { method:"POST", body:JSON.stringify(item) });
+          added++;
+        }
+      } catch (error) {
+        await loadTags();
+        throw new Error(`${added} / ${plan.items.length} ${t("tagBulkStopped")} ${error.message}`);
+      }
+      showToast(`${added} ${t("tagBulkAdded")}`);
+    }
+    else if (state.editingTagId) {
       await api(
         `/api/tags/${state.editingTagId}`,
         {
@@ -4582,14 +4683,49 @@ function populateHistorianTagSelect(selectedTagId=null) {
   $("historianTag").innerHTML = tags.length ? tags.map(tag => `<option value="${tag.id}">${escapeHtml(deviceName(tag.deviceId))} • ${escapeHtml(tag.name)}</option>`).join("") : `<option value="">${"All Tags are already in Historian"}</option>`;
 }
 
+Object.assign(translations.en,{
+  historianTagsPick:"Tags",historianSelectAll:"Select all",historianNoneLeft:"All Tags are already in Historian.",
+  historianPickOne:"Select at least one Tag.",historianAdded:"tags added to Historian.",historianStopped:"tags added, then stopped:"
+});
+
+// Add mode: a checklist of every Tag not yet recorded, so several can be added at once.
+function renderHistorianTagList() {
+  const configured=new Set(state.historianConfigurations.map(x => x.configuration.tagId));
+  const filter=($("historianTagFilter").value||"").trim().toLowerCase();
+  const checked=new Set([...document.querySelectorAll("#historianTagList input:checked")].map(x => x.value));
+  const tags=state.tags.filter(x => !configured.has(x.id));
+  const shown=tags.filter(x => !filter || `${deviceName(x.deviceId)} ${x.name}`.toLowerCase().includes(filter));
+  $("historianTagList").innerHTML = !tags.length ? `<p class="historian-tag-empty">${escapeHtml(t("historianNoneLeft"))}</p>`
+    : shown.map(tag => `<label class="historian-tag-option"><input type="checkbox" value="${tag.id}"${checked.has(tag.id)?" checked":""} />` +
+        `<span>${escapeHtml(tag.name)}</span><small>${escapeHtml(deviceName(tag.deviceId))}</small></label>`).join("");
+  syncHistorianSelectAll();
+}
+
+function syncHistorianSelectAll() {
+  const boxes=[...document.querySelectorAll("#historianTagList input")];
+  const on=boxes.filter(x => x.checked).length;
+  $("historianSelectAll").checked=boxes.length>0&&on===boxes.length;
+  $("historianSelectAll").indeterminate=on>0&&on<boxes.length;
+}
+
+$("historianTagFilter")?.addEventListener("input", renderHistorianTagList);
+$("historianTagList")?.addEventListener("change", syncHistorianSelectAll);
+$("historianSelectAll")?.addEventListener("change", () => {
+  document.querySelectorAll("#historianTagList input").forEach(x => { x.checked=$("historianSelectAll").checked; });
+  syncHistorianSelectAll();
+});
+
 function openAddHistorianModal() {
   if (!requireConfigurationAccess()) return;
   if (!state.tags.length) { showToast("Add a Tag first."); navigate("tags"); return; }
   state.editingHistorianId=null;
-  populateHistorianTagSelect();
+  $("historianTagSingle").classList.add("hidden");
+  $("historianTagPicker").classList.remove("hidden");
+  $("historianTagFilter").value="";
+  $("historianTagList").innerHTML="";
+  renderHistorianTagList();
   $("historianSampleInterval").value="30";
   $("historianRetention").value="365";
-  $("historianTag").disabled=false;
   $("historianModalTitle").textContent=t("historianAddTag");
   $("historianModal").classList.remove("hidden");
 }
@@ -4600,6 +4736,8 @@ function openEditHistorianModal(id) {
   if (!status) return;
   const c=status.configuration;
   state.editingHistorianId=id;
+  $("historianTagPicker").classList.add("hidden");
+  $("historianTagSingle").classList.remove("hidden");
   populateHistorianTagSelect(c.tagId);
   $("historianTag").value=c.tagId;
   $("historianTag").disabled=true;
@@ -4614,19 +4752,32 @@ function closeHistorianModal() { $("historianModal").classList.add("hidden"); }
 async function saveHistorianConfiguration() {
   if (!requireConfigurationAccess()) return;
   try {
-    const body={
-      tagId:$("historianTag").value,
+    const settings={
       sampleIntervalSeconds:Number($("historianSampleInterval").value),
       retentionDays:Number($("historianRetention").value)
     };
-    if (!body.tagId) throw new Error("Select a Tag.");
     if (state.editingHistorianId) {
+      const body={tagId:$("historianTag").value,...settings};
+      if (!body.tagId) throw new Error("Select a Tag.");
       await api(`/api/historian/configurations/${state.editingHistorianId}`, {method:"PUT",body:JSON.stringify(body)});
+      showToast("Historian configuration saved.");
     } else {
-      await api("/api/historian/configurations", {method:"POST",body:JSON.stringify(body)});
+      const tagIds=[...document.querySelectorAll("#historianTagList input:checked")].map(x => x.value);
+      if (!tagIds.length) throw new Error(t("historianPickOne"));
+      let added=0;
+      try {
+        for (const tagId of tagIds) {
+          await api("/api/historian/configurations", {method:"POST",body:JSON.stringify({tagId,...settings})});
+          added++;
+        }
+      } catch(error) {
+        await loadHistorianStats();
+        renderHistorianTagList();
+        throw new Error(`${added} / ${tagIds.length} ${t("historianStopped")} ${error.message}`);
+      }
+      showToast(tagIds.length===1 ? "Historian configuration saved." : `${added} ${t("historianAdded")}`);
     }
     closeHistorianModal();
-    showToast("Historian configuration saved.");
     await loadHistorianStats();
     continueCommissioningIfActive();
   } catch(error) { showToast(error.message); }

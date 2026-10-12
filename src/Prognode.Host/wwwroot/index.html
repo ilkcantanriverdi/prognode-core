@@ -1403,7 +1403,14 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
           <span data-i18n="offset">Offset</span>
           <input id="tagOffset" type="number" step="any" value="0" />
         </label>
+
+        <label class="field" id="tagCountField">
+          <span data-i18n="tagCount">How many tags</span>
+          <input id="tagCount" type="number" min="1" max="200" step="1" value="1" />
+          <small id="tagCountHelp" data-i18n="tagCountHelp">More than 1: names are numbered and each address follows the previous one.</small>
+        </label>
       </div>
+      <p class="info-box hidden" id="tagBulkPreview" role="status"></p>
 
 
       <div class="info-box" id="tagAddressHelp" data-i18n="tagAddressHelp">Modbus read areas: 00001 Coil (FC01), 10001 Discrete Input (FC02), 30001 Input Register (FC04), 40001 Holding Register (FC03). Coil/Discrete use BOOL directly; Holding Register BOOL uses bit 0..15. Input Register uses WORD/numeric types. 32-bit values use two consecutive registers.</div>
@@ -1617,11 +1624,20 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
         <button class="icon-button" id="closeHistorianModal">×</button>
       </div>
 
-      <label class="field">
+      <label class="field hidden" id="historianTagSingle">
         <span data-i18n="tag">Tag</span>
         <select id="historianTag"></select>
-        <small data-i18n="historianTagHelp">Adding a Tag here starts persistent local recording.</small>
       </label>
+
+      <div class="field historian-tag-picker" id="historianTagPicker">
+        <div class="historian-tag-picker-head">
+          <span data-i18n="historianTagsPick">Tags</span>
+          <label class="historian-select-all"><input type="checkbox" id="historianSelectAll" /> <span data-i18n="historianSelectAll">Select all</span></label>
+        </div>
+        <input id="historianTagFilter" type="search" placeholder="Filter tags" aria-label="Filter tags" />
+        <div class="historian-tag-list" id="historianTagList" role="group" aria-label="Tags to record"></div>
+        <small data-i18n="historianTagHelp">Adding a Tag here starts persistent local recording.</small>
+      </div>
 
       <div class="form-grid">
         <label class="field">
