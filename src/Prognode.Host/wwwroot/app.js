@@ -6091,6 +6091,11 @@ Object.assign(translations.en,{
   lanWizardAdapter:"Plant / LAN interface (never Tailscale)",lanWizardChoose:"Choose interface",lanWizardScope:"Windows firewall access scope",lanWizardDevices:"Selected mobile device IPs",lanWizardSubnet:"Approved plant LAN subnet",
   lanWizardIps:"Approved mobile IPs (comma-separated, up to 8)",lanWizardSubnetWarning:"Every host in this subnet can reach the HTTPS port until authenticated. Prefer a dedicated plant VLAN.",
   lanWizardPublicConfirm:"This is a Public Windows network. I explicitly approve only this interface and source range.",lanWizardPrepare:"Prepare LAN access",lanWizardVerify:"Verify / refresh",lanWizardApprove:"On this PC, right-click the PROGNODE Windows tray Agent → Complete LAN Access Setup (UAC); review the rule and approve Windows UAC once.",
+  lanAutoOn:"LAN access is on.",lanAutoWhat:"PROGNODE Clients and phones on this network find this Core by themselves. Each one still needs the pairing code or QR code from this Core before it can see anything.",
+  lanAutoStepPc:"Windows PC: install PROGNODE Client. It finds this Core; enter the 6-digit pairing code shown under Server & QR.",
+  lanAutoStepPhone:"Phone: open the PROGNODE app and scan the QR code.",
+  lanAutoScope:"Allowed: devices on the same local network only (TCP 5443, UDP 5081). To restrict it further, your IT team can edit the \"PROGNODE LAN Access\" rules in Windows Firewall.",
+  lanAutoAddresses:"This Core on the network:",lanAutoHttpsPending:"LAN access is on, but HTTPS is not ready yet. Restart the PROGNODE Core service once; if this stays, reinstall PROGNODE Core.",
   lanWizardProbe:"Test from phone",lanWizardRepair:"Repair rule",lanWizardDisable:"Disable LAN access",lanWizardQr:"Continue to QR pairing",lanWizardIt:"If guest VLAN/client isolation or enterprise GPO blocks access, request TCP 5443 from the approved sources to the selected Core IP from IT. PROGNODE never bypasses network policy."
 });
 
@@ -6119,6 +6124,20 @@ async function lanWizardLoad(){
     else if(data.selected && (data.interfaces||[]).some(n=>n.eligible&&n.interfaceIndex===data.selected.interfaceIndex))select.value=String(data.selected.interfaceIndex);
     lanWizardUpdateScope();
     const healthy=data.firewallRuleHealth==='HEALTHY',https=data.httpsReady;
+    // Setup opened LAN access for the local subnet: show the plain status, not the manual wizard.
+    const auto=Boolean(data.installerLan?.enabled)&&!data.selected;
+    $('lanAutoBox')?.classList.toggle('hidden',!auto);
+    $('lanWizardManualBox')?.classList.toggle('hidden',auto);
+    $('lanWizardIntroText')?.classList.toggle('hidden',auto);
+    if(auto){
+      const ips=(data.interfaces||[]).filter(n=>n.eligible).flatMap(n=>(n.ipv4||[]).map(ip=>`${ip} (${n.name})`));
+      $('lanAutoAddresses').textContent=https
+        ?`${t('lanAutoAddresses')} ${ips.join(' · ')||'—'} · HTTPS ${data.httpsPort||5443}`
+        :t('lanAutoHttpsPending')+(data.tlsDiagnosticCode?` [${data.tlsDiagnosticCode}]`:'');
+      $('lanAutoQr').disabled=!https;
+      $('lanWizardBadge').textContent=https?'LAN ON':'CHECK HTTPS';
+      return;
+    }
     $('lanWizardBadge').textContent=healthy&&https?(data.phoneVerified?'PHONE VERIFIED':'TLS READY · TEST PHONE'):data.selected?'CHECK LAN':'NOT CONFIGURED';
     out.textContent=`Firewall: ${data.firewallRuleHealth} · HTTPS: ${https?'TLS VERIFIED':(data.tlsDiagnosticCode||'NOT READY')} · Phone: ${data.phoneVerified?'VERIFIED '+data.phoneProbeIp:'NOT VERIFIED'}${data.pendingRequest?' · UAC action pending':''}${data.tlsDiagnosticMessage?' · '+data.tlsDiagnosticMessage:''}`;
     $('lanWizardProbe').disabled=!(data.selected&&https);
@@ -6164,6 +6183,10 @@ $('lanWizardProbe')?.addEventListener('click',lanWizardPhoneProbe);
 $('lanWizardRepair')?.addEventListener('click',()=>lanWizardPrepare('REPAIR'));
 $('lanWizardDisable')?.addEventListener('click',()=>lanWizardPrepare('DISABLE'));
 $('lanWizardQr')?.addEventListener('click',()=>{if($('qrPairStart')){$('qrPairStart').scrollIntoView({behavior:'smooth',block:'center'});qrStart(true);}});
+$('lanAutoQr')?.addEventListener('click',()=>{
+  document.querySelector('[data-settings-tab="general"]')?.click();
+  if($('qrPairStart')){$('qrPairStart').scrollIntoView({behavior:'smooth',block:'center'});qrStart(true);}
+});
 document.querySelector('[data-page="settings"]')?.addEventListener('click',()=>{void lanWizardLoad();});
 
 /* QR enrollment: independent of Trends and Remote entitlement; login/localhost checked by Core. */

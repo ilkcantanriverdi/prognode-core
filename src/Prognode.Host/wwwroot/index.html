@@ -889,8 +889,18 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
             <article class="panel lan-wizard-panel settings-pane" id="lanWizardPanel" data-settings-panel="lan">
               <div class="panel-head"><div><span class="panel-kicker" data-i18n="lanWizardKicker">MOBILE ACCESS</span>
                 <h3 data-i18n="lanWizardTitle">Enable LAN Access</h3></div><span class="active-badge" id="lanWizardBadge">NOT CONFIGURED</span></div>
-              <p class="panel-copy" data-i18n="lanWizardIntro">Grant this Core's mobile HTTPS port access only on the chosen plant LAN. No Windows profile change, remote license or manual firewall commands.</p>
-              <div class="lan-wizard-box">
+              <p class="panel-copy" id="lanWizardIntroText" data-i18n="lanWizardIntro">Grant this Core's mobile HTTPS port access only on the chosen plant LAN. No Windows profile change, remote license or manual firewall commands.</p>
+              <div class="lan-auto-box hidden" id="lanAutoBox" role="status">
+                <p><strong data-i18n="lanAutoOn">LAN access is on.</strong> <span data-i18n="lanAutoWhat">PROGNODE Clients and phones on this network find this Core by themselves. Each one still needs the pairing code or QR code from this Core before it can see anything.</span></p>
+                <p class="lan-wizard-note" id="lanAutoAddresses"></p>
+                <ol class="lan-auto-steps">
+                  <li data-i18n="lanAutoStepPc">Windows PC: install PROGNODE Client. It finds this Core; enter the 6-digit pairing code shown under Server &amp; QR.</li>
+                  <li data-i18n="lanAutoStepPhone">Phone: open the PROGNODE app and scan the QR code.</li>
+                </ol>
+                <div class="lan-wizard-actions"><button type="button" class="primary" id="lanAutoQr" data-i18n="lanWizardQr">Continue to QR pairing</button></div>
+                <p class="lan-wizard-note" data-i18n="lanAutoScope">Allowed: devices on the same local network only (TCP 5443, UDP 5081). To restrict it further, your IT team can edit the "PROGNODE LAN Access" rules in Windows Firewall.</p>
+              </div>
+              <div class="lan-wizard-box" id="lanWizardManualBox">
                 <label class="field"><span data-i18n="lanWizardAdapter">Plant / LAN interface (never Tailscale)</span>
                   <select id="lanWizardNic"><option value="" data-i18n="lanWizardChoose">Choose interface</option></select></label>
                 <div id="lanWizardNicDetails" class="lan-wizard-note" role="status"></div>

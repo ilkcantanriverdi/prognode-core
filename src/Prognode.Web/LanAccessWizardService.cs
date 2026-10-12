@@ -147,7 +147,8 @@ public sealed class LanAccessWizardService(ServerAccessService serverAccess, str
         var saved = ReadSaved();
         var iface = saved is null ? null : Interfaces().FirstOrDefault(x =>
             x.InterfaceIndex == saved.InterfaceIndex && x.Ipv4.Contains(saved.SelectedHost));
-        var rule = saved is null ? "NOT_CONFIGURED" :
+        var installerLan = OperatingSystem.IsWindows() ? InstallerLanHealth() : "MISSING";
+        var rule = saved is null ? (installerLan == "MISSING" ? "NOT_CONFIGURED" : installerLan) :
             iface is null ? "INTERFACE_MISSING" :
             iface.Profile != saved.Profile ? "PROFILE_CHANGED" : FirewallHealth(saved);
         var clients = serverAccess.GetClients()
@@ -160,6 +161,8 @@ public sealed class LanAccessWizardService(ServerAccessService serverAccess, str
             certificateSha256 = serverAccess.Identity.CertificateSha256,
             localHttpsListener = IsLocalPortOpen(serverAccess.Identity.SecureApiPort),
             selected = saved, firewallRuleHealth = rule,
+            // Set up by Setup for the whole local subnet; the manual wizard is then not needed.
+            installerLan = new { health = installerLan, enabled = installerLan == "HEALTHY" },
             // Last paired client contact is not proof that the *current* phone can connect.
             lastClientConnectionUtc = clients.Length == 0 ? (DateTime?)null : clients.Max(x => x.LastSeenAtUtc),
             phoneProbeAtUtc = _phoneProbeAt, phoneProbeIp = _phoneIp,
@@ -271,6 +274,18 @@ public sealed class LanAccessWizardService(ServerAccessService serverAccess, str
             return p.StandardOutput.ReadToEnd().Trim();
         }
         catch { return null; }
+    }
+
+    /// <summary>
+    /// Rules Setup creates (installer/scripts/enable-lan.ps1): HTTPS and discovery from the local
+    /// subnet only. HEALTHY when both are enabled inbound Allow rules; MISSING when neither exists.
+    /// </summary>
+    private static string InstallerLanHealth()
+    {
+        var count = Powershell("@(Get-NetFirewallRule -Name 'PROGNODE-LAN-HTTPS','PROGNODE-LAN-DISCOVERY' " +
+            "-ErrorAction SilentlyContinue | Where-Object { $_.Enabled.ToString() -eq 'True' -and " +
+            "$_.Direction.ToString() -eq 'Inbound' -and $_.Action.ToString() -eq 'Allow' }).Count");
+        return count switch { "2" => "HEALTHY", "0" => "MISSING", null => "UNVERIFIED", _ => "DRIFTED" };
     }
 
     private static string FirewallHealth(SavedState saved)

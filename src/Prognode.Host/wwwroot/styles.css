@@ -5598,3 +5598,8 @@ button.secondary.license-action-full { font-size:13px; font-weight:800; letter-s
 .sidebar-update { display:block; margin-top:4px; padding:0; border:0; background:none; cursor:pointer; font-size:11px; font-weight:600; color:var(--yellow); text-align:left; }
 .sidebar-update:disabled { cursor:default; opacity:.85; }
 .sidebar-update:hover { text-decoration:underline; }
+
+/* LAN access opened by Setup: plain status instead of the manual wizard */
+.lan-auto-box{display:grid;gap:12px;line-height:1.55}
+.lan-auto-box p{margin:0}
+.lan-auto-steps{margin:0;padding-left:20px;display:grid;gap:6px}
