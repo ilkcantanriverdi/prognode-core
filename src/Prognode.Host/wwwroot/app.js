@@ -247,7 +247,7 @@ Object.assign(translations.en, {
 Object.assign(translations.en,{
   backupKicker:"PROJECT SAFETY",backupTitle:"Backup Center",backupIntro:"Encrypted factory snapshot: devices, Tags, alarms, Historian, system records and saved Trend Studio layout.",
   backupPassword:"Backup passphrase (at least 12 characters)",backupPasswordConfirm:"Confirm passphrase",backupCreate:"Create encrypted snapshot",backupRefresh:"Refresh",backupSaved:"Available encrypted snapshots",
-  backupRestoreTitle:"Verify and prepare restoration",backupRestoreHelp:"Upload an existing .pgnbackup. This only checks and stores the encrypted file; restoring data requires stopping Core and running RESTORE_PROGNODE_BACKUP.cmd.",backupImportPassword:"Backup passphrase",backupInspect:"Verify uploaded backup",backupAuditTitle:"Recent configuration changes"
+  backupRestoreTitle:"Verify and prepare restoration",backupRestoreHelp:"Upload an existing .pgnbackup. This only checks and stores the encrypted file; to restore it, open Start menu › PROGNODE › Restore PROGNODE Backup on this PC.",backupImportPassword:"Backup passphrase",backupInspect:"Verify uploaded backup",backupAuditTitle:"Recent configuration changes"
 });
 
 
@@ -6316,7 +6316,7 @@ $('backupInspect')?.addEventListener('click',async()=>{
     out.textContent=('Encrypted archive verified and staged; NO data has been restored. ')+
       `${result.fileName} • ${result.files} files • schema ${result.databaseSchema} • ${result.overview?.devices??'—'} PLC • ${result.overview?.tags??'—'} Tags • ${result.overview?.historianSamples??'—'} samples. `+
       (different ? ('Notice: This backup is from a different Server ID. Verification PASSED. An offline identity-migration confirmation is required to restore; review license, HTTPS certificate and paired devices. ') : '')+
-      ('To restore, stop Core and approve the offline RESTORE_PROGNODE_BACKUP.cmd operation. ')+
+      ('To restore, open Start menu › PROGNODE › Restore PROGNODE Backup on this PC; it stops Core, restores and keeps the current data. ')+
       (window.__pgnBackupDirectory?window.__pgnBackupDirectory+'\\'+result.fileName:'');
     await loadBackupCenter();
   }catch(error){out.textContent=error.message||String(error)}
