@@ -1,12 +1,14 @@
 using System.Text.Json;
 using Prognode.Contracts;
+using Prognode.Contracts.Alarms;
 using Prognode.Contracts.Notifications;
 
 namespace Prognode.Client.Windows;
 
 /// <summary>
 /// Tray application: polls PROGNODE Core every few seconds on the plant network, shows a Windows
-/// notification for each new alarm (with ACK when Core allows this PC) and keeps the alarm window current.
+/// notification for each new alarm (with ACK when Core allows this PC) and feeds the client window.
+/// Notifications do not depend on the window: they keep coming while it is closed.
 /// </summary>
 public sealed class ClientContext : ApplicationContext
 {
@@ -21,13 +23,18 @@ public sealed class ClientContext : ApplicationContext
     private bool _updating;
     private readonly SynchronizationContext _ui;
     private readonly Toasts _toasts;
-    private MainForm? _window;
+    private ClientWindow? _window;
     private PairingRecord? _pairing;
     private CoreConnection? _core;
     private DeviceAccess? _access;
+    private IReadOnlyList<AlarmRuntimeSnapshot> _alarms = [];
+    private CoreCandidate? _candidate;
+    private Guid? _select;
     private bool _busy;
     private int _tick;
     private bool _online = true;
+    private string _connection = "Connecting…";
+    private DateTimeOffset? _lastContact;
 
     public ClientContext(bool background)
     {
@@ -47,29 +54,26 @@ public sealed class ClientContext : ApplicationContext
         _tray.BalloonTipClicked += async (_, _) => { if (_announcedVersion is not null && !_updating) await InstallUpdateAsync(); };
         _tray.ContextMenuStrip.Items.Add(new ToolStripSeparator());
         _tray.ContextMenuStrip.Items.Add("Exit", null, (_, _) => ExitThread());
-        _tray.DoubleClick += (_, _) => OpenWindow(null);
+        // A single click opens the window, like the PROGNODE icon on the Core PC.
+        _tray.MouseClick += (_, e) => { if (e.Button == MouseButtons.Left) OpenWindow(null); };
         _timer.Tick += async (_, _) => await PollAsync();
 
         _pairing = ClientStore.Load();
-        if (_pairing is null && !Pair()) { ExitThreadCore(); return; }
-        Connect();
-        if (!background) OpenWindow(null);
-        _ = PollAsync(initial: true);
-        _timer.Start();
+        if (_pairing is null) OpenWindow(null);
+        else
+        {
+            Connect();
+            if (!background) OpenWindow(null);
+            _ = PollAsync(initial: true);
+            _timer.Start();
+        }
         _updateTimer.Tick += async (_, _) => await CheckForUpdateAsync();
         _updateTimer.Start();
         _ = CheckForUpdateAsync();
     }
 
-    private bool Pair()
-    {
-        using var form = new ConnectForm();
-        if (form.ShowDialog() != DialogResult.OK || form.Result is null) return false;
-        _pairing = form.Result;
-        ClientStore.Save(_pairing);
-        if (!ClientStore.StartsWithWindows) ClientStore.StartsWithWindows = true;
-        return true;
-    }
+    /// <summary>Another start of PROGNODE Client (Start menu, desktop) asks this one to show its window.</summary>
+    public void RequestShow() => _ui.Post(_ => OpenWindow(null), null);
 
     private void Connect()
     {
@@ -80,21 +84,126 @@ public sealed class ClientContext : ApplicationContext
 
     private void OpenWindow(Guid? occurrence)
     {
-        if (_pairing is null) return;
         if (_window is null || _window.IsDisposed)
         {
-            _window = new MainForm();
-            _window.AckRequested += AckAsync;
-            _window.DisconnectRequested += Disconnect;
-            _window.ShowServer(_pairing.DisplayName, _pairing.Host);
-            _window.ShowAccess(_access);
+            _window = new ClientWindow();
+            _window.Command += OnCommand;
+            // Without a pairing there is nothing to watch in the tray.
+            _window.Hidden += () => { if (_pairing is null) ExitThread(); };
         }
-        _window.Show();
-        if (_window.WindowState == FormWindowState.Minimized) _window.WindowState = FormWindowState.Normal;
-        _window.Activate();
-        _ = PollAsync();
-        if (occurrence is { } id) _window.SelectOccurrence(id);
+        _window.ShowAndActivate();
+        if (occurrence is { } id) { _select = id; _window.Post(new { type = "select", occurrenceId = id }); }
+        if (_pairing is not null) _ = PollAsync();
     }
+
+    private void PushState() => _window?.Post(new
+    {
+        type = "state",
+        paired = _pairing is not null,
+        version = ProductVersion.Current,
+        pcName = _pairing?.ClientName ?? Environment.MachineName,
+        autostart = ClientStore.StartsWithWindows,
+        server = _pairing is null ? null : new { name = _pairing.DisplayName, host = _pairing.Host, port = _pairing.Port },
+        connection = new { online = _online, message = _connection, lastContactUtc = _lastContact },
+        access = _access is null ? null : new { _access.CanViewAlarms, _access.CanAcknowledge, deviceAck = _access.DeviceAck },
+        alarms = _alarms,
+    });
+
+    private void Toast(string text, string? kind = null, string? reenable = null) =>
+        _window?.Post(new { type = "toast", text, kind, reenable });
+
+    private void OnCommand(JsonElement message)
+    {
+        string? Text(string name) => message.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+        switch (Text("cmd"))
+        {
+            case "ready":
+                PushState();
+                if (_select is { } id) _window?.Post(new { type = "select", occurrenceId = id });
+                if (_pairing is null) _ = DiscoverAsync();
+                break;
+            case "refresh": _ = PollAsync(initial: true); break;
+            case "ack": if (Guid.TryParse(Text("id"), out var ackId)) _ = AckAsync(ackId); break;
+            case "history":
+                var offset = message.TryGetProperty("offset", out var o) && o.TryGetInt32(out var n) ? Math.Max(0, n) : 0;
+                _ = HistoryAsync(offset);
+                break;
+            case "check": _ = CheckAsync(); break;
+            case "reconnect": _ = FindCoreAgainAsync(); break;
+            case "testNotification": _ = TestNotificationAsync(); break;
+            case "autostart":
+                ClientStore.StartsWithWindows = message.TryGetProperty("value", out var on) && on.ValueKind == JsonValueKind.True;
+                PushState();
+                break;
+            case "disconnect": Disconnect(); break;
+            case "discover": _ = DiscoverAsync(); break;
+            case "inspect":
+                var port = message.TryGetProperty("port", out var p) && p.TryGetInt32(out var pn) ? pn : 5443;
+                _ = InspectAsync(Text("host") ?? "", port, Guid.TryParse(Text("serverId"), out var sid) ? sid : null);
+                break;
+            case "pair": _ = PairAsync(Text("code") ?? "", Text("name") ?? ""); break;
+        }
+    }
+
+    // ---------- pairing ----------
+
+    private async Task DiscoverAsync()
+    {
+        try
+        {
+            var found = await CoreConnection.DiscoverAsync();
+            _window?.Post(new
+            {
+                type = "discovered",
+                items = found.Select(x => new { serverId = x.ServerId, displayName = x.DisplayName, address = x.Address.ToString(), securePort = x.SecurePort }),
+            });
+        }
+        catch (Exception ex) when (ex is System.Net.Sockets.SocketException or IOException)
+        {
+            _window?.Post(new { type = "discovered", items = Array.Empty<object>() });
+        }
+    }
+
+    private async Task InspectAsync(string host, int port, Guid? expectedServerId)
+    {
+        _candidate = null;
+        try
+        {
+            _candidate = await CoreConnection.InspectAsync(host.Trim(), port, expectedServerId);
+            _window?.Post(new { type = "candidate", _candidate.DisplayName, _candidate.CheckCode });
+        }
+        catch (Exception ex)
+        {
+            _window?.Post(new { type = "candidate", error = $"Could not reach PROGNODE Core securely at {host}:{port}. {ex.Message}" });
+        }
+    }
+
+    private async Task PairAsync(string code, string name)
+    {
+        if (_candidate is null) { _window?.Post(new { type = "paired", error = "Find your Core and compare the check code first." }); return; }
+        if (code.Length != 6 || !code.All(char.IsDigit)) { _window?.Post(new { type = "paired", error = "Enter the 6-digit pairing code from the Core screen." }); return; }
+        var pcName = string.IsNullOrWhiteSpace(name) ? Environment.MachineName : name.Trim();
+        try
+        {
+            using var core = new CoreConnection(_candidate.Host, _candidate.Port, _candidate.CertificateSha256);
+            var (clientId, token) = await core.PairAsync(_candidate.ServerId, pcName, code, ClientStore.DevicePublicKey());
+            _pairing = new PairingRecord(_candidate.ServerId, _candidate.DisplayName, _candidate.Host, _candidate.Port,
+                _candidate.CertificateSha256, clientId, token, ClientName: pcName);
+            ClientStore.Save(_pairing);
+            if (!ClientStore.StartsWithWindows) ClientStore.StartsWithWindows = true;
+            _candidate = null;
+            Connect();
+            _window?.Post(new { type = "paired" });
+            await PollAsync(initial: true);
+            _timer.Start();
+        }
+        catch (Exception ex)
+        {
+            _window?.Post(new { type = "paired", error = ex.Message });
+        }
+    }
+
+    // ---------- monitoring ----------
 
     private async Task PollAsync(bool initial = false)
     {
@@ -102,13 +211,8 @@ public sealed class ClientContext : ApplicationContext
         _busy = true;
         try
         {
-            if (initial || _tick++ % 15 == 0)
-            {
-                _access = await _core.GetAccessAsync();
-                _window?.ShowAccess(_access);
-            }
-            var alarms = await _core.GetActiveAlarmsAsync();
-            _window?.ShowAlarms(alarms);
+            if (initial || _access is null || _tick++ % 15 == 0) _access = await _core.GetAccessAsync();
+            _alarms = await _core.GetActiveAlarmsAsync();
 
             var cursor = _pairing.Cursor;
             var fresh = new List<NotificationEvent>();
@@ -127,22 +231,28 @@ public sealed class ClientContext : ApplicationContext
                 ClientStore.Save(_pairing);
             }
             if (!replay) Notify(fresh);
+            _lastContact = DateTimeOffset.UtcNow;
             SetOnline(true, $"Connected · {_pairing.Host}");
         }
         catch (UnauthorizedAccessException)
         {
             _timer.Stop();
             ClientStore.Clear();
-            _tray.ShowBalloonTip(8000, "PROGNODE", "This PC was removed from PROGNODE Core. Pair it again to receive alarms.", ToolTipIcon.Warning);
             _pairing = null;
-            _window?.Close();
-            if (Pair()) { Connect(); _timer.Start(); OpenWindow(null); } else ExitThread();
+            _access = null;
+            _alarms = [];
+            _tray.ShowBalloonTip(8000, "PROGNODE", "This PC was removed from PROGNODE Core. Pair it again to receive alarms.", ToolTipIcon.Warning);
+            OpenWindow(null);
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException or System.Text.Json.JsonException)
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException or JsonException)
         {
             SetOnline(false, "PROGNODE Core is not reachable on the plant network. Retrying…");
         }
-        finally { _busy = false; }
+        finally
+        {
+            _busy = false;
+            PushState();
+        }
     }
 
     private void Notify(IEnumerable<NotificationEvent> events)
@@ -160,12 +270,16 @@ public sealed class ClientContext : ApplicationContext
             // Core puts "<device> • <alarm text>" in Message and the priority/ACK state in Title.
             var title = string.IsNullOrWhiteSpace(e.Message) ? e.Title : e.Message;
             var body = e.Title;
-            if (_toasts.Available)
-                _toasts.Show(title, body, e.OccurrenceId, critical, _access?.DeviceAck == true && e.OccurrenceId is not null);
-            else
-                _tray.ShowBalloonTip(8000, Truncate(title, 63), body, critical ? ToolTipIcon.Error : ToolTipIcon.Warning);
+            var needsAck = e.OccurrenceId is { } occ && _alarms.FirstOrDefault(a => a.OccurrenceId == occ)?.RequiresAcknowledgement != false;
+            ShowNotification(title, body, e.OccurrenceId, critical, _access?.DeviceAck == true && e.OccurrenceId is not null && needsAck);
             shown++;
         }
+    }
+
+    private void ShowNotification(string title, string body, Guid? occurrenceId, bool critical, bool canAck)
+    {
+        if (_toasts.Available) _toasts.Show(title, body, occurrenceId, critical, canAck);
+        else _tray.ShowBalloonTip(8000, Truncate(title, 63), body, critical ? ToolTipIcon.Error : ToolTipIcon.Warning);
     }
 
     private async Task AckAsync(Guid occurrenceId)
@@ -175,14 +289,32 @@ public sealed class ClientContext : ApplicationContext
         {
             await _core.AcknowledgeAsync(occurrenceId);
             _toasts.RemoveFor(occurrenceId);
-            _tray.ShowBalloonTip(3000, "PROGNODE", "Core confirmed the acknowledgement.", ToolTipIcon.Info);
+            if (_window is { Visible: true }) Toast("Core confirmed the acknowledgement.", "ok");
+            else _tray.ShowBalloonTip(3000, "PROGNODE", "Core confirmed the acknowledgement.", ToolTipIcon.Info);
         }
         catch (Exception ex)
         {
-            if (_window is { Visible: true }) MessageBox.Show(_window, ex.Message, "ACK not applied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            if (_window is { Visible: true }) Toast($"ACK not applied: {ex.Message}", "error");
             else _tray.ShowBalloonTip(6000, "ACK not applied", ex.Message, ToolTipIcon.Warning);
         }
         await PollAsync();
+    }
+
+    private async Task HistoryAsync(int offset)
+    {
+        if (_core is null) return;
+        try
+        {
+            var (items, total) = await _core.GetHistoryAsync(offset, 50);
+            _window?.Post(new { type = "history", items, total });
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or InvalidOperationException or UnauthorizedAccessException)
+        {
+            var message = ex is HttpRequestException { StatusCode: System.Net.HttpStatusCode.NotFound }
+                ? "This PROGNODE Core does not offer alarm history to PCs yet. Update PROGNODE Core."
+                : "Alarm history could not be loaded. Check the connection and try again.";
+            _window?.Post(new { type = "history", items = Array.Empty<object>(), total = 0, error = message });
+        }
     }
 
     private void SetOnline(bool online, string message)
@@ -192,7 +324,73 @@ public sealed class ClientContext : ApplicationContext
             _online = online;
             if (!online) _tray.ShowBalloonTip(5000, "PROGNODE", "Connection to PROGNODE Core lost. Alarms resume when it is back.", ToolTipIcon.Warning);
         }
-        _window?.ShowConnection(online, message);
+        _connection = message;
+    }
+
+    // ---------- connection tools ----------
+
+    private async Task CheckAsync()
+    {
+        if (_core is null || _pairing is null) return;
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            _access = await _core.GetAccessAsync();
+            _lastContact = DateTimeOffset.UtcNow;
+            SetOnline(true, $"Connected · {_pairing.Host}");
+            Toast($"PROGNODE Core answered in {watch.ElapsedMilliseconds} ms. The connection is secure (certificate matches).", "ok", "checkBtn");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            Toast("PROGNODE Core no longer accepts this PC. Pair it again.", "error", "checkBtn");
+        }
+        catch (Exception ex)
+        {
+            SetOnline(false, "PROGNODE Core is not reachable on the plant network. Retrying…");
+            Toast($"No answer from {_pairing.Host}:{_pairing.Port}. {ex.Message} If Core moved to another IP address, use Find Core again.", "error", "checkBtn");
+        }
+        PushState();
+    }
+
+    /// <summary>Finds the paired Core on the network again (e.g. after its IP address changed); the certificate must still match.</summary>
+    private async Task FindCoreAgainAsync()
+    {
+        if (_pairing is null) return;
+        try
+        {
+            var match = (await CoreConnection.DiscoverAsync()).FirstOrDefault(x => x.ServerId == _pairing.ServerId);
+            if (match is null)
+            {
+                Toast("Your PROGNODE Core did not answer on this network. Check that the Core PC is on and on the same network.", "error", "reconnectBtn");
+                return;
+            }
+            var address = match.Address.ToString();
+            if (address != _pairing.Host || match.SecurePort != _pairing.Port)
+            {
+                var candidate = await CoreConnection.InspectAsync(address, match.SecurePort, _pairing.ServerId);
+                if (!string.Equals(candidate.CertificateSha256, _pairing.CertificateSha256, StringComparison.OrdinalIgnoreCase))
+                {
+                    Toast($"A Core with this identity answered at {address}, but its certificate changed. For safety, disconnect and pair this PC again.", "error", "reconnectBtn");
+                    return;
+                }
+                _pairing = _pairing with { Host = address, Port = match.SecurePort };
+                ClientStore.Save(_pairing);
+                Connect();
+            }
+            await PollAsync(initial: true);
+            Toast($"Connected to {_pairing.DisplayName} at {address}.", "ok", "reconnectBtn");
+        }
+        catch (Exception ex)
+        {
+            Toast($"Search failed: {ex.Message}", "error", "reconnectBtn");
+        }
+    }
+
+    private async Task TestNotificationAsync()
+    {
+        Toast("A test notification appears in 5 seconds. You can close this window to check that it still arrives.", "ok");
+        await Task.Delay(5000);
+        ShowNotification("PROGNODE test notification", "Alarm notifications from PROGNODE Core reach this PC.", null, false, false);
     }
 
     private void Disconnect()
@@ -200,14 +398,19 @@ public sealed class ClientContext : ApplicationContext
         _timer.Stop();
         ClientStore.Clear();
         ClientStore.StartsWithWindows = false;
-        _window?.Close();
-        _window?.Dispose();
-        _window = null;
+        _core?.Dispose();
+        _core = null;
         _pairing = null;
-        if (Pair()) { Connect(); _timer.Start(); OpenWindow(null); } else ExitThread();
+        _access = null;
+        _alarms = [];
+        _tray.Text = "PROGNODE";
+        PushState();
+        _ = DiscoverAsync();
     }
 
     private static string Truncate(string value, int max) => value.Length <= max ? value : value[..max];
+
+    // ---------- updates ----------
 
     /// <summary>Tells the user once per version that a newer PROGNODE Client is available; never installs by itself.</summary>
     private async Task CheckForUpdateAsync()
@@ -279,6 +482,7 @@ public sealed class ClientContext : ApplicationContext
         _tray.Dispose();
         _toasts.Dispose();
         _core?.Dispose();
+        _window?.Dispose();
         base.ExitThreadCore();
     }
 }

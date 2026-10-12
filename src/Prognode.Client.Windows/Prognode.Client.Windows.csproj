@@ -13,14 +13,18 @@
     <Description>PROGNODE Windows Client: alarm notifications and acknowledgement on the plant network</Description>
     <Company>Cordara Labs</Company>
     <ApplicationIcon>Assets\prognode.ico</ApplicationIcon>
+    <!-- The window uses the WinForms WebView2 control; the Windows App SDK would switch WebView2 to its WinUI projection. -->
+    <WebView2EnableCsWinRTProjection>false</WebView2EnableCsWinRTProjection>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Prognode.Contracts\Prognode.Contracts.csproj" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260804001" />
     <PackageReference Include="NSec.Cryptography" Version="26.4.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3179.45" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Assets\prognode.ico"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
     <Content Include="Assets\prognode.png"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
+    <Content Include="Assets\ui\**"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
   </ItemGroup>
 </Project>
