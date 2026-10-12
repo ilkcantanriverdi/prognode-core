@@ -319,7 +319,7 @@ durableNotifications.SetRemoteEligibility(() =>
 app.Use(async (context, next) =>
 {
     var remote = context.Connection.RemoteIpAddress;
-    var isLoopback = remote is null || IPAddress.IsLoopback(remote);
+    var isLoopback = remote is not null && IPAddress.IsLoopback(remote);
     var path = context.Request.Path;
 
     var publicClientRoute =
