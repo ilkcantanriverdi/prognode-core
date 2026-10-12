@@ -967,7 +967,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
                   <div class="qr-tls-guide hidden" id="qrTlsGuide" role="status">
                     <strong data-i18n="qrTlsGuideTitle">LAN HTTPS is required for QR pairing</strong>
                     <p data-i18n="qrTlsGuideText">Check the HTTPS status on the Mobile LAN page; if needed, repair it through the Windows Agent with local administrator approval. Do not replace the existing certificate.</p>
-                    <div class="lan-wizard-actions"><button class="primary" id="qrTlsOpenLan" type="button" data-i18n="hf5Lan">Mobil LAN</button><button class="secondary" id="qrTlsRecheck" type="button" data-i18n="qrTlsRecheck">Kontrol et</button></div>
+                    <div class="lan-wizard-actions"><button class="primary" id="qrTlsOpenLan" type="button" data-i18n="hf5Lan">Mobile LAN</button><button class="secondary" id="qrTlsRecheck" type="button" data-i18n="qrTlsRecheck">Check again</button></div>
                   </div>
                   <div class="qr-code-frame hidden" id="qrGraphic"></div>
                   <p class="qr-status" id="qrPairStatus"></p>
@@ -1672,7 +1672,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
             <div class="account-connect-code" id="accountConnectCode">—</div>
             <div class="account-connect-actions">
               <a class="secondary" id="accountConnectOpen" href="https://account.prognode.io/link" target="_blank" rel="noopener noreferrer">Open PROGNODE Account ↗</a>
-              <button class="ghost" id="accountConnectCancel">Cancel</button>
+              <button class="secondary" id="accountConnectCancel">Cancel</button>
             </div>
           </div>
           <small class="account-connect-message hidden" id="accountConnectMessage"></small>
