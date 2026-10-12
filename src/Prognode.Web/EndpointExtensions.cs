@@ -2502,7 +2502,7 @@ public static class EndpointExtensions
     private static bool IsLoopbackRequest(HttpContext context)
     {
         var remote = context.Connection.RemoteIpAddress;
-        return remote is null || System.Net.IPAddress.IsLoopback(remote);
+        return remote is not null && System.Net.IPAddress.IsLoopback(remote);
     }
 
     private static bool TryGetPairedClientId(HttpContext context, out Guid clientId)
