@@ -5598,3 +5598,24 @@ button.secondary.license-action-full { font-size:13px; font-weight:800; letter-s
 .sidebar-update { display:block; margin-top:4px; padding:0; border:0; background:none; cursor:pointer; font-size:11px; font-weight:600; color:var(--yellow); text-align:left; }
 .sidebar-update:disabled { cursor:default; opacity:.85; }
 .sidebar-update:hover { text-decoration:underline; }
+
+/* LAN access opened by Setup: plain status instead of the manual wizard */
+.lan-auto-box{display:grid;gap:12px;line-height:1.55}
+.lan-auto-box p{margin:0}
+.lan-auto-steps{margin:0;padding-left:20px;display:grid;gap:6px}
+
+/* Add Tag to Historian: pick several Tags at once */
+.historian-tag-picker{display:grid;gap:8px}
+.historian-tag-picker-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.historian-select-all{display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer}
+.historian-tag-list{max-height:260px;overflow-y:auto;border:1px solid var(--line-soft);border-radius:10px;padding:4px}
+.historian-tag-option{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:7px 9px;border-radius:7px;cursor:pointer}
+.historian-tag-option:hover{background:rgba(62,215,232,.07)}
+.historian-tag-option span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.historian-tag-option small{color:var(--muted);font-size:.78rem}
+.historian-tag-empty{margin:8px;color:var(--muted)}
+
+/* Backup restore from Settings */
+.backup-row-actions{display:flex;gap:8px;flex-wrap:wrap}
+.backup-restore{border:1px solid rgba(233,185,73,.45);background:rgba(233,185,73,.06);border-radius:12px;padding:14px;display:grid;gap:10px}
+.backup-restore-check{display:flex;gap:8px;align-items:flex-start;font-size:.85rem;line-height:1.5}

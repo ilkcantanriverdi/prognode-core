@@ -247,7 +247,7 @@ Object.assign(translations.en, {
 Object.assign(translations.en,{
   backupKicker:"PROJECT SAFETY",backupTitle:"Backup Center",backupIntro:"Encrypted factory snapshot: devices, Tags, alarms, Historian, system records and saved Trend Studio layout.",
   backupPassword:"Backup passphrase (at least 12 characters)",backupPasswordConfirm:"Confirm passphrase",backupCreate:"Create encrypted snapshot",backupRefresh:"Refresh",backupSaved:"Available encrypted snapshots",
-  backupRestoreTitle:"Verify and prepare restoration",backupRestoreHelp:"Upload an existing .pgnbackup. This only checks and stores the encrypted file; to restore it, open Start menu › PROGNODE › Restore PROGNODE Backup on this PC.",backupImportPassword:"Backup passphrase",backupInspect:"Verify uploaded backup",backupAuditTitle:"Recent configuration changes"
+  backupRestoreTitle:"Add a backup from another location",backupRestoreHelp:"Upload a .pgnbackup file to check it. It then appears in the list above, where you can restore it. Uploading changes nothing.",backupImportPassword:"Backup passphrase",backupInspect:"Verify uploaded backup",backupAuditTitle:"Recent configuration changes"
 });
 
 
@@ -2221,9 +2221,12 @@ function resetTagForm() {
   $("tagUnit").value = "";
   $("tagDecimalPlaces").value = "0";
   $("tagOffset").value = "0";
+  $("tagCount").value = "1";
+  $("tagCountField").classList.remove("hidden");
 
   updateTagFormVisibility();
   validateTagAddressClient();
+  updateTagBulkPreview();
 }
 
 function openAddTagModal() {
@@ -2274,6 +2277,9 @@ function openEditTagModal(id) {
   $("tagOffset").value =
     String(tag.offset ?? 0);
   state.tagSuggestedAddress = null;
+  $("tagCount").value = "1";
+  $("tagCountField").classList.add("hidden");
+  $("tagBulkPreview").classList.add("hidden");
 
   updateTagFormVisibility();
   validateTagAddressClient();
@@ -2503,6 +2509,97 @@ function validateTagAddressClient() {
   return !message;
 }
 
+Object.assign(translations.en,{
+  tagCount:"How many tags",tagCountHelp:"More than 1: names are numbered and each address follows the previous one.",
+  tagCountRange:"Enter a number of tags from 1 to 200.",
+  tagBulkAddressError:"This address cannot be continued automatically. Use an address that ends with a number, or add the tags one by one.",
+  tagBulkWillAdd:"Will add",tagBulkAdded:"tags added.",tagBulkStopped:"tags added, then stopped:"
+});
+
+// Bulk add: the n-th tag (n = 0 is the form as typed). Names ending in a number continue it
+// (Temp7, Temp8 …); other names get 1, 2, 3 …
+function bulkTagName(base, n) {
+  const m = /^(.*?)(\d+)$/.exec(base);
+  return m ? m[1] + String(Number(m[2]) + n).padStart(m[2].length, "0") : `${base}${n + 1}`;
+}
+
+// The n-th address after the first, sized by the data type; null when it cannot continue.
+// Modbus: next register(s) or coil, register bits 0..15 then the next register.
+// S7: DBX bits 0..7 then the next byte, DBB +1, DBW +2, DBD +4. Others: the trailing number.
+function bulkTagAddress(address, dataType, bitIndex, protocol, n) {
+  const text = String(address || "").trim();
+  if (protocol === "Modbus TCP") {
+    const info = modbusAddressInfo(text);
+    if (!info) return null;
+    const start = Number(text), pad = s => String(s).padStart(text.length, "0");
+    if (dataType === "Bool" && !info.bitArea) {
+      const bit = Number(bitIndex || 0) + n, register = start + Math.floor(bit / 16);
+      return register > info.last ? null : { address: pad(register), bitIndex: bit % 16 };
+    }
+    const width = info.bitArea ? 1 : tagRegisterWidth(dataType), first = start + n * width;
+    return first + width - 1 > info.last ? null : { address: pad(first), bitIndex };
+  }
+  if (protocol === "Siemens S7 TCP") {
+    const m = /^DB(\d+)\.DB([XBWD])(\d+)(?:\.([0-7]))?$/i.exec(text);
+    if (!m) return null;
+    const area = m[2].toUpperCase(), offset = Number(m[3]);
+    if (area === "X") {
+      const bit = Number(m[4] || 0) + n;
+      return { address: `DB${m[1]}.DBX${offset + Math.floor(bit / 8)}.${bit % 8}`, bitIndex };
+    }
+    return { address: `DB${m[1]}.DB${area}${offset + n * { B: 1, W: 2, D: 4 }[area]}`, bitIndex };
+  }
+  const m = /^(.*?)(\d+)$/.exec(text);
+  return m ? { address: m[1] + String(Number(m[2]) + n).padStart(m[2].length, "0"), bitIndex } : null;
+}
+
+function tagFormBody() {
+  return {
+    deviceId:$("tagDevice").value,
+    name:$("tagName").value.trim(),
+    address:$("tagAddress").value.trim(),
+    dataType:$("tagDataType").value,
+    bitIndex:!tagIsS7() && !tagIsMqtt() && !tagIsOpcUa() && $("tagDataType").value === "Bool" &&
+      modbusAddressInfo($("tagAddress").value)?.area === "Holding Register"
+        ? Number($("tagBitIndex").value)
+        : null,
+    byteOrder:$("tagByteOrder").value,
+    unit:$("tagUnit").value.trim(),
+    offset:Number($("tagOffset").value || 0),
+    decimalPlaces:Number($("tagDecimalPlaces").value || 0)
+  };
+}
+
+// The tags a bulk add will create, or an error message.
+function tagBulkPlan() {
+  const count = Number($("tagCount").value || 1);
+  if (!Number.isInteger(count) || count < 1 || count > 200) return { error: t("tagCountRange") };
+  const body = tagFormBody();
+  const protocol = state.devices.find(d => d.id === body.deviceId)?.protocol;
+  const items = [];
+  for (let n = 0; n < count; n++) {
+    const next = bulkTagAddress(body.address, body.dataType, body.bitIndex, protocol, n);
+    if (!next) return { error: t("tagBulkAddressError") };
+    items.push({ ...body, name: bulkTagName(body.name, n), address: next.address, bitIndex: next.bitIndex });
+  }
+  return { items };
+}
+
+function updateTagBulkPreview() {
+  const box = $("tagBulkPreview");
+  if (!box) return;
+  const many = !state.editingTagId && Number($("tagCount").value || 1) !== 1;
+  box.classList.toggle("hidden", !many);
+  if (!many) return;
+  const plan = tagBulkPlan();
+  const label = x => `${x.name || "?"} ${x.address}${x.bitIndex != null && x.dataType === "Bool" ? "." + x.bitIndex : ""}`;
+  box.textContent = plan.error ? plan.error
+    : `${t("tagBulkWillAdd")} ${plan.items.length}: ${label(plan.items[0])} … ${label(plan.items[plan.items.length - 1])}`;
+}
+
+["tagCount","tagName","tagAddress","tagDataType","tagDevice","tagBitIndex"].forEach(id =>
+  ["input","change"].forEach(type => $(id)?.addEventListener(type, updateTagBulkPreview)));
+
 async function saveTag() {
   if (!requireConfigurationAccess()) return;
   try {
@@ -2512,22 +2609,26 @@ async function saveTag() {
     if (!validateTagAddressClient())
       return;
 
-    const body = {
-      deviceId:$("tagDevice").value,
-      name:$("tagName").value.trim(),
-      address:$("tagAddress").value.trim(),
-      dataType:$("tagDataType").value,
-      bitIndex:!tagIsS7() && !tagIsMqtt() && !tagIsOpcUa() && $("tagDataType").value === "Bool" &&
-        modbusAddressInfo($("tagAddress").value)?.area === "Holding Register"
-          ? Number($("tagBitIndex").value)
-          : null,
-      byteOrder:$("tagByteOrder").value,
-      unit:$("tagUnit").value.trim(),
-      offset:Number($("tagOffset").value || 0),
-      decimalPlaces:Number($("tagDecimalPlaces").value || 0)
-    };
+    const body = tagFormBody();
+    const bulk = !state.editingTagId && Number($("tagCount").value || 1) !== 1;
 
-    if (state.editingTagId) {
+    if (bulk) {
+      const plan = tagBulkPlan();
+      if (plan.error) throw new Error(plan.error);
+      // One request per tag, so each one gets the same checks and license limits as a single add.
+      let added = 0;
+      try {
+        for (const item of plan.items) {
+          await api("/api/tags", { method:"POST", body:JSON.stringify(item) });
+          added++;
+        }
+      } catch (error) {
+        await loadTags();
+        throw new Error(`${added} / ${plan.items.length} ${t("tagBulkStopped")} ${error.message}`);
+      }
+      showToast(`${added} ${t("tagBulkAdded")}`);
+    }
+    else if (state.editingTagId) {
       await api(
         `/api/tags/${state.editingTagId}`,
         {
@@ -4582,14 +4683,49 @@ function populateHistorianTagSelect(selectedTagId=null) {
   $("historianTag").innerHTML = tags.length ? tags.map(tag => `<option value="${tag.id}">${escapeHtml(deviceName(tag.deviceId))} • ${escapeHtml(tag.name)}</option>`).join("") : `<option value="">${"All Tags are already in Historian"}</option>`;
 }
 
+Object.assign(translations.en,{
+  historianTagsPick:"Tags",historianSelectAll:"Select all",historianNoneLeft:"All Tags are already in Historian.",
+  historianPickOne:"Select at least one Tag.",historianAdded:"tags added to Historian.",historianStopped:"tags added, then stopped:"
+});
+
+// Add mode: a checklist of every Tag not yet recorded, so several can be added at once.
+function renderHistorianTagList() {
+  const configured=new Set(state.historianConfigurations.map(x => x.configuration.tagId));
+  const filter=($("historianTagFilter").value||"").trim().toLowerCase();
+  const checked=new Set([...document.querySelectorAll("#historianTagList input:checked")].map(x => x.value));
+  const tags=state.tags.filter(x => !configured.has(x.id));
+  const shown=tags.filter(x => !filter || `${deviceName(x.deviceId)} ${x.name}`.toLowerCase().includes(filter));
+  $("historianTagList").innerHTML = !tags.length ? `<p class="historian-tag-empty">${escapeHtml(t("historianNoneLeft"))}</p>`
+    : shown.map(tag => `<label class="historian-tag-option"><input type="checkbox" value="${tag.id}"${checked.has(tag.id)?" checked":""} />` +
+        `<span>${escapeHtml(tag.name)}</span><small>${escapeHtml(deviceName(tag.deviceId))}</small></label>`).join("");
+  syncHistorianSelectAll();
+}
+
+function syncHistorianSelectAll() {
+  const boxes=[...document.querySelectorAll("#historianTagList input")];
+  const on=boxes.filter(x => x.checked).length;
+  $("historianSelectAll").checked=boxes.length>0&&on===boxes.length;
+  $("historianSelectAll").indeterminate=on>0&&on<boxes.length;
+}
+
+$("historianTagFilter")?.addEventListener("input", renderHistorianTagList);
+$("historianTagList")?.addEventListener("change", syncHistorianSelectAll);
+$("historianSelectAll")?.addEventListener("change", () => {
+  document.querySelectorAll("#historianTagList input").forEach(x => { x.checked=$("historianSelectAll").checked; });
+  syncHistorianSelectAll();
+});
+
 function openAddHistorianModal() {
   if (!requireConfigurationAccess()) return;
   if (!state.tags.length) { showToast("Add a Tag first."); navigate("tags"); return; }
   state.editingHistorianId=null;
-  populateHistorianTagSelect();
+  $("historianTagSingle").classList.add("hidden");
+  $("historianTagPicker").classList.remove("hidden");
+  $("historianTagFilter").value="";
+  $("historianTagList").innerHTML="";
+  renderHistorianTagList();
   $("historianSampleInterval").value="30";
   $("historianRetention").value="365";
-  $("historianTag").disabled=false;
   $("historianModalTitle").textContent=t("historianAddTag");
   $("historianModal").classList.remove("hidden");
 }
@@ -4600,6 +4736,8 @@ function openEditHistorianModal(id) {
   if (!status) return;
   const c=status.configuration;
   state.editingHistorianId=id;
+  $("historianTagPicker").classList.add("hidden");
+  $("historianTagSingle").classList.remove("hidden");
   populateHistorianTagSelect(c.tagId);
   $("historianTag").value=c.tagId;
   $("historianTag").disabled=true;
@@ -4614,19 +4752,32 @@ function closeHistorianModal() { $("historianModal").classList.add("hidden"); }
 async function saveHistorianConfiguration() {
   if (!requireConfigurationAccess()) return;
   try {
-    const body={
-      tagId:$("historianTag").value,
+    const settings={
       sampleIntervalSeconds:Number($("historianSampleInterval").value),
       retentionDays:Number($("historianRetention").value)
     };
-    if (!body.tagId) throw new Error("Select a Tag.");
     if (state.editingHistorianId) {
+      const body={tagId:$("historianTag").value,...settings};
+      if (!body.tagId) throw new Error("Select a Tag.");
       await api(`/api/historian/configurations/${state.editingHistorianId}`, {method:"PUT",body:JSON.stringify(body)});
+      showToast("Historian configuration saved.");
     } else {
-      await api("/api/historian/configurations", {method:"POST",body:JSON.stringify(body)});
+      const tagIds=[...document.querySelectorAll("#historianTagList input:checked")].map(x => x.value);
+      if (!tagIds.length) throw new Error(t("historianPickOne"));
+      let added=0;
+      try {
+        for (const tagId of tagIds) {
+          await api("/api/historian/configurations", {method:"POST",body:JSON.stringify({tagId,...settings})});
+          added++;
+        }
+      } catch(error) {
+        await loadHistorianStats();
+        renderHistorianTagList();
+        throw new Error(`${added} / ${tagIds.length} ${t("historianStopped")} ${error.message}`);
+      }
+      showToast(tagIds.length===1 ? "Historian configuration saved." : `${added} ${t("historianAdded")}`);
     }
     closeHistorianModal();
-    showToast("Historian configuration saved.");
     await loadHistorianStats();
     continueCommissioningIfActive();
   } catch(error) { showToast(error.message); }
@@ -6091,6 +6242,11 @@ Object.assign(translations.en,{
   lanWizardAdapter:"Plant / LAN interface (never Tailscale)",lanWizardChoose:"Choose interface",lanWizardScope:"Windows firewall access scope",lanWizardDevices:"Selected mobile device IPs",lanWizardSubnet:"Approved plant LAN subnet",
   lanWizardIps:"Approved mobile IPs (comma-separated, up to 8)",lanWizardSubnetWarning:"Every host in this subnet can reach the HTTPS port until authenticated. Prefer a dedicated plant VLAN.",
   lanWizardPublicConfirm:"This is a Public Windows network. I explicitly approve only this interface and source range.",lanWizardPrepare:"Prepare LAN access",lanWizardVerify:"Verify / refresh",lanWizardApprove:"On this PC, right-click the PROGNODE Windows tray Agent → Complete LAN Access Setup (UAC); review the rule and approve Windows UAC once.",
+  lanAutoOn:"LAN access is on.",lanAutoWhat:"PROGNODE Clients and phones on this network find this Core by themselves. Each one still needs the pairing code or QR code from this Core before it can see anything.",
+  lanAutoStepPc:"Windows PC: install PROGNODE Client. It finds this Core; enter the 6-digit pairing code shown under Server & QR.",
+  lanAutoStepPhone:"Phone: open the PROGNODE app and scan the QR code.",
+  lanAutoScope:"Allowed: devices on the same local network only (TCP 5443, UDP 5081). To restrict it further, your IT team can edit the \"PROGNODE LAN Access\" rules in Windows Firewall.",
+  lanAutoAddresses:"This Core on the network:",lanAutoHttpsPending:"LAN access is on, but HTTPS is not ready yet. Restart the PROGNODE Core service once; if this stays, reinstall PROGNODE Core.",
   lanWizardProbe:"Test from phone",lanWizardRepair:"Repair rule",lanWizardDisable:"Disable LAN access",lanWizardQr:"Continue to QR pairing",lanWizardIt:"If guest VLAN/client isolation or enterprise GPO blocks access, request TCP 5443 from the approved sources to the selected Core IP from IT. PROGNODE never bypasses network policy."
 });
 
@@ -6119,6 +6275,20 @@ async function lanWizardLoad(){
     else if(data.selected && (data.interfaces||[]).some(n=>n.eligible&&n.interfaceIndex===data.selected.interfaceIndex))select.value=String(data.selected.interfaceIndex);
     lanWizardUpdateScope();
     const healthy=data.firewallRuleHealth==='HEALTHY',https=data.httpsReady;
+    // Setup opened LAN access for the local subnet: show the plain status, not the manual wizard.
+    const auto=Boolean(data.installerLan?.enabled)&&!data.selected;
+    $('lanAutoBox')?.classList.toggle('hidden',!auto);
+    $('lanWizardManualBox')?.classList.toggle('hidden',auto);
+    $('lanWizardIntroText')?.classList.toggle('hidden',auto);
+    if(auto){
+      const ips=(data.interfaces||[]).filter(n=>n.eligible).flatMap(n=>(n.ipv4||[]).map(ip=>`${ip} (${n.name})`));
+      $('lanAutoAddresses').textContent=https
+        ?`${t('lanAutoAddresses')} ${ips.join(' · ')||'—'} · HTTPS ${data.httpsPort||5443}`
+        :t('lanAutoHttpsPending')+(data.tlsDiagnosticCode?` [${data.tlsDiagnosticCode}]`:'');
+      $('lanAutoQr').disabled=!https;
+      $('lanWizardBadge').textContent=https?'LAN ON':'CHECK HTTPS';
+      return;
+    }
     $('lanWizardBadge').textContent=healthy&&https?(data.phoneVerified?'PHONE VERIFIED':'TLS READY · TEST PHONE'):data.selected?'CHECK LAN':'NOT CONFIGURED';
     out.textContent=`Firewall: ${data.firewallRuleHealth} · HTTPS: ${https?'TLS VERIFIED':(data.tlsDiagnosticCode||'NOT READY')} · Phone: ${data.phoneVerified?'VERIFIED '+data.phoneProbeIp:'NOT VERIFIED'}${data.pendingRequest?' · UAC action pending':''}${data.tlsDiagnosticMessage?' · '+data.tlsDiagnosticMessage:''}`;
     $('lanWizardProbe').disabled=!(data.selected&&https);
@@ -6164,6 +6334,10 @@ $('lanWizardProbe')?.addEventListener('click',lanWizardPhoneProbe);
 $('lanWizardRepair')?.addEventListener('click',()=>lanWizardPrepare('REPAIR'));
 $('lanWizardDisable')?.addEventListener('click',()=>lanWizardPrepare('DISABLE'));
 $('lanWizardQr')?.addEventListener('click',()=>{if($('qrPairStart')){$('qrPairStart').scrollIntoView({behavior:'smooth',block:'center'});qrStart(true);}});
+$('lanAutoQr')?.addEventListener('click',()=>{
+  document.querySelector('[data-settings-tab="general"]')?.click();
+  if($('qrPairStart')){$('qrPairStart').scrollIntoView({behavior:'smooth',block:'center'});qrStart(true);}
+});
 document.querySelector('[data-page="settings"]')?.addEventListener('click',()=>{void lanWizardLoad();});
 
 /* QR enrollment: independent of Trends and Remote entitlement; login/localhost checked by Core. */
@@ -6260,7 +6434,11 @@ async function loadBackupCenter(){
       const meta=document.createElement('div');const title=document.createElement('strong');title.textContent=b.fileName;
       const small=document.createElement('small');small.textContent=`${new Date(b.createdAtUtc).toLocaleString()} · ${b.sizeBytes < 1048576 ? Math.max(1,Math.round(b.sizeBytes/1024)) + ' KiB' : (b.sizeBytes/1048576).toFixed(1) + ' MiB'} ${b.automated?'· AUTO':''}`;
       meta.append(title,small);const download=document.createElement('button');download.className='secondary';download.type='button';download.textContent='Download';
-      download.addEventListener('click',()=>backupDownload(b.fileName));row.append(meta,download);list.appendChild(row);
+      download.addEventListener('click',()=>backupDownload(b.fileName));
+      const restore=document.createElement('button');restore.className='secondary';restore.type='button';restore.textContent=t('backupRestoreButton');
+      restore.addEventListener('click',()=>backupRestoreOpen(b.fileName));
+      const actions=document.createElement('div');actions.className='backup-row-actions';actions.append(restore,download);
+      row.append(meta,actions);list.appendChild(row);
     }
     const aud=$('backupAuditList');aud.replaceChildren();
     for(const item of (audit||[]).slice().reverse().slice(0,20)){
@@ -6270,8 +6448,69 @@ async function loadBackupCenter(){
       }catch{}
     }
     if(!aud.children.length)aud.textContent='No changes logged yet.';
+    void backupShowLastRestore();
     status.classList.remove('error');if(!status.textContent)status.textContent='Ready for encrypted backup.';
   }catch(error){status.classList.add('error');status.textContent=error.message||String(error)}
+}
+Object.assign(translations.en,{
+  backupRestoreButton:"Restore",backupRestorePassword:"Backup passphrase",backupRestoreRun:"Restore and restart Core",backupRestoreCancel:"Cancel",
+  backupRestoreWhat:"Core checks this backup, restarts and replaces its data with it. The current data is kept in a data.before-restore folder next to it, so nothing is lost.",
+  backupRestoreAdopt:"This backup is from another PROGNODE Core. Use its identity and paired devices on this PC (the license and HTTPS certificate of this PC are not taken over).",
+  backupRestoreChecking:"Checking the backup…",backupRestoreRestarting:"Backup checked. Core is restarting to restore it; this page reloads when Core is back.",
+  backupRestoreSlow:"Core has not come back yet. If it stays offline, start the PROGNODE Core service in Windows Services.",
+  backupRestoreAdoptNeeded:"Tick the box above to confirm, then choose Restore again.",
+  backupRestoreDone:"Last restore:",backupRestoreFailed:"Last restore failed:"
+});
+
+let backupRestoreFile=null;
+function backupRestoreOpen(fileName){
+  backupRestoreFile=fileName;
+  $('backupRestoreName').textContent=fileName;
+  $('backupRestorePassword').value='';
+  $('backupRestoreAdopt').checked=false;
+  $('backupRestoreAdoptRow').classList.add('hidden');
+  $('backupRestoreStatus').textContent='';$('backupRestoreStatus').classList.remove('error');
+  $('backupRestoreRun').disabled=false;
+  $('backupRestorePanel').classList.remove('hidden');
+  $('backupRestorePanel').scrollIntoView({behavior:'smooth',block:'center'});
+  setTimeout(()=>$('backupRestorePassword').focus(),250);
+}
+$('backupRestoreCancel')?.addEventListener('click',()=>{$('backupRestorePanel').classList.add('hidden');$('backupRestorePassword').value='';backupRestoreFile=null;});
+$('backupRestoreRun')?.addEventListener('click',async()=>{
+  const out=$('backupRestoreStatus'),button=$('backupRestoreRun');
+  out.classList.remove('error');out.textContent=t('backupRestoreChecking');button.disabled=true;
+  try{
+    const token=sessionStorage.getItem('prognode.accessSession')||'';
+    const response=await fetch('/api/backup/restore',{method:'POST',cache:'no-store',
+      headers:{'Content-Type':'application/json','X-PROGNODE-Session':token},
+      body:JSON.stringify({fileName:backupRestoreFile,passphrase:$('backupRestorePassword').value,adoptSourceIdentity:$('backupRestoreAdopt').checked})});
+    const result=await response.json().catch(()=>({}));
+    if(response.status===409&&result.code==='DIFFERENT_SERVER'){
+      $('backupRestoreAdoptRow').classList.remove('hidden');
+      throw Error(`${result.message} ${t('backupRestoreAdoptNeeded')}`);
+    }
+    if(!response.ok)throw Error(result.message||`HTTP ${response.status}`);
+    $('backupRestorePassword').value='';
+    out.textContent=t('backupRestoreRestarting');
+    // Wait for Core to stop, then for it to answer again, and reload into the restored data.
+    const started=Date.now();let wentDown=false;
+    while(Date.now()-started<180000){
+      await new Promise(r=>setTimeout(r,2000));
+      const up=await fetch('/api/server/identity',{cache:'no-store'}).then(r=>r.ok).catch(()=>false);
+      if(!up)wentDown=true;
+      else if(wentDown){location.reload();return;}
+      if(Date.now()-started>60000)out.textContent=t('backupRestoreSlow');
+    }
+  }catch(error){out.classList.add('error');out.textContent=error.message||String(error);button.disabled=false;}
+});
+async function backupShowLastRestore(){
+  const line=$('backupLastRestore');if(!line)return;
+  try{
+    const data=await api('/api/backup/restore/last');const last=data?.last;
+    line.classList.toggle('hidden',!last);if(!last)return;
+    line.classList.toggle('error',!last.success);
+    line.textContent=`${last.success?t('backupRestoreDone'):t('backupRestoreFailed')} ${new Date(last.appliedAtUtc).toLocaleString()} · ${last.message}${last.rollbackPath?' · '+last.rollbackPath:''}`;
+  }catch{line.classList.add('hidden');}
 }
 async function backupDownload(fileName){
   const status=$('backupStatusLine');
@@ -6316,7 +6555,7 @@ $('backupInspect')?.addEventListener('click',async()=>{
     out.textContent=('Encrypted archive verified and staged; NO data has been restored. ')+
       `${result.fileName} • ${result.files} files • schema ${result.databaseSchema} • ${result.overview?.devices??'—'} PLC • ${result.overview?.tags??'—'} Tags • ${result.overview?.historianSamples??'—'} samples. `+
       (different ? ('Notice: This backup is from a different Server ID. Verification PASSED. An offline identity-migration confirmation is required to restore; review license, HTTPS certificate and paired devices. ') : '')+
-      ('To restore, open Start menu › PROGNODE › Restore PROGNODE Backup on this PC; it stops Core, restores and keeps the current data. ')+
+      ('To restore it, choose Restore next to it in the list above. ')+
       (window.__pgnBackupDirectory?window.__pgnBackupDirectory+'\\'+result.fileName:'');
     await loadBackupCenter();
   }catch(error){out.textContent=error.message||String(error)}

@@ -10,7 +10,7 @@ and the PROGNODE Client for Windows.
 | `tests/` | Console contract suites and Node/Python UI regression tests |
 | `installer/` | Inno Setup installers (`installer/build.ps1 -Version x.y.z`) |
 | `docs/` | Current contracts, compliance and security documentation |
-| `tools/Prognode.Backup.Restore` | Developer backup tool; installed Core uses `PROGNODE.Core.exe backup` via Start menu › Restore PROGNODE Backup |
+| `tools/Prognode.Backup.Restore` | Developer backup tool; installed Core restores from Settings › Backup & audit |
 
 ## Build and test
 

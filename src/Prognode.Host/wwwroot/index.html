@@ -36,7 +36,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
   <link rel="stylesheet" href="/customer-hf61.css?v=20261004-bulk-management" />
 <link rel="stylesheet" href="/mobile-device-access.css?v=hf64" />
 <link rel="stylesheet" href="/manual-pairing.css?v=hf65" />
-<link rel="stylesheet" href="/sidebar-v3.css?v=20261009" />
+<link rel="stylesheet" href="/sidebar-v3.css?v=20261012-sticky" />
 </head>
 <body class="customer-v2">
   <div class="app-shell">
@@ -889,8 +889,18 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
             <article class="panel lan-wizard-panel settings-pane" id="lanWizardPanel" data-settings-panel="lan">
               <div class="panel-head"><div><span class="panel-kicker" data-i18n="lanWizardKicker">MOBILE ACCESS</span>
                 <h3 data-i18n="lanWizardTitle">Enable LAN Access</h3></div><span class="active-badge" id="lanWizardBadge">NOT CONFIGURED</span></div>
-              <p class="panel-copy" data-i18n="lanWizardIntro">Grant this Core's mobile HTTPS port access only on the chosen plant LAN. No Windows profile change, remote license or manual firewall commands.</p>
-              <div class="lan-wizard-box">
+              <p class="panel-copy" id="lanWizardIntroText" data-i18n="lanWizardIntro">Grant this Core's mobile HTTPS port access only on the chosen plant LAN. No Windows profile change, remote license or manual firewall commands.</p>
+              <div class="lan-auto-box hidden" id="lanAutoBox" role="status">
+                <p><strong data-i18n="lanAutoOn">LAN access is on.</strong> <span data-i18n="lanAutoWhat">PROGNODE Clients and phones on this network find this Core by themselves. Each one still needs the pairing code or QR code from this Core before it can see anything.</span></p>
+                <p class="lan-wizard-note" id="lanAutoAddresses"></p>
+                <ol class="lan-auto-steps">
+                  <li data-i18n="lanAutoStepPc">Windows PC: install PROGNODE Client. It finds this Core; enter the 6-digit pairing code shown under Server &amp; QR.</li>
+                  <li data-i18n="lanAutoStepPhone">Phone: open the PROGNODE app and scan the QR code.</li>
+                </ol>
+                <div class="lan-wizard-actions"><button type="button" class="primary" id="lanAutoQr" data-i18n="lanWizardQr">Continue to QR pairing</button></div>
+                <p class="lan-wizard-note" data-i18n="lanAutoScope">Allowed: devices on the same local network only (TCP 5443, UDP 5081). To restrict it further, your IT team can edit the "PROGNODE LAN Access" rules in Windows Firewall.</p>
+              </div>
+              <div class="lan-wizard-box" id="lanWizardManualBox">
                 <label class="field"><span data-i18n="lanWizardAdapter">Plant / LAN interface (never Tailscale)</span>
                   <select id="lanWizardNic"><option value="" data-i18n="lanWizardChoose">Choose interface</option></select></label>
                 <div id="lanWizardNicDetails" class="lan-wizard-note" role="status"></div>
@@ -1026,8 +1036,21 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
               </div>
               <div class="backup-subhead" data-i18n="backupSaved">Available encrypted snapshots</div>
               <div id="backupList" class="backup-list"></div>
-              <div class="backup-subhead" data-i18n="backupRestoreTitle">Inspect and prepare restore</div>
-              <p class="panel-copy" data-i18n="backupRestoreHelp">Upload an existing .pgnbackup to verify it. Final restoration happens offline after stopping Core; nothing is overwritten by uploading.</p>
+              <p id="backupLastRestore" role="status" class="backup-status hidden"></p>
+              <div class="backup-box backup-restore hidden" id="backupRestorePanel" role="region" aria-labelledby="backupRestoreName">
+                <strong id="backupRestoreName"></strong>
+                <p class="backup-info" data-i18n="backupRestoreWhat">Core checks this backup, restarts and replaces its data with it. The current data is kept in a data.before-restore folder next to it, so nothing is lost.</p>
+                <label class="field"><span data-i18n="backupRestorePassword">Backup passphrase</span>
+                  <input id="backupRestorePassword" type="password" autocomplete="off" /></label>
+                <label class="backup-restore-check hidden" id="backupRestoreAdoptRow"><input type="checkbox" id="backupRestoreAdopt" />
+                  <span data-i18n="backupRestoreAdopt">This backup is from another PROGNODE Core. Use its identity and paired devices on this PC (the license and HTTPS certificate of this PC are not taken over).</span></label>
+                <div class="backup-actions">
+                  <button class="primary" id="backupRestoreRun" type="button" data-i18n="backupRestoreRun">Restore and restart Core</button>
+                  <button class="secondary" id="backupRestoreCancel" type="button" data-i18n="backupRestoreCancel">Cancel</button></div>
+                <p id="backupRestoreStatus" role="status" class="backup-status"></p>
+              </div>
+              <div class="backup-subhead" data-i18n="backupRestoreTitle">Add a backup from another location</div>
+              <p class="panel-copy" data-i18n="backupRestoreHelp">Upload a .pgnbackup file to check it. It then appears in the list above, where you can restore it. Uploading changes nothing.</p>
               <div class="backup-box">
                 <input type="file" id="backupImportFile" accept=".pgnbackup" aria-label="Encrypted PROGNODE backup" />
                 <label class="field"><span data-i18n="backupImportPassword">Passphrase for uploaded backup</span>
@@ -1393,7 +1416,14 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
           <span data-i18n="offset">Offset</span>
           <input id="tagOffset" type="number" step="any" value="0" />
         </label>
+
+        <label class="field" id="tagCountField">
+          <span data-i18n="tagCount">How many tags</span>
+          <input id="tagCount" type="number" min="1" max="200" step="1" value="1" />
+          <small id="tagCountHelp" data-i18n="tagCountHelp">More than 1: names are numbered and each address follows the previous one.</small>
+        </label>
       </div>
+      <p class="info-box hidden" id="tagBulkPreview" role="status"></p>
 
 
       <div class="info-box" id="tagAddressHelp" data-i18n="tagAddressHelp">Modbus read areas: 00001 Coil (FC01), 10001 Discrete Input (FC02), 30001 Input Register (FC04), 40001 Holding Register (FC03). Coil/Discrete use BOOL directly; Holding Register BOOL uses bit 0..15. Input Register uses WORD/numeric types. 32-bit values use two consecutive registers.</div>
@@ -1607,11 +1637,20 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
         <button class="icon-button" id="closeHistorianModal">×</button>
       </div>
 
-      <label class="field">
+      <label class="field hidden" id="historianTagSingle">
         <span data-i18n="tag">Tag</span>
         <select id="historianTag"></select>
-        <small data-i18n="historianTagHelp">Adding a Tag here starts persistent local recording.</small>
       </label>
+
+      <div class="field historian-tag-picker" id="historianTagPicker">
+        <div class="historian-tag-picker-head">
+          <span data-i18n="historianTagsPick">Tags</span>
+          <label class="historian-select-all"><input type="checkbox" id="historianSelectAll" /> <span data-i18n="historianSelectAll">Select all</span></label>
+        </div>
+        <input id="historianTagFilter" type="search" placeholder="Filter tags" aria-label="Filter tags" />
+        <div class="historian-tag-list" id="historianTagList" role="group" aria-label="Tags to record"></div>
+        <small data-i18n="historianTagHelp">Adding a Tag here starts persistent local recording.</small>
+      </div>
 
       <div class="form-grid">
         <label class="field">

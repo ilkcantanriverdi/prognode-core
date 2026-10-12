@@ -50,28 +50,35 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
+Name: "lanaccess"; Description: "Let PROGNODE Clients and phones on this local network connect (recommended)"; GroupDescription: "Network:"
 
 [Dirs]
 Name: "{commonappdata}\PROGNODE\data"
+
+[InstallDelete]
+; Restore moved into Settings > Backup & audit (beta.6); remove the earlier Start menu tool on upgrade.
+Type: files; Name: "{group}\Restore PROGNODE Backup.lnk"
+Type: files; Name: "{app}\Setup\restore-backup.ps1"
 
 [Files]
 Source: "{#PublishDir}\core\*"; DestDir: "{app}\Core"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#PublishDir}\agent\*"; DestDir: "{app}\Agent"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "scripts\install-service.ps1"; DestDir: "{app}\Setup"; Flags: ignoreversion
 Source: "scripts\uninstall-service.ps1"; DestDir: "{app}\Setup"; Flags: ignoreversion
-Source: "scripts\restore-backup.ps1"; DestDir: "{app}\Setup"; Flags: ignoreversion
+Source: "scripts\enable-lan.ps1"; DestDir: "{app}\Setup"; Flags: ignoreversion
 Source: "PROGNODE.url"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\PROGNODE"; Filename: "{app}\PROGNODE.url"; IconFilename: "{app}\Agent\PROGNODE.Agent.exe"
 Name: "{group}\PROGNODE Notifications"; Filename: "{app}\Agent\PROGNODE.Agent.exe"
-Name: "{group}\Restore PROGNODE Backup"; Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\Setup\restore-backup.ps1"""; IconFilename: "{app}\Agent\PROGNODE.Agent.exe"
 Name: "{group}\Uninstall PROGNODE Core"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\PROGNODE"; Filename: "{app}\PROGNODE.url"; IconFilename: "{app}\Agent\PROGNODE.Agent.exe"; Tasks: desktopicon
 ; Tray notifications start for every user who signs in on this PC.
 Name: "{commonstartup}\PROGNODE Notifications"; Filename: "{app}\Agent\PROGNODE.Agent.exe"
 
 [Run]
+; LAN HTTPS certificate and firewall rules first, so the service starts with them.
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\Setup\enable-lan.ps1"" -InstallRoot ""{app}"""; StatusMsg: "Allowing PROGNODE Clients and phones on the local network..."; Flags: runhidden waituntilterminated; Tasks: lanaccess
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\Setup\install-service.ps1"" -InstallRoot ""{app}"" -DataRoot ""{commonappdata}\PROGNODE\data"""; StatusMsg: "Starting the PROGNODE Core service..."; Flags: runhidden waituntilterminated
 Filename: "{app}\Agent\PROGNODE.Agent.exe"; Description: "Start PROGNODE notifications"; Flags: nowait postinstall skipifsilent runasoriginaluser
 Filename: "{app}\PROGNODE.url"; Description: "Open PROGNODE"; Flags: shellexec nowait postinstall skipifsilent runasoriginaluser

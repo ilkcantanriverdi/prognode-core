@@ -1,7 +1,12 @@
 /* Sidebar v3: two states only (expanded / collapsed), switched by the toggle in the sidebar.
    No hover peeking, so the sidebar never slides over the page content. Loaded last. */
 
-.sidebar { position: relative; }
+/* The sidebar and the page toolbar stay in place while the page scrolls. Sticky also anchors the
+   absolutely positioned toggle. .main clips instead of hiding overflow-x: hidden would make it a
+   scroll container and the toolbar would not stick. Phones keep the fixed drawer (customer-v2.css). */
+.sidebar { position: sticky; top: 0; height: 100vh; height: 100dvh; align-self: start; }
+.customer-v2 .main { overflow-x: clip; }
+.customer-v2 .customer-toolbar { position: sticky; top: 0; z-index: 15; }
 .app-shell.sidebar-peeking .sidebar { box-shadow: none !important; }
 
 .sidebar-toggle {
