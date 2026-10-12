@@ -91,6 +91,7 @@ async function loadCatalog(){
   for(const d of signalDefs)if(!allData.has(d.id))allData.set(d.id,[]);
   S.charts=S.charts.filter(c=>allowed.has(c.id));
   if(!Core.ready)await restoreLayout();
+  S.layoutReady=true;
   if(S.activeId&&!allowed.has(S.activeId))S.activeId=S.charts[0]?.id||null;
   Core.ready=true;Core.error='';Core.lastCatalogAt=Date.now();
   const source=byId('hf61-source');if(source)source.textContent=`${signalDefs.length} HISTORIAN SIGNALS`;
@@ -293,7 +294,7 @@ function resizeLayout(){const grid=byId('grid'),n=filteredCharts().length;
 
 function stateFor(d,v){return !Number.isFinite(v)?'unknown':d.high!==null&&v>=d.high?'high':d.low!==null&&v<=d.low?'low':'normal'}
 
-function renderLayout(){const grid=byId('grid');grid.innerHTML='';resizeLayout();
+function renderLayout(){autosaveLayout();const grid=byId('grid');grid.innerHTML='';resizeLayout();
  if(!S.charts.length&&!Core.ready){renderExplorer();renderProcessEvents();grid.innerHTML=`<div class="empty"><strong>${Core.error?esc(Core.error):tx('emptyTitle')}</strong><div>${Core.ready?tx('emptyDesc'):('Waiting for Historian')}</div><button class="btn primary" id="emptyAdd">${tx('add')}</button></div>`;byId('emptyAdd').onclick=()=>openDrawer();return}
  grid.classList.toggle('compare-mode',S.compare);byId('compare-actions').classList.toggle('hidden',!S.compare);
  byId('compare').classList.toggle('active',S.compare);byId('compare-count').textContent=`${S.compareIds.size} ${tx('selected')}`;
@@ -520,7 +521,11 @@ byId('theme').onclick=()=>{S.theme=S.theme==='dark'?'light':'dark';document.docu
 // HF3+ controls: aligned by sample timestamp; independent viewports and saved layout only.
 byId('sync-cursor').onchange=e=>{S.linkedCursor=e.target.checked;if(!S.linkedCursor){S.linkedTime=null;byId('sync-info').textContent='';for(const c of S.charts)drawChart(c)}else toast('Linked cursor enabled: hover a chart')};
 byId('col-width').oninput=e=>{S.leftPercent=Math.min(70,Math.max(30,+e.target.value));resizeLayout();S.charts.forEach(drawChart)};
-async function storeLayout(){if(!requireTrendEdit()||!await refreshTrendAuth())return;const data={savedAt:Date.now(),leftPercent:S.leftPercent,linkedCursor:S.linkedCursor,layout:S.layout,charts:S.charts.map(c=>({id:c.id,windowMin:c.windowMin,flags:c.flags,threshold:c.threshold,points:c.points,batch:c.batch,smooth:c.smooth,chartType:c.chartType,wide:c.wide,slot:c.slot}))};
+// The open charts and their settings. Kept in this browser after every change (so reopening the page
+// brings them back) and saved to Core with Save layout (so every browser on this PC gets them).
+function layoutData(){return {savedAt:Date.now(),leftPercent:S.leftPercent,linkedCursor:S.linkedCursor,layout:S.layout,charts:S.charts.map(c=>({id:c.id,windowMin:c.windowMin,flags:c.flags,threshold:c.threshold,points:c.points,batch:c.batch,smooth:c.smooth,chartType:c.chartType,wide:c.wide,slot:c.slot}))}}
+function autosaveLayout(){if(!S.layoutReady||!signalDefs.length)return;try{localStorage.setItem(STORE_KEY,JSON.stringify(layoutData()))}catch{}}
+async function storeLayout(){if(!requireTrendEdit()||!await refreshTrendAuth())return;const data=layoutData();
  try{
    const session=sessionStorage.getItem('prognode.accessSession')||'';
    const resp=await fetch('/api/backup/layout',{method:'POST',headers:{'Content-Type':'application/json','X-PROGNODE-Session':session},body:JSON.stringify(data)});

@@ -654,6 +654,26 @@ async function signOutLocalAccess() {
   showToast('Signed out.');
 }
 
+// Idle sign-out: after 15 minutes without mouse, keyboard or touch input the local session ends,
+// with a warning one minute before. Background polling does not count as activity.
+const IDLE_SIGN_OUT_MS = 15 * 60 * 1000, IDLE_WARNING_MS = 60 * 1000;
+let lastUserActivity = Date.now(), idleWarned = false;
+for (const type of ["pointerdown", "keydown", "wheel", "touchstart", "mousemove"])
+  window.addEventListener(type, () => { lastUserActivity = Date.now(); idleWarned = false; }, { passive: true, capture: true });
+setInterval(async () => {
+  if (!state.accessSession?.authenticated) { lastUserActivity = Date.now(); return; }
+  const idle = Date.now() - lastUserActivity;
+  if (idle >= IDLE_SIGN_OUT_MS) {
+    lastUserActivity = Date.now();
+    await signOutLocalAccess();
+    showToast("Signed out after 15 minutes without activity. Sign in again to make changes.");
+    openAccountModal();
+  } else if (idle >= IDLE_SIGN_OUT_MS - IDLE_WARNING_MS && !idleWarned) {
+    idleWarned = true;
+    showToast("You will be signed out in 1 minute because of inactivity. Move the mouse or press a key to stay signed in.");
+  }
+}, 15000);
+
 function openAccountModal() {
   $("accountModal")?.classList.remove("hidden");
   renderAccount();

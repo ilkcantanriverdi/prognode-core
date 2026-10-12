@@ -653,10 +653,14 @@ app.MapGet("/api/backup/download/{fileName}", (string fileName, HttpContext ctx,
         "BACKUP_DOWNLOADED","backup/download",true);
     return Results.File(path,"application/octet-stream",fileName,enableRangeProcessing:true);
 });
-app.MapGet("/api/backup/layout", (HttpContext ctx, LocalAccessSessionService sessions, ProjectBackupService backup) =>
+// Reading the saved Trend Studio layout (which charts are open) needs no sign-in on the Core PC itself,
+// so the trends come back after the browser was closed. Saving and resetting it still need an administrator.
+app.MapGet("/api/backup/layout", (HttpContext ctx, ProjectBackupService backup) =>
 {
-    var denied=BackupAdmin(ctx,sessions);ctx.Response.Headers.CacheControl="no-store";
-    return denied ?? Results.Ok(backup.GetLayout());
+    ctx.Response.Headers.CacheControl="no-store";
+    if (ctx.Connection.RemoteIpAddress is not { } ip || !IPAddress.IsLoopback(ip))
+        return Results.Json(new { message="The trend layout is available on the Core PC only." },statusCode:403);
+    return Results.Ok(backup.GetLayout());
 });
 app.MapPost("/api/backup/layout", (HttpContext ctx, System.Text.Json.JsonElement layout,
     LocalAccessSessionService sessions,ProjectBackupService backup) =>
