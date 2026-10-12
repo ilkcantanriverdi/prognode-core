@@ -87,9 +87,9 @@ td .sub { display: block; color: var(--muted); font-size: 12px; }
 .step-head { display: flex; align-items: center; gap: 10px; }
 .step-no { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--cyan-soft); color: var(--cyan); font-weight: 700; font-size: 13px; }
 .field { display: grid; gap: 6px; font-size: 12px; color: var(--muted); font-weight: 600; }
-.field input { background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 9px 12px; font-size: 14px; color: var(--text); }
+.field input { width: 100%; min-width: 0; background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 9px 12px; font-size: 14px; color: var(--text); }
 .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
-.row .grow { flex: 1 1 220px; }
+.row .grow { flex: 1 1 220px; min-width: 0; }
 .cores { display: grid; gap: 8px; }
 .core-option { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 14px; border-radius: 10px;
   border: 1px solid var(--line); background: var(--bg); text-align: left; width: 100%; }
@@ -103,7 +103,7 @@ td .sub { display: block; color: var(--muted); font-size: 12px; }
 .toast.error { border-color: rgba(255, 107, 107, .5); }
 .toast.ok { border-color: rgba(61, 220, 151, .5); }
 
-.w-port { width: 110px; }
+.w-port { width: 110px; flex: 0 0 110px; }
 .w-code { width: 200px; }
 .spaced { margin: 14px 0 18px; }
 .mt { margin-top: 12px; }

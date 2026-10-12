@@ -5623,3 +5623,12 @@ button.secondary.license-action-full { font-size:13px; font-weight:800; letter-s
 /* Backup passphrases: masked text fields, so browser password managers do not offer to save or
    "update" them as the account password. Browsers without text-security get a password field (app.js). */
 .secret-input{-webkit-text-security:disc;text-security:disc}
+
+/* Backup upload / restore progress and the last-chance warning */
+.backup-progress{display:flex;align-items:center;gap:12px}
+.backup-progress-bar{flex:1;height:10px;border-radius:999px;background:rgba(145,166,183,.18);overflow:hidden}
+.backup-progress-bar span{display:block;height:100%;width:0;border-radius:999px;background:var(--cyan,#25c8d9);transition:width .4s ease}
+.backup-progress-pct{min-width:44px;text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.backup-last-chance{display:grid;gap:8px;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,107,107,.5);background:rgba(255,107,107,.08)}
+.backup-last-chance strong{color:#ff8a8a}
+.backup-last-chance p{margin:0;line-height:1.55}

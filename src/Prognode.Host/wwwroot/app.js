@@ -6436,7 +6436,7 @@ async function loadBackupCenter(){
       meta.append(title,small);const download=document.createElement('button');download.className='secondary';download.type='button';download.textContent='Download';
       download.addEventListener('click',()=>backupDownload(b.fileName));
       const restore=document.createElement('button');restore.className='secondary';restore.type='button';restore.textContent=t('backupRestoreButton');
-      restore.addEventListener('click',()=>backupRestoreOpen(b.fileName));
+      restore.addEventListener('click',()=>backupRestoreOpen(b.fileName,b.createdAtUtc,b.fileName.startsWith('IMPORTED-')));
       const actions=document.createElement('div');actions.className='backup-row-actions';actions.append(restore,download);
       row.append(meta,actions);list.appendChild(row);
     }
@@ -6453,7 +6453,7 @@ async function loadBackupCenter(){
   }catch(error){status.classList.add('error');status.textContent=error.message||String(error)}
 }
 Object.assign(translations.en,{
-  backupRestoreButton:"Restore",backupRestorePassword:"Backup passphrase",backupRestoreRun:"Restore and restart Core",backupRestoreCancel:"Cancel",
+  backupRestoreButton:"Restore",backupRestoreLastChance:"Last chance before the restore",backupRestoreConfirmText:"I understand that PROGNODE goes back to this backup and that changes made after it leave the live data.",backupRestorePassword:"Backup passphrase",backupRestoreRun:"Restore and restart Core",backupRestoreCancel:"Cancel",
   backupRestoreWhat:"Core checks this backup, restarts and replaces its data with it. The current data is kept in a data.before-restore folder next to it, so nothing is lost.",
   backupRestoreAdopt:"This backup is from another PROGNODE Core. Use its identity and paired devices on this PC (the license and HTTPS certificate of this PC are not taken over).",
   backupRestoreChecking:"Checking the backup…",backupRestoreRestarting:"Backup checked. Core is restarting to restore it; this page reloads when Core is back.",
@@ -6463,14 +6463,36 @@ Object.assign(translations.en,{
 });
 
 let backupRestoreFile=null;
-function backupRestoreOpen(fileName){
+// Progress bars for upload and restore: pct 0..100, or null to hide.
+function backupProgress(prefix,pct){
+  const box=$(prefix+'Progress');if(!box)return;
+  box.classList.toggle('hidden',pct===null);
+  if(pct===null)return;
+  const value=Math.max(0,Math.min(100,Math.round(pct)));
+  $(prefix+'Bar').style.width=value+'%';$(prefix+'Pct').textContent=value+'%';
+}
+function backupRestoreReady(){
+  $('backupRestoreRun').disabled=!($('backupRestoreConfirm').checked&&$('backupRestorePassword').value.length>0);
+}
+$('backupRestoreConfirm')?.addEventListener('change',backupRestoreReady);
+$('backupRestorePassword')?.addEventListener('input',backupRestoreReady);
+
+// createdAt: when the backup was taken, if known (imported files are listed by import time).
+function backupRestoreOpen(fileName,createdAt,imported){
   backupRestoreFile=fileName;
   $('backupRestoreName').textContent=fileName;
   $('backupRestorePassword').value='';
   $('backupRestoreAdopt').checked=false;
   $('backupRestoreAdoptRow').classList.add('hidden');
   $('backupRestoreStatus').textContent='';$('backupRestoreStatus').classList.remove('error');
-  $('backupRestoreRun').disabled=false;
+  const when=createdAt?new Date(createdAt).toLocaleString():null;
+  $('backupRestoreWarningText').textContent=(when&&!imported
+      ?`PROGNODE Core goes back to how it was on ${when}. `
+      :`PROGNODE Core goes back to the state stored in this backup${when?` (added here on ${when})`:''}. `)+
+    'Devices, Tags, alarm rules, alarm history, recorded data and settings all change to that state. Anything added or changed after it is no longer in the live data; the current data stays in a data.before-restore folder on this PC.';
+  $('backupRestoreConfirm').checked=false;
+  backupProgress('backupRestore',null);
+  $('backupRestoreRun').disabled=true;
   $('backupRestorePanel').classList.remove('hidden');
   $('backupRestorePanel').scrollIntoView({behavior:'smooth',block:'center'});
   setTimeout(()=>$('backupRestorePassword').focus(),250);
@@ -6478,7 +6500,12 @@ function backupRestoreOpen(fileName){
 $('backupRestoreCancel')?.addEventListener('click',()=>{$('backupRestorePanel').classList.add('hidden');$('backupRestorePassword').value='';backupRestoreFile=null;});
 $('backupRestoreRun')?.addEventListener('click',async()=>{
   const out=$('backupRestoreStatus'),button=$('backupRestoreRun');
+  if(!$('backupRestoreConfirm').checked)return;
   out.classList.remove('error');out.textContent=t('backupRestoreChecking');button.disabled=true;
+  // Steps: check and unpack (5→40), Core stops (→60), Core starts with the backup (→95), back (100).
+  let pct=5;backupProgress('backupRestore',pct);
+  const creep=(to,step)=>{pct=Math.max(pct,Math.min(to,pct+step));backupProgress('backupRestore',pct);};
+  const ticker=setInterval(()=>creep(38,1.5),400);
   try{
     const token=sessionStorage.getItem('prognode.accessSession')||'';
     const response=await fetch('/api/backup/restore',{method:'POST',cache:'no-store',
@@ -6490,6 +6517,7 @@ $('backupRestoreRun')?.addEventListener('click',async()=>{
       throw Error(`${result.message} ${t('backupRestoreAdoptNeeded')}`);
     }
     if(!response.ok)throw Error(result.message||`HTTP ${response.status}`);
+    clearInterval(ticker);pct=40;backupProgress('backupRestore',pct);
     $('backupRestorePassword').value='';
     out.textContent=t('backupRestoreRestarting');
     // Wait for Core to stop, then for it to answer again, and reload into the restored data.
@@ -6497,11 +6525,13 @@ $('backupRestoreRun')?.addEventListener('click',async()=>{
     while(Date.now()-started<180000){
       await new Promise(r=>setTimeout(r,2000));
       const up=await fetch('/api/server/identity',{cache:'no-store'}).then(r=>r.ok).catch(()=>false);
-      if(!up)wentDown=true;
-      else if(wentDown){location.reload();return;}
+      if(!up){if(!wentDown){wentDown=true;pct=Math.max(pct,60);}creep(95,3);}
+      else if(wentDown){backupProgress('backupRestore',100);await new Promise(r=>setTimeout(r,600));location.reload();return;}
+      else creep(58,4);
       if(Date.now()-started>60000)out.textContent=t('backupRestoreSlow');
     }
-  }catch(error){out.classList.add('error');out.textContent=error.message||String(error);button.disabled=false;}
+  }catch(error){out.classList.add('error');out.textContent=error.message||String(error);backupProgress('backupRestore',null);backupRestoreReady();}
+  finally{clearInterval(ticker);}
 });
 async function backupShowLastRestore(){
   const line=$('backupLastRestore');if(!line)return;
@@ -6549,11 +6579,27 @@ $('backupInspect')?.addEventListener('click',async()=>{
   const input=$('backupImportFile'),password=$('backupImportPassword').value,out=$('backupImportResult'),button=$('backupInspect');
   if(!input.files?.length || !password){out.textContent='Select file and passphrase.';return;}
   const form=new FormData();form.append('backup',input.files[0]);form.append('passphrase',password);
-  button.disabled=true;out.textContent='Verifying encrypted backup and file hashes…';
+  button.disabled=true;out.classList.remove('error');out.textContent='Uploading the backup…';
+  // Upload with progress (0→80%), then Core checks every encrypted record and file hash (80→100%).
+  let checking=null;
+  backupProgress('backupImport',0);
   try{
     const token=sessionStorage.getItem('prognode.accessSession')||'';
-    const response=await fetch('/api/backup/inspect',{method:'POST',headers:{'X-PROGNODE-Session':token},body:form});
-    const result=await response.json().catch(()=>({}));if(!response.ok)throw Error(result.message||`HTTP ${response.status}`);
+    const result=await new Promise((resolve,reject)=>{
+      const xhr=new XMLHttpRequest();
+      xhr.open('POST','/api/backup/inspect');
+      xhr.setRequestHeader('X-PROGNODE-Session',token);
+      xhr.responseType='json';
+      xhr.upload.onprogress=e=>{if(e.lengthComputable)backupProgress('backupImport',e.loaded/e.total*80);};
+      xhr.upload.onload=()=>{
+        out.textContent='Checking the encrypted backup and file hashes…';
+        let pct=80;checking=setInterval(()=>{pct=Math.min(97,pct+1);backupProgress('backupImport',pct);},300);
+      };
+      xhr.onload=()=>{const body=xhr.response||{};xhr.status>=200&&xhr.status<300?resolve(body):reject(Error(body.message||`HTTP ${xhr.status}`));};
+      xhr.onerror=()=>reject(Error('The upload was interrupted. Check that PROGNODE Core is running and try again.'));
+      xhr.send(form);
+    });
+    clearInterval(checking);backupProgress('backupImport',100);
     const different = Boolean(result.crossServer);
     
     out.classList.toggle('backup-cross-server',different);
@@ -6563,11 +6609,12 @@ $('backupInspect')?.addEventListener('click',async()=>{
       ('Confirm the restore below.');
     await loadBackupCenter();
     // Uploading is the first step of a restore: open the restore panel for this file, passphrase filled in.
-    backupRestoreOpen(result.fileName);
+    backupRestoreOpen(result.fileName,result.createdAtUtc,false);
     $('backupRestorePassword').value=password;
+    backupRestoreReady();
     if(different)$('backupRestoreAdoptRow').classList.remove('hidden');
-  }catch(error){out.textContent=error.message||String(error)}
-  finally{button.disabled=false;$('backupImportPassword').value='';}
+  }catch(error){out.classList.add('error');out.textContent=error.message||String(error);backupProgress('backupImport',null);}
+  finally{clearInterval(checking);button.disabled=false;$('backupImportPassword').value='';}
 });
 
 Object.assign(translations.en,{
