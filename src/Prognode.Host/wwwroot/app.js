@@ -6530,6 +6530,7 @@ async function backupDownload(fileName){
   }catch(e){status.textContent=e.message||String(e);status.classList.add('error')}
 }
 $('backupRefresh')?.addEventListener('click',()=>{ $('backupStatusLine').textContent='';void loadBackupCenter();});
+if(!(window.CSS&&CSS.supports&&CSS.supports('-webkit-text-security','disc')))document.querySelectorAll('.secret-input').forEach(i=>{i.type='password';});
 // Same rule as Prognode.Contracts.PasswordPolicy and PROGNODE Cloud accounts.
 const pgnPasswordRule='Use at least 8 characters with an upper-case letter, a lower-case letter, a digit and a symbol.';
 const pgnPasswordOk=p=>typeof p==='string'&&p.length>=8&&p.length<=1024&&/[A-Z]/.test(p)&&/[a-z]/.test(p)&&/[0-9]/.test(p)&&/[^A-Za-z0-9\s]/.test(p);

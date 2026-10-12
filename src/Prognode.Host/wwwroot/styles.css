@@ -5619,3 +5619,7 @@ button.secondary.license-action-full { font-size:13px; font-weight:800; letter-s
 .backup-row-actions{display:flex;gap:8px;flex-wrap:wrap}
 .backup-restore{border:1px solid rgba(233,185,73,.45);background:rgba(233,185,73,.06);border-radius:12px;padding:14px;display:grid;gap:10px}
 .backup-restore-check{display:flex;gap:8px;align-items:flex-start;font-size:.85rem;line-height:1.5}
+
+/* Backup passphrases: masked text fields, so browser password managers do not offer to save or
+   "update" them as the account password. Browsers without text-security get a password field (app.js). */
+.secret-input{-webkit-text-security:disc;text-security:disc}

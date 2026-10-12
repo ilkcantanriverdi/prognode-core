@@ -1026,9 +1026,9 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
               <p class="panel-copy" data-i18n="backupIntro">Encrypted factory snapshot: configuration, alarms, Historian and your saved Trend Studio layout.</p>
               <div class="backup-box">
                 <label class="field"><span data-i18n="backupPassword">Backup passphrase (8+ characters: A–Z, a–z, 0–9 and a symbol)</span>
-                  <input id="backupPassword" type="password" minlength="8" autocomplete="new-password" placeholder="e.g. Plant-Line2!" /></label>
+                  <input id="backupPassword" type="text" class="secret-input" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" minlength="8" placeholder="e.g. Plant-Line2!" /></label>
                 <label class="field"><span data-i18n="backupPasswordConfirm">Confirm passphrase</span>
-                  <input id="backupPasswordConfirm" type="password" minlength="8" autocomplete="new-password" placeholder="Repeat passphrase" /></label>
+                  <input id="backupPasswordConfirm" type="text" class="secret-input" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" minlength="8" placeholder="Repeat passphrase" /></label>
                 <div class="backup-actions"><button class="primary" id="backupCreate" type="button" data-i18n="backupCreate">Create encrypted snapshot</button>
                   <button class="secondary" id="backupRefresh" type="button" data-i18n="backupRefresh">Refresh</button></div>
                 <p id="backupStatusLine" role="status" class="backup-status"></p>
@@ -1041,7 +1041,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
                 <strong id="backupRestoreName"></strong>
                 <p class="backup-info" data-i18n="backupRestoreWhat">Core checks this backup, restarts and replaces its data with it. The current data is kept in a data.before-restore folder next to it, so nothing is lost.</p>
                 <label class="field"><span data-i18n="backupRestorePassword">Backup passphrase</span>
-                  <input id="backupRestorePassword" type="password" autocomplete="off" /></label>
+                  <input id="backupRestorePassword" type="text" class="secret-input" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" /></label>
                 <label class="backup-restore-check hidden" id="backupRestoreAdoptRow"><input type="checkbox" id="backupRestoreAdopt" />
                   <span data-i18n="backupRestoreAdopt">This backup is from another PROGNODE Core. Use its identity and paired devices on this PC (the license and HTTPS certificate of this PC are not taken over).</span></label>
                 <div class="backup-actions">
@@ -1054,7 +1054,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
               <div class="backup-box">
                 <input type="file" id="backupImportFile" accept=".pgnbackup" aria-label="Encrypted PROGNODE backup" />
                 <label class="field"><span data-i18n="backupImportPassword">Passphrase for uploaded backup</span>
-                  <input id="backupImportPassword" type="password" autocomplete="off" /></label>
+                  <input id="backupImportPassword" type="text" class="secret-input" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" /></label>
                 <button class="secondary" id="backupInspect" type="button" data-i18n="backupInspect">Upload and check</button>
                 <div id="backupImportResult" role="status" class="backup-status"></div>
               </div>
