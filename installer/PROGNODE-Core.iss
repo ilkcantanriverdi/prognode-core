@@ -59,11 +59,13 @@ Source: "{#PublishDir}\core\*"; DestDir: "{app}\Core"; Flags: ignoreversion recu
 Source: "{#PublishDir}\agent\*"; DestDir: "{app}\Agent"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "scripts\install-service.ps1"; DestDir: "{app}\Setup"; Flags: ignoreversion
 Source: "scripts\uninstall-service.ps1"; DestDir: "{app}\Setup"; Flags: ignoreversion
+Source: "scripts\restore-backup.ps1"; DestDir: "{app}\Setup"; Flags: ignoreversion
 Source: "PROGNODE.url"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\PROGNODE"; Filename: "{app}\PROGNODE.url"; IconFilename: "{app}\Agent\PROGNODE.Agent.exe"
 Name: "{group}\PROGNODE Notifications"; Filename: "{app}\Agent\PROGNODE.Agent.exe"
+Name: "{group}\Restore PROGNODE Backup"; Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\Setup\restore-backup.ps1"""; IconFilename: "{app}\Agent\PROGNODE.Agent.exe"
 Name: "{group}\Uninstall PROGNODE Core"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\PROGNODE"; Filename: "{app}\PROGNODE.url"; IconFilename: "{app}\Agent\PROGNODE.Agent.exe"; Tasks: desktopicon
 ; Tray notifications start for every user who signs in on this PC.

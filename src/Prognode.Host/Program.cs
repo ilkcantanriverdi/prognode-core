@@ -27,6 +27,14 @@ using Prognode.RemoteAccess;
 using Prognode.Trends;
 using Prognode.Web;
 
+// Offline backup mode for installed Core (used by Setup\restore-backup.ps1 with the service stopped):
+//   PROGNODE.Core.exe backup verify|restore <file.pgnbackup> --data <dataRoot> [--json|--adopt-source-identity]
+if (args.Length > 0 && args[0] == "backup")
+{
+    Environment.ExitCode = BackupCommandLine.Run(args[1..]);
+    return;
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // HF6.2: LAN TLS settings are installation identity, NOT release-specific settings.
