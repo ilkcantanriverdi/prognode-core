@@ -35,9 +35,14 @@
         fields.append(w);return input;};
       const view=makeCheck('View alarms',d.canViewAlarms!==false);
       const ack=makeCheck('Allow ACK from this device',!!d.canAcknowledge);
+      // Phones can sign in, so ACK can require a signed-in person or be allowed for the device itself.
+      // The Windows Client has no sign-in: its ACK is always recorded as this PC (device ACK).
+      const windows=String(d.platform||'').toLowerCase()==='windows';
       const mode=create('select');
-      for(const val of ['USER_SESSION','DEVICE']){let o=create('option','',val==='DEVICE'?'Device-only ACK':'User session');o.value=val;mode.append(o)}
-      mode.value=d.ackAuthMode==='DEVICE'?'DEVICE':'USER_SESSION';
+      mode.title='Who may acknowledge on this device';
+      for(const [val,label] of [['DEVICE','ACK as this device, no sign-in'],['USER_SESSION','ACK only by a signed-in user']]){let o=create('option','',label);o.value=val;mode.append(o)}
+      mode.value=windows||d.ackAuthMode==='DEVICE'?'DEVICE':'USER_SESSION';
+      if(windows){mode.hidden=true;fields.append(create('small','hf64-ack-note','ACK is recorded as this PC'));}
       fields.append(mode);
       const save=create('button','secondary','Save access');save.type='button';
       const msg=create('p','hf64-msg','');

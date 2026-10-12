@@ -42,7 +42,8 @@ function renderState() {
   const pill = $("sidePill");
   pill.className = "pill " + (state.paired ? (c.online ? "online" : "offline") : "");
   $("sidePillText").textContent = !state.paired ? "Not connected" : c.online ? "Connected" : "Core not reachable";
-  $("sideCore").textContent = state.server ? `${state.server.name} · ${state.server.host}` : "";
+  $("sidePc").textContent = state.paired ? state.pcName || "" : "";
+  $("sideCore").textContent = state.server ? `Core: ${state.server.name} · ${state.server.host}` : "";
   $("sideVersion").textContent = state.version ? `Version ${state.version}` : "";
   $("autostart").checked = !!state.autostart;
   if (state.server) {

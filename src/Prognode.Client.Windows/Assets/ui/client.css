@@ -108,3 +108,5 @@ td .sub { display: block; color: var(--muted); font-size: 12px; }
 .spaced { margin: 14px 0 18px; }
 .mt { margin-top: 12px; }
 .sep { border: 0; border-top: 1px solid var(--line-soft); margin: 18px 0; }
+
+.side-pc { color: var(--text); font-weight: 700; font-size: 13px; overflow-wrap: anywhere; }
