@@ -4,7 +4,7 @@ using Prognode.Backup;
 
 var tmp=Path.Combine(Path.GetTempPath(),"pgn-backup-test-"+Guid.NewGuid().ToString("N"));
 var data=Path.Combine(tmp,"data");Directory.CreateDirectory(data);
-var password="Integration-Test-1";
+var password="Integration-Test-1"; // gitleaks:allow (test-only passphrase for a temporary archive)
 var db=Path.Combine(data,"prognode.db");
 try
 {
