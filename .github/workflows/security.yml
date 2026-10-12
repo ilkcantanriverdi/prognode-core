@@ -1,0 +1,85 @@
+name: Security
+
+# Supply-chain and code security checks (IEC 62443-4-1 / EU CRA groundwork):
+# SBOM for every build, known-vulnerability scan of all dependencies, secret scanning and static analysis.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 4 * * 1" # weekly, so new advisories against unchanged dependencies are found
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sbom:
+    name: SBOM (CycloneDX)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate CycloneDX SBOM
+        uses: anchore/sbom-action@v0.24.2
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: prognode-core-sbom.cdx.json
+          upload-artifact: false
+          upload-release-assets: false
+      - uses: actions/upload-artifact@v7.0.1
+        with:
+          name: prognode-core-sbom
+          path: prognode-core-sbom.cdx.json
+          retention-days: 90
+
+  dependencies:
+    name: Known vulnerabilities (OSV)
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.6.0
+    with:
+      scan-args: |-
+        --recursive
+        ./
+
+  secrets:
+    name: Secret scanning (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  codeql:
+    name: Static analysis (CodeQL)
+    runs-on: windows-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [csharp, javascript-typescript]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        if: matrix.language == 'csharp'
+        with:
+          global-json-file: global.json
+      - uses: github/codeql-action/init@v4.38.2
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.language == 'csharp' && 'manual' || 'none' }}
+      - name: Build
+        if: matrix.language == 'csharp'
+        run: dotnet build PROGNODE.sln -c Release
+      - uses: github/codeql-action/analyze@v4.38.2
+        with:
+          category: /language:${{ matrix.language }}

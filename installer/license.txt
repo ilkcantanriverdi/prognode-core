@@ -7,9 +7,14 @@ By installing or using PROGNODE Core you agree to the PROGNODE Terms of Service
 PROGNODE Core runs on this computer and keeps your process data on site. A valid PROGNODE
 license is required for configuration and licensed functions; it is activated to one computer.
 
-PROGNODE is a monitoring product. It does not replace safety instrumented systems, interlocks
-or emergency shutdown functions, and must not be used as the only means of protecting people,
-equipment or the environment.
+PROGNODE is a monitoring product. It is not a safety instrumented system or safety-related system
+(IEC 61508 / IEC 61511), has no safety integrity level, and must not be used as a safety alarm,
+interlock or emergency shutdown, or as the only means of protecting people, equipment or the
+environment. Its industrial connectors are read-only: PROGNODE does not write to devices or
+program PLCs. Notifications can be delayed or lost; critical conditions must also be signalled by
+the site's own alarm and safety systems.
+
+Security updates: keep PROGNODE updated. Report vulnerabilities to security@prognode.io.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXCEPT AS EXPRESSLY STATED IN
 THE PROGNODE TERMS OF SERVICE.
