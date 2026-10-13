@@ -549,8 +549,8 @@ app.MapPost("/api/backup/create", async (HttpContext ctx, BackupCreateRequest re
     LocalAccessSessionService sessions, ProjectBackupService backup) =>
 {
     var denied=BackupAdmin(ctx,sessions);if(denied is not null)return denied;
-    if(request.Passphrase is null || request.Passphrase.Length is <12 or >1024)
-        return Results.BadRequest(new {message="Use a backup password of 12–1024 characters."});
+    if(!Prognode.Contracts.PasswordPolicy.IsValid(request.Passphrase))
+        return Results.BadRequest(new {message="Use a backup passphrase with "+Prognode.Contracts.PasswordPolicy.Requirement+"."});
     try
     {
         var actor=sessions.GetStatus(ctx.Request.Headers["X-PROGNODE-Session"].ToString()).UserEmail ?? "LOCAL_ADMIN";
@@ -571,8 +571,8 @@ app.MapPost("/api/backup/restore", async (HttpContext ctx, BackupRestoreRequest 
     var denied=BackupAdmin(ctx,sessions);if(denied is not null)return denied;
     var file=backup.GetFile(request.FileName ?? string.Empty);
     if(file is null) return Results.NotFound(new {message="Backup file not found."});
-    if(request.Passphrase is null || request.Passphrase.Length is <12 or >1024)
-        return Results.BadRequest(new {message="Enter the backup passphrase (12 characters or more)."});
+    if(string.IsNullOrEmpty(request.Passphrase) || request.Passphrase.Length > Prognode.Contracts.PasswordPolicy.MaximumLength)
+        return Results.BadRequest(new {message="Enter the backup passphrase."});
     var actor=sessions.GetStatus(ctx.Request.Headers["X-PROGNODE-Session"].ToString()).UserEmail ?? "LOCAL_ADMIN";
     try
     {
@@ -617,7 +617,7 @@ app.MapPost("/api/backup/inspect", async (HttpContext ctx, LocalAccessSessionSer
     {
         var form=await ctx.Request.ReadFormAsync(ctx.RequestAborted);
         var file=form.Files.GetFile("backup");var password=form["passphrase"].ToString();
-        if(file is null || file.Length is <=0 or > 2L*1024*1024*1024 || password.Length is <12 or >1024)
+        if(file is null || file.Length is <=0 or > 2L*1024*1024*1024 || password.Length is <1 or >1024)
             return Results.BadRequest(new {message="Select a backup file (max 2 GiB) and its passphrase."});
         stage=Path.Combine(backup.BackupRoot,"INCOMING-"+Guid.NewGuid().ToString("N")+".part");
         await using(var output=new FileStream(stage,FileMode.CreateNew,FileAccess.Write,FileShare.None))

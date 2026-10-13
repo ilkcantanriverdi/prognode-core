@@ -186,6 +186,16 @@ public sealed class CoreConnection : IDisposable
         return new NotificationPage(items, body.TryGetProperty("hasMore", out var more) && more.GetBoolean(), next);
     }
 
+    /// <summary>Recent alarm history, newest first, with who acknowledged each alarm (Core 1.0.0-beta.8 and later).</summary>
+    public async Task<(IReadOnlyList<AlarmOccurrenceRecord> Items, int Total)> GetHistoryAsync(int offset, int limit, CancellationToken ct = default)
+    {
+        using var response = await _http.GetAsync($"api/mobile/v2/alarms/history?offset={offset}&limit={limit}", ct);
+        EnsureAuthorized(response);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>(Json, ct);
+        var items = body.GetProperty("items").Deserialize<List<AlarmOccurrenceRecord>>(Json) ?? [];
+        return (items, body.TryGetProperty("total", out var t) && t.TryGetInt32(out var n) ? n : items.Count);
+    }
+
     public async Task AcknowledgeAsync(Guid occurrenceId, CancellationToken ct = default)
     {
         using var response = await _http.PostAsync($"api/mobile/v2/alarms/{occurrenceId:D}/ack", new StringContent("{}", Encoding.UTF8, "application/json"), ct);

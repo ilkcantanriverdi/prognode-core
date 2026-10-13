@@ -2252,6 +2252,23 @@ public static class EndpointExtensions
             });
         });
 
+        // Recent alarm history for paired PCs and phones: when each alarm came and went and who
+        // acknowledged it. Same attribution as the Core history page; read-only.
+        endpoints.MapGet("/api/mobile/v2/alarms/history",async(
+            HttpContext context,int? offset,int? limit,AlarmService alarms,MobileAckAuditStore ackAudit,
+            ServerAccessService server,LicenseService license,LocalAccessSessionService sessions,CancellationToken ct) =>
+        {
+            if(!MobileReaderAllowed(context,sessions,server)) return Results.Unauthorized();
+            var page=await alarms.GetHistoryPageAsync(Math.Max(0,offset??0),Math.Clamp(limit??50,1,100),null,null,ct);
+            var acknowledgements=ackAudit.GetAcknowledgements(server.Identity.ServerId,page.Select(x=>x.OccurrenceId));
+            var items=page.Select(alarm =>
+                acknowledgements.TryGetValue(alarm.OccurrenceId,out var attribution)
+                    ? alarm with { AcknowledgedAt=attribution.TimestampUtc,
+                        AcknowledgedBy=ResolveMobileAckActor(attribution,server,license) }
+                    : alarm).ToArray();
+            return Results.Ok(new { schemaVersion=1,items,total=await alarms.CountMatchingHistoryAsync(null,null,ct) });
+        });
+
         endpoints.MapGet("/api/mobile/v2/alarms/active",(
             HttpContext context, AlarmService alarms, LocalAccessSessionService sessions,
             ServerAccessService server) =>

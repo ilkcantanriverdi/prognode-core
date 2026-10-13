@@ -1025,10 +1025,10 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
                 <h3 data-i18n="backupTitle">Backup Center</h3></div><span class="active-badge">.pgnbackup</span></div>
               <p class="panel-copy" data-i18n="backupIntro">Encrypted factory snapshot: configuration, alarms, Historian and your saved Trend Studio layout.</p>
               <div class="backup-box">
-                <label class="field"><span data-i18n="backupPassword">Backup passphrase (min. 12 characters)</span>
-                  <input id="backupPassword" type="password" minlength="12" autocomplete="new-password" placeholder="At least 12 characters" /></label>
+                <label class="field"><span data-i18n="backupPassword">Backup passphrase (8+ characters: A–Z, a–z, 0–9 and a symbol)</span>
+                  <input id="backupPassword" type="text" class="secret-input" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" minlength="8" placeholder="e.g. Plant-Line2!" /></label>
                 <label class="field"><span data-i18n="backupPasswordConfirm">Confirm passphrase</span>
-                  <input id="backupPasswordConfirm" type="password" minlength="12" autocomplete="new-password" placeholder="Repeat passphrase" /></label>
+                  <input id="backupPasswordConfirm" type="text" class="secret-input" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" minlength="8" placeholder="Repeat passphrase" /></label>
                 <div class="backup-actions"><button class="primary" id="backupCreate" type="button" data-i18n="backupCreate">Create encrypted snapshot</button>
                   <button class="secondary" id="backupRefresh" type="button" data-i18n="backupRefresh">Refresh</button></div>
                 <p id="backupStatusLine" role="status" class="backup-status"></p>
@@ -1041,21 +1041,31 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
                 <strong id="backupRestoreName"></strong>
                 <p class="backup-info" data-i18n="backupRestoreWhat">Core checks this backup, restarts and replaces its data with it. The current data is kept in a data.before-restore folder next to it, so nothing is lost.</p>
                 <label class="field"><span data-i18n="backupRestorePassword">Backup passphrase</span>
-                  <input id="backupRestorePassword" type="password" autocomplete="off" /></label>
+                  <input id="backupRestorePassword" type="text" class="secret-input" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" /></label>
                 <label class="backup-restore-check hidden" id="backupRestoreAdoptRow"><input type="checkbox" id="backupRestoreAdopt" />
                   <span data-i18n="backupRestoreAdopt">This backup is from another PROGNODE Core. Use its identity and paired devices on this PC (the license and HTTPS certificate of this PC are not taken over).</span></label>
+                <div class="backup-last-chance" role="alert">
+                  <strong data-i18n="backupRestoreLastChance">Last chance before the restore</strong>
+                  <p id="backupRestoreWarningText"></p>
+                  <label class="backup-restore-check"><input type="checkbox" id="backupRestoreConfirm" />
+                    <span data-i18n="backupRestoreConfirmText">I understand that PROGNODE goes back to this backup and that changes made after it leave the live data.</span></label>
+                </div>
+                <div class="backup-progress hidden" id="backupRestoreProgress" aria-live="polite">
+                  <div class="backup-progress-bar"><span id="backupRestoreBar"></span></div><span class="backup-progress-pct" id="backupRestorePct">0%</span></div>
                 <div class="backup-actions">
                   <button class="primary" id="backupRestoreRun" type="button" data-i18n="backupRestoreRun">Restore and restart Core</button>
                   <button class="secondary" id="backupRestoreCancel" type="button" data-i18n="backupRestoreCancel">Cancel</button></div>
                 <p id="backupRestoreStatus" role="status" class="backup-status"></p>
               </div>
-              <div class="backup-subhead" data-i18n="backupRestoreTitle">Add a backup from another location</div>
+              <div class="backup-subhead" data-i18n="backupRestoreTitle">Restore a backup from another location</div>
               <p class="panel-copy" data-i18n="backupRestoreHelp">Upload a .pgnbackup file to check it. It then appears in the list above, where you can restore it. Uploading changes nothing.</p>
               <div class="backup-box">
                 <input type="file" id="backupImportFile" accept=".pgnbackup" aria-label="Encrypted PROGNODE backup" />
                 <label class="field"><span data-i18n="backupImportPassword">Passphrase for uploaded backup</span>
-                  <input id="backupImportPassword" type="password" autocomplete="off" /></label>
-                <button class="secondary" id="backupInspect" type="button" data-i18n="backupInspect">Verify uploaded backup</button>
+                  <input id="backupImportPassword" type="text" class="secret-input" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" /></label>
+                <button class="secondary" id="backupInspect" type="button" data-i18n="backupInspect">Upload and check</button>
+                <div class="backup-progress hidden" id="backupImportProgress" aria-live="polite">
+                  <div class="backup-progress-bar"><span id="backupImportBar"></span></div><span class="backup-progress-pct" id="backupImportPct">0%</span></div>
                 <div id="backupImportResult" role="status" class="backup-status"></div>
               </div>
               <div class="backup-subhead" data-i18n="backupAuditTitle">Recent configuration changes</div>

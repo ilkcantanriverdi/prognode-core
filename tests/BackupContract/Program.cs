@@ -4,7 +4,7 @@ using Prognode.Backup;
 
 var tmp=Path.Combine(Path.GetTempPath(),"pgn-backup-test-"+Guid.NewGuid().ToString("N"));
 var data=Path.Combine(tmp,"data");Directory.CreateDirectory(data);
-var password="integration-test-strong-password";
+var password="Integration-Test-1"; // gitleaks:allow (test-only passphrase for a temporary archive)
 var db=Path.Combine(data,"prognode.db");
 try
 {
@@ -82,6 +82,15 @@ try
     Ensure(refused is {Success:false} && File.Exists(Path.Combine(live,"prognode.db")) && Directory.Exists(outside),
         "A restore request pointing outside the data folder was applied");
     Console.WriteLine("PASS staged restore applies at start, keeps previous data and refuses foreign folders");
+
+    // New passphrases follow PasswordPolicy; opening a backup only needs its passphrase.
+    foreach(var weak in new[]{"Ab1!xyz","alllowercase-1!","ALLUPPER-1!","No-Digits-Here!","NoSymbols123"})
+    {
+        try{BackupArchive.Create(data,Path.Combine(tmp,"weak.pgnbackup"),weak,"contract-v1");throw new Exception("Weak passphrase accepted: "+weak);}
+        catch(ArgumentException){}
+    }
+    Ensure(Prognode.Contracts.PasswordPolicy.IsValid("short1!A") && !Prognode.Contracts.PasswordPolicy.IsValid("Short1A"),"Policy boundary");
+    Console.WriteLine("PASS new backup passphrases need 8+ characters with upper, lower, digit and symbol");
 
     Ensure(!BackupArchive.SafeDataRelative("../escape"),"Traversal allowed");
     Ensure(!BackupArchive.SafeDataRelative("private-keys/secret.pem"),"Private key allowed");

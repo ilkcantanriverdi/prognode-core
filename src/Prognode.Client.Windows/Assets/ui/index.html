@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'" />
+  <title>PROGNODE Client</title>
+  <link rel="stylesheet" href="client.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><img src="../prognode.png" alt="" /><div><strong>PROGNODE</strong><span>Client for Windows</span></div></div>
+      <nav class="nav" id="nav" aria-label="Sections">
+        <button type="button" data-view="alarms" aria-current="page"><span>Alarms</span><span class="count" id="navCount" hidden>0</span></button>
+        <button type="button" data-view="history"><span>History</span></button>
+        <button type="button" data-view="connection"><span>Connection</span></button>
+      </nav>
+      <div class="side-foot">
+        <span class="pill" id="sidePill"><span class="dot"></span><span id="sidePillText">Starting…</span></span>
+        <span class="side-pc" id="sidePc"></span>
+        <span id="sideCore"></span>
+        <span id="sideVersion"></span>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="toolbar">
+        <div><h1 id="viewTitle">Alarms</h1><small id="viewSub"></small></div>
+        <div class="actions"><button type="button" class="btn small" id="refreshBtn">Refresh</button></div>
+      </header>
+
+      <div class="content">
+        <!-- Connect (not paired yet) -->
+        <section id="viewConnect" class="connect" hidden>
+          <div class="panel">
+            <span class="kicker">Connect</span>
+            <h2>Connect this PC to PROGNODE Core</h2>
+            <p class="note">This PC then shows the plant's alarms and notifies you about new ones. On the Core PC, open Settings › Server &amp; QR to see the pairing code.</p>
+          </div>
+          <div class="panel step">
+            <div class="step-head"><span class="step-no">1</span><strong>Find your Core</strong></div>
+            <div class="cores" id="coreList"></div>
+            <div class="row">
+              <label class="field grow">Or enter its address<input id="hostInput" placeholder="192.168.1.52" spellcheck="false" /></label>
+              <label class="field w-port">HTTPS port<input id="portInput" value="5443" inputmode="numeric" /></label>
+            </div>
+            <div class="actions"><button type="button" class="btn" id="searchBtn">Search again</button><button type="button" class="btn primary" id="inspectBtn">Continue</button></div>
+          </div>
+          <div class="panel step" id="verifyStep" hidden>
+            <div class="step-head"><span class="step-no">2</span><strong>Compare the check code</strong></div>
+            <p class="note">Continue only if PROGNODE Core shows exactly this code under Settings › Server &amp; QR. It proves you reached your own Core.</p>
+            <div class="check-code" id="checkCode"></div>
+            <label class="switch"><input type="checkbox" id="codeMatches" /> The code is the same as on the PROGNODE Core screen</label>
+          </div>
+          <div class="panel step" id="pairStep" hidden>
+            <div class="step-head"><span class="step-no">3</span><strong>Pair</strong></div>
+            <div class="row">
+              <label class="field w-code">6-digit pairing code<input id="pairCode" maxlength="6" inputmode="numeric" autocomplete="off" /></label>
+              <label class="field grow">Name of this PC, as Core lists it<input id="pcName" maxlength="64" /></label>
+            </div>
+            <div class="actions"><button type="button" class="btn primary" id="pairBtn" disabled>Pair this PC</button></div>
+          </div>
+          <p class="status" id="connectStatus" role="status"></p>
+        </section>
+
+        <!-- Active alarms -->
+        <section id="viewAlarms" hidden>
+          <div class="panel">
+            <table>
+              <thead><tr><th>Priority</th><th>Alarm</th><th>Since</th><th>State</th><th></th></tr></thead>
+              <tbody id="alarmRows"></tbody>
+            </table>
+          </div>
+          <p class="note" id="ackHint"></p>
+        </section>
+
+        <!-- History -->
+        <section id="viewHistory" hidden>
+          <div class="panel">
+            <table>
+              <thead><tr><th>Priority</th><th>Alarm</th><th>Came</th><th>Went</th><th>Acknowledged</th></tr></thead>
+              <tbody id="historyRows"></tbody>
+            </table>
+            <div class="pager"><span id="historyInfo"></span>
+              <span class="actions"><button type="button" class="btn small" id="historyPrev">Newer</button><button type="button" class="btn small" id="historyNext">Older</button></span></div>
+          </div>
+        </section>
+
+        <!-- Connection -->
+        <section id="viewConnection" hidden>
+          <div class="grid2">
+            <div class="panel">
+              <span class="kicker">PROGNODE Core</span>
+              <h2 id="connCore"></h2>
+              <dl class="facts">
+                <dt>Status</dt><dd id="connStatus"></dd>
+                <dt>Address</dt><dd id="connAddress"></dd>
+                <dt>Last contact</dt><dd id="connLast"></dd>
+                <dt>This PC</dt><dd id="connAccess"></dd>
+              </dl>
+              <div class="actions">
+                <button type="button" class="btn primary" id="checkBtn">Check connection</button>
+                <button type="button" class="btn" id="reconnectBtn">Find Core again</button>
+              </div>
+              <p class="note mt">Find Core again searches the plant network for this Core, for example after its IP address changed. The certificate must still match.</p>
+            </div>
+            <div class="panel">
+              <span class="kicker">This PC</span>
+              <h2>Notifications</h2>
+              <p class="note">New alarms appear as Windows notifications while PROGNODE runs in the system tray, also when this window is closed.</p>
+              <div class="actions spaced"><button type="button" class="btn" id="testToastBtn">Send a test notification</button></div>
+              <label class="switch"><input type="checkbox" id="autostart" /> Start with Windows</label>
+              <hr class="sep" />
+              <button type="button" class="btn danger" id="disconnectBtn">Disconnect this PC</button>
+              <div id="disconnectConfirm" class="mt" hidden>
+                <p class="note">This PC stops receiving alarms. Pairing again needs a new code from the Core screen.</p>
+                <div class="actions mt"><button type="button" class="btn danger" id="disconnectYes">Disconnect</button><button type="button" class="btn" id="disconnectNo">Keep connected</button></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" hidden></div>
+  <script src="client.js"></script>
+</body>
+</html>

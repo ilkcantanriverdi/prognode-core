@@ -6,7 +6,7 @@ using NSec.Cryptography;
 
 namespace Prognode.Client.Windows;
 
-public sealed record PairingRecord(Guid ServerId, string DisplayName, string Host, int Port, string CertificateSha256, Guid ClientId, string Token, long Cursor = 0);
+public sealed record PairingRecord(Guid ServerId, string DisplayName, string Host, int Port, string CertificateSha256, Guid ClientId, string Token, long Cursor = 0, string? ClientName = null);
 
 /// <summary>Pairing is stored per Windows user, encrypted with DPAPI (CurrentUser).</summary>
 public static class ClientStore
