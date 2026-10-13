@@ -45,7 +45,12 @@ html[data-theme="light"] .sidebar-toggle { background: #fff; color: #0b6f76; bor
 .app-shell.sidebar-collapsed #accountButton.signed-out { border-color: rgba(233, 185, 73, .45) !important; background: rgba(233, 185, 73, .10) !important; }
 
 /* Cordara Labs credit */
-.sidebar-credit { display: block; margin-top: 3px; font-size: 10px; letter-spacing: .02em; color: rgba(150, 180, 196, .72); text-decoration: none; }
+.sidebar-credit { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 3px; font-size: 10px; letter-spacing: .02em; color: rgba(150, 180, 196, .72); text-decoration: none; }
+/* Cordara Labs mark: white on dark (brand "White on Dark"), brand colours on the light theme. */
+.sidebar-credit .cl-mark { width: 17px; height: 12px; flex: 0 0 auto; }
+.sidebar-credit .cl-mark path { fill: rgba(235, 243, 255, .85); }
+html[data-theme="light"] .sidebar-credit .cl-mark .cl-a { fill: #0A1C3A; }
+html[data-theme="light"] .sidebar-credit .cl-mark .cl-b { fill: #0066FF; }
 .sidebar-credit b { font-weight: 700; color: rgba(205, 228, 238, .9); }
 .sidebar-credit:hover b { color: #fff; }
 .app-shell.sidebar-collapsed .sidebar-credit { display: none; }

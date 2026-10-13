@@ -157,6 +157,7 @@ function receive(msg) {
 
 // ---------- commands ----------
 $("nav").addEventListener("click", e => { const b = e.target.closest("button[data-view]"); if (b && !b.disabled) { if (b.dataset.view === "history") historyOffset = 0; show(b.dataset.view); } });
+$("cordaraLink").addEventListener("click", e => { e.preventDefault(); send({ cmd: "openCordara" }); });
 $("refreshBtn").addEventListener("click", () => view === "history" ? send({ cmd: "history", offset: historyOffset }) : send({ cmd: "refresh" }));
 $("historyPrev").addEventListener("click", () => { historyOffset = Math.max(0, historyOffset - 50); send({ cmd: "history", offset: historyOffset }); });
 $("historyNext").addEventListener("click", () => { historyOffset += 50; send({ cmd: "history", offset: historyOffset }); });

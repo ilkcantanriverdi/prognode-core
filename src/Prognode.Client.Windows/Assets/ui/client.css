@@ -109,4 +109,9 @@ td .sub { display: block; color: var(--muted); font-size: 12px; }
 .mt { margin-top: 12px; }
 .sep { border: 0; border-top: 1px solid var(--line-soft); margin: 18px 0; }
 
+.credit { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 11px; color: var(--muted); text-decoration: none; }
+.credit svg { width: 17px; height: 12px; flex: 0 0 auto; }
+.credit svg path { fill: rgba(235, 243, 255, .85); }
+.credit b { color: var(--text); font-weight: 600; }
+.credit:hover b { color: #fff; }
 .side-pc { color: var(--text); font-weight: 700; font-size: 13px; overflow-wrap: anywhere; }
