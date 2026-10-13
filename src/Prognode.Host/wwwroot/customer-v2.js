@@ -16,8 +16,9 @@ for(const btn of document.querySelectorAll('[data-open-settings]')) btn.addEvent
 byId('customerSettingsBack').addEventListener('click',settingsHome);
 byId('customerDiagnostics').addEventListener('click',()=>navigateTo('diagnostics'));
 byId('customerNotification').addEventListener('click',()=>navigateTo('notifications'));
-byId('customerOpenTrends').addEventListener('click',()=>navigateTo('trends'));
-byId('customerAddFirstDevice').addEventListener('click',()=>{const licenseReady=!!(window.__customerV2State?.licensed);if(!licenseReady) navigateTo('license'); else byId('opAddDevice')?.click();});
+byId('customerOpenTrends').addEventListener('click',()=>{if(byId('customerOpenTrends').dataset.setup==='1'&&typeof startFirstRunQuickSetup==='function')startFirstRunQuickSetup();else navigateTo('trends');});
+// Connect a device starts the guided setup (device, Tag, alarm, Historian), not a lone device form.
+byId('customerAddFirstDevice').addEventListener('click',()=>{const licenseReady=!!(window.__customerV2State?.licensed);if(!licenseReady) navigateTo('license'); else if(typeof startFirstRunQuickSetup==='function') startFirstRunQuickSetup(); else byId('opAddDevice')?.click();});
 byId('customerGuidedSetup').addEventListener('click',()=>{if(typeof openFirstRunQuickStart==='function')openFirstRunQuickStart(true);});
 window.customerV2Refresh=function(s){if(!s)return;window.__customerV2State=s;
   const pg=byId('page-overview');pg.classList.toggle('customer-has-devices',s.devices>0);

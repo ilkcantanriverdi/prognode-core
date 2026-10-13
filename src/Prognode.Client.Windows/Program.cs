@@ -13,10 +13,21 @@ internal static class Program
             if (!args.Contains("--background")) show.Set();
             return;
         }
-        ApplicationConfiguration.Initialize();
-        var context = new ClientContext(background: args.Contains("--background"));
-        var wait = ThreadPool.RegisterWaitForSingleObject(show, (_, _) => context.RequestShow(), null, Timeout.Infinite, executeOnlyOnce: false);
-        Application.Run(context);
-        wait.Unregister(null);
+        Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+        Application.ThreadException += (_, e) => CrashLog.Write(e.Exception, "ui");
+        AppDomain.CurrentDomain.UnhandledException += (_, e) => CrashLog.Write(e.ExceptionObject as Exception, "fatal");
+        TaskScheduler.UnobservedTaskException += (_, e) => { CrashLog.Write(e.Exception, "task"); e.SetObserved(); };
+        try
+        {
+            ApplicationConfiguration.Initialize();
+            var context = new ClientContext(background: args.Contains("--background"));
+            var wait = ThreadPool.RegisterWaitForSingleObject(show, (_, _) => context.RequestShow(), null, Timeout.Infinite, executeOnlyOnce: false);
+            Application.Run(context);
+            wait.Unregister(null);
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Fatal(ex);
+        }
     }
 }

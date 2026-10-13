@@ -37,6 +37,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
 <link rel="stylesheet" href="/mobile-device-access.css?v=hf64" />
 <link rel="stylesheet" href="/manual-pairing.css?v=hf65" />
 <link rel="stylesheet" href="/sidebar-v3.css?v=20261013-cordara" />
+<link rel="stylesheet" href="/progress-overlay.css?v=20261013" />
 </head>
 <body class="customer-v2">
   <div class="app-shell">
@@ -156,7 +157,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
               <div class="customer-intro-copy"><span class="customer-intro-kicker">✦ <span data-customer-en="QUICK START">QUICK START</span></span><h2 data-customer-en="Your monitoring journey starts here.">Your monitoring journey starts here.</h2><p data-customer-en="Connect your first PLC, select important signals and turn live plant data into actionable alarms, history and trends. Your data stays on this PC.">Connect your first PLC, select important signals and turn live plant data into actionable alarms, history and trends. Your data stays on this PC.</p><div class="customer-intro-actions"><button type="button" class="customer-primary" id="customerAddFirstDevice" data-customer-en="Connect a device →">Connect a device →</button><button type="button" id="customerGuidedSetup" class="customer-intro-link" data-customer-en="Guided setup · Around 15 minutes →">Guided setup · Around 15 minutes →</button></div></div>
               <div class="customer-steps"><div><span class="customer-step-index">01</span><span><strong data-customer-en="Activate your license">Activate your license</strong><small data-customer-en="Start the free trial or connect your account">Start the free trial or connect your account</small></span><b id="customerStepLicense">—</b></div><div><span class="customer-step-index">02</span><span><strong data-customer-en="Connect a device">Connect a device</strong><small data-customer-en="PLC or supported industrial source">PLC or supported industrial source</small></span><b id="customerStepDevice">—</b></div><div><span class="customer-step-index">03</span><span><strong data-customer-en="Select live signals">Select live signals</strong><small data-customer-en="Tags, alarm and recording rules">Tags, alarm and recording rules</small></span><b id="customerStepSignals">—</b></div></div>
             </div>
-            <div class="customer-intro customer-intro-ready" id="customerIntroReady" hidden><div><span class="customer-intro-kicker">● <span data-customer-en="ON-SITE MONITORING">ON-SITE MONITORING</span></span><h2 data-customer-en="A clear picture of your critical processes.">A clear picture of your critical processes.</h2><p data-customer-en="Your local devices, live signals and alarms. No cloud connection required.">Your local devices, live signals and alarms. No cloud connection required.</p></div><button id="customerOpenTrends" class="customer-primary" type="button" data-customer-en="Open Trend Studio →">Open Trend Studio →</button></div>
+            <div class="customer-intro customer-intro-ready" id="customerIntroReady" hidden><div><span class="customer-intro-kicker">● <span data-customer-en="ON-SITE MONITORING">ON-SITE MONITORING</span></span><h2 data-customer-en="A clear picture of your critical processes.">A clear picture of your critical processes.</h2><p data-customer-en="Your local devices, live signals and alarms. No cloud connection required.">Your local devices, live signals and alarms. No cloud connection required.</p></div><button id="customerOpenTrends" class="customer-primary" type="button">Open Trend Studio →</button></div>
             <div class="customer-kpis"><button class="customer-kpi" data-customer-page="devices" type="button"><span class="customer-kpi-top"><span data-customer-en="CONNECTED DEVICES">CONNECTED DEVICES</span><span class="customer-kpi-icon">▣</span></span><strong id="customerDeviceCount">0</strong><small data-customer-en="Your local device connections">Your local device connections</small></button><button class="customer-kpi" data-customer-page="alarms" type="button"><span class="customer-kpi-top"><span data-customer-en="ACTIVE ALARMS">ACTIVE ALARMS</span><span class="customer-kpi-icon">△</span></span><strong id="customerAlarmCount">0</strong><small data-customer-en="Conditions requiring attention">Conditions requiring attention</small></button><button class="customer-kpi" data-customer-page="historian" type="button"><span class="customer-kpi-top"><span>HISTORIAN</span><span class="customer-kpi-icon">▤</span></span><strong id="customerRecordingCount">—</strong><small id="customerHistorianHelp" data-customer-en="Set up local signal recording">Set up local signal recording</small></button></div>
             <div class="customer-overview-bottom" id="customerEmptyBottom"><article class="customer-panel"><div class="customer-panel-head"><div><h3 data-customer-en="Plant activity">Plant activity</h3><p data-customer-en="Trends and events will appear here as signals arrive.">Trends and events will appear here as signals arrive.</p></div><button type="button" data-customer-page="trends" class="customer-text-action" data-customer-en="Open Trend Studio →">Open Trend Studio →</button></div><div class="customer-empty-activity"><span class="customer-empty-icon">⌁</span><strong data-customer-en="No data to display yet">No data to display yet</strong><p data-customer-en="Your first live signals will appear after setup.">Your first live signals will appear after setup.</p></div></article><article class="customer-panel customer-help"><h3 data-customer-en="Deployment checklist">Deployment checklist</h3><p data-customer-en="Everything needed to bring this site online.">Everything needed to bring this site online.</p><div class="customer-help-card"><span class="customer-help-icon">♢</span><div><strong data-customer-en="Designed to work offline">Designed to work offline</strong><p data-customer-en="Local monitoring, historian and LAN clients work without cloud connectivity.">Local monitoring, historian and LAN clients work without cloud connectivity.</p><button type="button" class="customer-text-action" data-customer-page="settings" data-customer-en="Explore system settings →">Explore system settings →</button></div></div><hr/><button type="button" class="customer-text-action" data-customer-page="license" data-customer-en="Go to license setup →">Go to license setup →</button></article></div>
           </section>
@@ -1795,11 +1796,11 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
   </div>
 
   <script src="/qr-local.js?v=0.7.2-rc6.4.7-hf5-ui-stabilization"></script>
-  <script src="/app.js?v=20261004-alarm-ack-persistence-2"></script>
+  <script src="/app.js?v=20261013-final-test"></script>
   <script src="/trend-studio.js?v=20261004-csv-audit"></script>
   <script src="/trend-studio-mount.js?v=rc647-hf63-auth-catalog"></script>
   <script src="/hf5-ui.js?v=20261004-bulk-management"></script>
-  <script defer src="/customer-v2.js?v=20261004-visual-hierarchy"></script>
+  <script defer src="/customer-v2.js?v=20261013-guided-setup"></script>
 <script>
 (()=>{
 // Sidebar: expanded or collapsed, switched only by the toggle (no hover peeking over the content).
@@ -1819,7 +1820,7 @@ desktop.addEventListener('change',apply);
 apply();
 })();
 </script>
-<script src="/mobile-device-access.js?v=hf64" defer></script>
+<script src="/mobile-device-access.js?v=20261013-device-ack" defer></script>
 <script src="/manual-pairing.js?v=hf65" defer></script>
 </body>
 </html>

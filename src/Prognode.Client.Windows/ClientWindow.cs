@@ -62,14 +62,19 @@ public sealed class ClientWindow : Form
             core.WebMessageReceived += OnMessage;
             core.Navigate(Origin + "ui/index.html");
         }
-        catch (Exception ex) when (ex is WebView2RuntimeNotFoundException or System.Runtime.InteropServices.COMException or InvalidOperationException)
+        catch (Exception ex)
         {
+            // Any WebView2 failure (missing runtime, blocked by policy, broken profile) shows this
+            // fallback instead of closing the client; alarm notifications keep running.
+            CrashLog.Write(ex, "window");
             Controls.Remove(_web);
             var link = new LinkLabel
             {
                 Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter, ForeColor = Color.FromArgb(238, 245, 250),
                 LinkColor = Color.FromArgb(37, 200, 217), Font = new Font("Segoe UI", 11f),
-                Text = "This window needs the Microsoft Edge WebView2 Runtime, which this PC does not have.\n" +
+                Text = (ex is WebView2RuntimeNotFoundException
+                           ? "This window needs the Microsoft Edge WebView2 Runtime, which this PC does not have.\n"
+                           : $"The PROGNODE Client window could not open: {ex.Message}\nDetails: {CrashLog.FilePath}\n") +
                        "Alarm notifications keep working in the meantime.\n\nDownload WebView2 Runtime",
             };
             link.LinkArea = new LinkArea(link.Text.LastIndexOf("Download", StringComparison.Ordinal), "Download WebView2 Runtime".Length);
