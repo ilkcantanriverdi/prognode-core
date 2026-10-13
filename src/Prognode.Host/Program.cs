@@ -424,9 +424,17 @@ app.Use(async (context, next) =>
             requestPath.StartsWith("/api/mobile/v2/alarms/", StringComparison.OrdinalIgnoreCase) &&
             requestPath.EndsWith("/ack", StringComparison.OrdinalIgnoreCase) &&
             HttpMethods.IsPost(method);
-        // Only this endpoint can authenticate using an explicit, server-stored device grant.
-        // It performs its own bearer/session check; all other mutations still require login.
-        if (!sessions.Validate(sessionToken) && !occurrenceAckRoute)
+        // A paired device (bearer token validated above) turns Remote Access on or off for itself:
+        // it signs the cloud challenge with its own key, and the endpoints only act on the caller.
+        var pairedSelfRemoteRoute = context.Items.ContainsKey("PROGNODE_CLIENT_ID") &&
+            path.StartsWithSegments("/api/remote-access/clients") &&
+            ((HttpMethods.IsPost(method) &&
+              (string.Equals(path.Value, "/api/remote-access/clients/challenge", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(path.Value, "/api/remote-access/clients/register", StringComparison.OrdinalIgnoreCase))) ||
+             HttpMethods.IsDelete(method));
+        // Only these endpoints can authenticate using an explicit, server-stored device grant.
+        // They perform their own bearer/session check; all other mutations still require login.
+        if (!sessions.Validate(sessionToken) && !occurrenceAckRoute && !pairedSelfRemoteRoute)
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             await context.Response.WriteAsJsonAsync(new
