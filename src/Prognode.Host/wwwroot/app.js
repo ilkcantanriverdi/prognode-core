@@ -349,7 +349,15 @@ function updateCommissioningAssistant() {
     $("firstRunAccessState").textContent = access ? t("firstRunAccessReady") : t("firstRunAccessRequired");
     $("firstRunAccessState").classList.toggle("ready", access);
   }
-  if ($("firstRunStart")) $("firstRunStart").textContent = access ? t("firstRunStart") : t("firstRunSignIn");
+  if ($("firstRunStart")) $("firstRunStart").textContent = !access ? t("firstRunSignIn")
+    : progress.completed > 0 && !progress.complete ? `Next: ${nextLabels[nextIndex]} →` : t("firstRunStart");
+  // Overview card: until commissioning is complete it continues the guided setup instead of
+  // jumping to Trend Studio after the first device.
+  const overviewNext = $("customerOpenTrends");
+  if (overviewNext) {
+    overviewNext.dataset.setup = progress.complete ? "" : "1";
+    overviewNext.textContent = progress.complete ? "Open Trend Studio →" : `Continue setup · ${nextLabels[nextIndex]} →`;
+  }
 
   const setupButtons = [$("setupAssistantButton"), $("overviewSetupAssistant")].filter(Boolean);
   setupButtons.forEach(button => {
@@ -6484,7 +6492,30 @@ Object.assign(translations.en,{
 
 let backupRestoreFile=null;
 // Progress bars for upload and restore: pct 0..100, or null to hide.
+// Full-screen progress for long backup operations: the PROGNODE logo inside a ring that fills.
+const PROGRESS_TITLES={backupRestore:'Restoring backup',backupImport:'Uploading backup'};
+function progressOverlay(prefix,pct){
+  let el=$('pgnProgressOverlay');
+  if(pct===null){el?.classList.add('hidden');return;}
+  if(!el){
+    el=document.createElement('div');el.id='pgnProgressOverlay';el.className='pgn-progress-overlay';
+    el.setAttribute('role','progressbar');el.setAttribute('aria-valuemin','0');el.setAttribute('aria-valuemax','100');
+    el.innerHTML='<div class="pgn-progress-card"><div class="pgn-progress-ring"><svg viewBox="0 0 120 120" aria-hidden="true">'
+      +'<circle class="track" cx="60" cy="60" r="54"/><circle class="fill" cx="60" cy="60" r="54" pathLength="100"/></svg>'
+      +'<img src="/assets/prognode.png" alt=""></div><strong class="pgn-progress-pct">0%</strong>'
+      +'<span class="pgn-progress-title"></span><span class="pgn-progress-note">Keep this page open.</span></div>';
+    document.body.append(el);
+  }
+  const value=Math.max(0,Math.min(100,Math.round(pct)));
+  el.classList.remove('hidden');
+  el.querySelector('.fill').style.strokeDashoffset=String(100-value);
+  el.querySelector('.pgn-progress-pct').textContent=value+'%';
+  el.querySelector('.pgn-progress-title').textContent=PROGRESS_TITLES[prefix]||'Working';
+  el.setAttribute('aria-label',el.querySelector('.pgn-progress-title').textContent);
+  el.setAttribute('aria-valuenow',String(value));
+}
 function backupProgress(prefix,pct){
+  progressOverlay(prefix,pct);
   const box=$(prefix+'Progress');if(!box)return;
   box.classList.toggle('hidden',pct===null);
   if(pct===null)return;

@@ -70,7 +70,9 @@ async function loadCatalog(){
   ]);
   const devicesById=new Map(devices.map(d=>[d.id,d.name]));
   const active=new Map(recordings.filter(r=>r.configuration?.enabled===true).map(r=>[r.configuration.tagId,r]));
-  if(signalDefs.length&&active.size===0)throw Error('Historian catalog temporarily empty; keeping open charts');
+  // Core answered with its tags but no recordings: Historian really is empty (everything removed).
+ // Only an answer without any tags (Core still starting or restoring) keeps the open charts.
+ if(signalDefs.length&&active.size===0&&!tags.length)throw Error('Historian catalog temporarily empty; keeping open charts');
   const previous=new Set(signalDefs.map(d=>d.id));
   const nextSignalDefs=tags.filter(t=>active.has(t.id)).map((t,i)=>{
    const alarms=definitions.filter(a=>a.tagId===t.id&&a.enabled!==false&&a.threshold!=null);
@@ -84,7 +86,7 @@ async function loadCatalog(){
     decimals:Math.min(4,Math.max(0,Number(t.decimalPlaces)||2)),
     digital:String(t.dataType||'').toLowerCase()==='bool'};
   });
-  if(signalDefs.length&&!nextSignalDefs.length)throw Error('Historian catalog temporarily empty; keeping open charts');
+  if(signalDefs.length&&!nextSignalDefs.length&&!tags.length)throw Error('Historian catalog temporarily empty; keeping open charts');
   signalDefs=nextSignalDefs;
   const allowed=new Set(signalDefs.map(d=>d.id));
   for(const id of [...allData.keys()])if(!allowed.has(id)){allData.delete(id);metaById.delete(id)}

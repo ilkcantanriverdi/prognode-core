@@ -35,15 +35,11 @@
         fields.append(w);return input;};
       const view=makeCheck('View alarms',d.canViewAlarms!==false);
       const ack=makeCheck('Allow ACK from this device',!!d.canAcknowledge);
-      // Phones can sign in, so ACK can require a signed-in person or be allowed for the device itself.
-      // The Windows Client has no sign-in: its ACK is always recorded as this PC (device ACK).
+      // ACK from a paired device is always recorded as that device (phone or PC); the choice between
+      // device ACK and a signed-in person was removed because it confused operators.
       const windows=String(d.platform||'').toLowerCase()==='windows';
-      const mode=create('select');
-      mode.title='Who may acknowledge on this device';
-      for(const [val,label] of [['DEVICE','ACK as this device, no sign-in'],['USER_SESSION','ACK only by a signed-in user']]){let o=create('option','',label);o.value=val;mode.append(o)}
-      mode.value=windows||d.ackAuthMode==='DEVICE'?'DEVICE':'USER_SESSION';
-      if(windows){mode.hidden=true;fields.append(create('small','hf64-ack-note','ACK is recorded as this PC'));}
-      fields.append(mode);
+      const mode={value:'DEVICE'};
+      fields.append(create('small','hf64-ack-note',windows?'ACK is recorded as this PC':'ACK is recorded as this phone'));
       const save=create('button','secondary','Save access');save.type='button';
       const msg=create('p','hf64-msg','');
       save.addEventListener('click',async()=>{

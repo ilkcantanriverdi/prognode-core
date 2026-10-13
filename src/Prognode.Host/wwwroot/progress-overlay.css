@@ -1,0 +1,16 @@
+/* Full-screen progress for long operations (backup upload, restore): the PROGNODE logo inside a
+   ring that fills, over the blurred page. Built by progressOverlay() in app.js. */
+.pgn-progress-overlay { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; background: rgba(6, 14, 22, .55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.pgn-progress-overlay.hidden { display: none; }
+.pgn-progress-card { display: grid; justify-items: center; gap: 6px; min-width: 250px; padding: 28px 36px 24px; border-radius: 18px; background: rgba(16, 30, 43, .94); border: 1px solid #1b2e40; color: #eef5fa; box-shadow: 0 24px 70px rgba(0, 0, 0, .45); text-align: center; }
+.pgn-progress-ring { position: relative; width: 136px; height: 136px; margin-bottom: 6px; }
+.pgn-progress-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.pgn-progress-ring circle { fill: none; stroke-width: 6; }
+.pgn-progress-ring .track { stroke: rgba(37, 200, 217, .14); }
+.pgn-progress-ring .fill { stroke: #25c8d9; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100; transition: stroke-dashoffset .35s ease; }
+.pgn-progress-ring img { position: absolute; top: 50%; left: 50%; width: 74px; height: 74px; margin: -37px 0 0 -37px; object-fit: contain; animation: pgnProgressPulse 1.8s ease-in-out infinite; }
+@keyframes pgnProgressPulse { 50% { transform: scale(.93); opacity: .82; } }
+.pgn-progress-pct { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pgn-progress-title { font-size: 15px; font-weight: 600; }
+.pgn-progress-note { font-size: 12px; color: #91a6b7; }
+@media (prefers-reduced-motion: reduce) { .pgn-progress-ring .fill { transition: none; } .pgn-progress-ring img { animation: none; } }
