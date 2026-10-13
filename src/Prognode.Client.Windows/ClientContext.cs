@@ -17,6 +17,7 @@ public sealed class ClientContext : ApplicationContext
     private readonly System.Windows.Forms.Timer _updateTimer = new() { Interval = 12 * 60 * 60 * 1000 };
     private const string ReleasesUrl = "https://account.prognode.io/api/releases/latest";
     private const string DownloadsUrl = "https://account.prognode.io/downloads";
+    private const string CordaraUrl = "https://www.cordaralabs.com";
     private ToolStripMenuItem? _updateItem;
     private string? _announcedVersion;
     private (string Version, Uri Url, string Sha256)? _update;
@@ -141,6 +142,8 @@ public sealed class ClientContext : ApplicationContext
                 var port = message.TryGetProperty("port", out var p) && p.TryGetInt32(out var pn) ? pn : 5443;
                 _ = InspectAsync(Text("host") ?? "", port, Guid.TryParse(Text("serverId"), out var sid) ? sid : null);
                 break;
+            // The page cannot open links itself; only this fixed address is opened in the browser.
+            case "openCordara": System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(CordaraUrl) { UseShellExecute = true }); break;
             case "pair": _ = PairAsync(Text("code") ?? "", Text("name") ?? ""); break;
         }
     }
