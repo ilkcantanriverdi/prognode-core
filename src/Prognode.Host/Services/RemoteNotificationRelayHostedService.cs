@@ -7,8 +7,12 @@ public sealed class RemoteNotificationRelayHostedService(
     RemoteAccessService remoteAccess,
     ServerAccessService delivery,
     RemoteNotificationOutboxStore outbox,
+    Prognode.Alarm.AlarmService alarms,
     ILogger<RemoteNotificationRelayHostedService> logger) : BackgroundService
 {
+    private static readonly TimeSpan ActiveSyncInterval = TimeSpan.FromSeconds(30);
+    private DateTimeOffset _lastActiveSync = DateTimeOffset.MinValue;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
@@ -28,6 +32,18 @@ public sealed class RemoteNotificationRelayHostedService(
                         { logger.LogWarning(ex,"Remote relay temporarily unavailable for event {Id}",pending.Event.Id); }
                         if(accepted) outbox.MarkDelivered(pending.Event.Id);
                         else outbox.MarkFailed(pending.Event.Id);
+                    }
+                    // Clears and ACKs reach off-site phones even for alarms that do not notify on clear.
+                    if(DateTimeOffset.UtcNow-_lastActiveSync>=ActiveSyncInterval)
+                    {
+                        var takenAt=DateTimeOffset.UtcNow;
+                        var active=alarms.GetActive()
+                            .Where(a=>a.OccurrenceId!=Guid.Empty)
+                            .Select(a=>new RemoteActiveAlarm(a.OccurrenceId.ToString("D"),
+                                a.State==Prognode.Contracts.Alarms.AlarmRuntimeState.Acknowledged?"ACKNOWLEDGED":"ACTIVE"))
+                            .ToArray();
+                        if(await remoteAccess.TrySyncActiveAlarmsAsync(active,takenAt,stoppingToken))
+                            _lastActiveSync=takenAt;
                     }
                 }
             }

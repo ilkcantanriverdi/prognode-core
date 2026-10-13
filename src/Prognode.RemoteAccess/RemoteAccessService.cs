@@ -14,6 +14,34 @@ public sealed class RemoteAccessService(
     private readonly SemaphoreSlim _syncGate = new(1, 1);
     private readonly object _relayGate = new();
     private RemoteRelayStatus? _relay;
+    private Func<Prognode.Contracts.Notifications.NotificationEvent, CancellationToken, Task<RemoteAlarmLabel?>>? _describe;
+
+    /// <summary>Set by Host: names an alarm notification with its configured text for off-site phones.</summary>
+    public void SetAlarmDescriber(Func<Prognode.Contracts.Notifications.NotificationEvent, CancellationToken, Task<RemoteAlarmLabel?>> describe) =>
+        _describe = describe;
+
+    private bool RelayEligible(out string? token)
+    {
+        token = null;
+        var status = GetStatus();
+        if (!status.Entitled || !status.CloudConfigured || !status.ServerBound ||
+            !string.Equals(status.SubscriptionStatus, "ACTIVE", StringComparison.OrdinalIgnoreCase))
+            return false;
+        token = CloudToken();
+        return !string.IsNullOrWhiteSpace(token);
+    }
+
+    /// <summary>Sends Core's active alarms so PROGNODE Cloud clears the ones that are no longer active.</summary>
+    public async Task<bool> TrySyncActiveAlarmsAsync(IReadOnlyCollection<RemoteActiveAlarm> active, DateTimeOffset takenAtUtc,
+        CancellationToken cancellationToken = default)
+    {
+        if (!RelayEligible(out var token)) return false;
+        try { return await cloud.SyncActiveAlarmsAsync(token!, active, takenAtUtc, cancellationToken); }
+        catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or TaskCanceledException or System.Text.Json.JsonException)
+        {
+            return false;
+        }
+    }
 
     /// <summary>Core authenticates to the Remote Access relay with its license activation token.</summary>
     private string? CloudToken() => cloudLicense.Load(configured: true).ActivationToken;
@@ -336,9 +364,12 @@ public sealed class RemoteAccessService(
         if (string.IsNullOrWhiteSpace(token))
             return false;
 
+        RemoteAlarmLabel? label = null;
+        try { if (_describe is not null) label = await _describe(notification, cancellationToken); }
+        catch (Exception ex) when (ex is not OperationCanceledException) { /* Fall back to the plain name. */ }
         try
         {
-            var result = await cloud.PublishNotificationAsync(token, notification, cancellationToken);
+            var result = await cloud.PublishNotificationAsync(token, notification, cancellationToken, label);
             RecordRelay(result.Accepted, result.Error, result.Pushed, result.PushTargets, result.PushConfigured);
             return result.Accepted;
         }
