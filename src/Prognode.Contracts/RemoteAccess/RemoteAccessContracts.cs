@@ -12,7 +12,17 @@ public sealed record RemoteAccessStatusSnapshot(
     int? RemainingClients,
     DateTimeOffset? ExpiresAtUtc,
     DateTimeOffset? LastSyncedAtUtc,
-    string? LastError);
+    string? LastError,
+    RemoteRelayStatus? Relay = null);
+
+/// What happened to the last alarm Core sent to PROGNODE Cloud for off-site phones (since Core started).
+public sealed record RemoteRelayStatus(
+    DateTimeOffset? LastAttemptUtc,
+    DateTimeOffset? LastSuccessUtc,
+    string? LastError,
+    int? LastPushed,
+    int? LastPushTargets,
+    bool? PushConfigured);
 
 public sealed record RemoteAccessClientSnapshot(
     Guid LocalClientId,

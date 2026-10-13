@@ -5632,3 +5632,7 @@ button.secondary.license-action-full { font-size:13px; font-weight:800; letter-s
 .backup-last-chance{display:grid;gap:8px;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,107,107,.5);background:rgba(255,107,107,.08)}
 .backup-last-chance strong{color:#ff8a8a}
 .backup-last-chance p{margin:0;line-height:1.55}
+
+/* Remote Access: delivery of the last alarm to PROGNODE Cloud; amber when something blocks it. */
+.remote-relay-line { color: var(--text, #eef5fa); }
+.remote-relay-line.warning { color: #f0b44c; }

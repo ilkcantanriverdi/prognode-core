@@ -6,7 +6,7 @@
   <title>PROGNODE</title>
   <link rel="icon" type="image/png" href="/assets/prognode-favicon.png" />
   <link rel="shortcut icon" href="/assets/prognode.ico" />
-  <link rel="stylesheet" href="/styles.css?v=0.7.2-rc6.4.7-hf5-ui-stabilization" />
+  <link rel="stylesheet" href="/styles.css?v=20261014-relay-status" />
   <link rel="stylesheet" href="/trend-studio.css?v=0.7.2-rc6.4.7-hf5-ui-stabilization" />
   <link rel="stylesheet" href="/hf5-ui.css?v=0.7.2-rc6.4.7-hf5-ui-stabilization" />
   <link rel="stylesheet" href="/hf5-1-customer-polish.css?v=0.7.2-rc6.4.7-hf5.1-sidebar" />
@@ -1017,6 +1017,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
                 <button class="ghost-button" id="remoteAccessSync" data-i18n="syncNow">Sync now</button>
               </div>
               <div class="remote-client-list" id="remoteAccessClientList"></div>
+              <small class="license-local-note remote-relay-line" id="remoteAccessRelay" aria-live="polite" hidden></small>
               <small class="license-local-note" id="remoteAccessNote" data-i18n="remoteAccessLocalNote">Local runtime and LAN access never depend on this cloud connection.</small>
             </article>
 
@@ -1796,7 +1797,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
   </div>
 
   <script src="/qr-local.js?v=0.7.2-rc6.4.7-hf5-ui-stabilization"></script>
-  <script src="/app.js?v=20261013-final-test"></script>
+  <script src="/app.js?v=20261014-relay-status"></script>
   <script src="/trend-studio.js?v=20261004-csv-audit"></script>
   <script src="/trend-studio-mount.js?v=rc647-hf63-auth-catalog"></script>
   <script src="/hf5-ui.js?v=20261004-bulk-management"></script>
