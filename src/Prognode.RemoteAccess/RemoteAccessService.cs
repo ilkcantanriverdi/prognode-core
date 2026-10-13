@@ -12,11 +12,20 @@ public sealed class RemoteAccessService(
     CoreCloudLicenseStateStore cloudLicense)
 {
     private readonly SemaphoreSlim _syncGate = new(1, 1);
+    private readonly object _relayGate = new();
+    private RemoteRelayStatus? _relay;
 
     /// <summary>Core authenticates to the Remote Access relay with its license activation token.</summary>
     private string? CloudToken() => cloudLicense.Load(configured: true).ActivationToken;
 
     public RemoteAccessStatusSnapshot GetStatus()
+    {
+        RemoteRelayStatus? relay;
+        lock (_relayGate) relay = _relay;
+        return BuildStatus() with { Relay = relay };
+    }
+
+    private RemoteAccessStatusSnapshot BuildStatus()
     {
         var localLicense = license.Current;
         var entitlement = localLicense.Entitlements;
@@ -329,11 +338,14 @@ public sealed class RemoteAccessService(
 
         try
         {
-            return await cloud.PublishNotificationAsync(token, notification, cancellationToken);
+            var result = await cloud.PublishNotificationAsync(token, notification, cancellationToken);
+            RecordRelay(result.Accepted, result.Error, result.Pushed, result.PushTargets, result.PushConfigured);
+            return result.Accepted;
         }
         catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or TaskCanceledException)
         {
             SaveError(ex.Message);
+            RecordRelay(false, ex.Message, null, null, null);
             return false;
         }
     }
@@ -441,6 +453,19 @@ public sealed class RemoteAccessService(
             LastError = error,
             Clients = remote.Clients ?? []
         });
+    }
+
+    private void RecordRelay(bool accepted, string? error, int? pushed, int? targets, bool? pushConfigured)
+    {
+        var now = DateTimeOffset.UtcNow;
+        lock (_relayGate)
+        {
+            var previous = _relay;
+            _relay = accepted
+                ? new RemoteRelayStatus(now, now, null, pushed, targets, pushConfigured)
+                : new RemoteRelayStatus(now, previous?.LastSuccessUtc, error ?? "Not accepted by PROGNODE Cloud",
+                    previous?.LastPushed, previous?.LastPushTargets, previous?.PushConfigured);
+        }
     }
 
     private void SaveError(string? message)

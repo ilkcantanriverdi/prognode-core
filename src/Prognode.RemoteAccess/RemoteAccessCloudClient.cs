@@ -150,7 +150,7 @@ public sealed class RemoteAccessCloudClient(HttpClient httpClient, CoreCloudLice
         return new RemoteAccessCloudOperationResponse { Success = true, Code = "REVOKED", Message = "Remote Access revoked and the seat was released. LAN pairing remains available." };
     }
 
-    internal async Task<bool> PublishNotificationAsync(string token, NotificationEvent notification, CancellationToken cancellationToken = default)
+    internal async Task<RemoteRelayResult> PublishNotificationAsync(string token, NotificationEvent notification, CancellationToken cancellationToken = default)
     {
         // Decision: only alarm name, severity, state and time leave the site. Message text (which
         // may contain process values) is never sent.
@@ -167,11 +167,26 @@ public sealed class RemoteAccessCloudClient(HttpClient httpClient, CoreCloudLice
             timestampUtc = (notification.ActiveAtUtc ?? notification.Timestamp).ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
             displayMetadata = new { repeatSequence = notification.RepeatSequence, requiresAcknowledgement = notification.RequiresAcknowledgement },
         }, cancellationToken);
-        if (!response.IsSuccessStatusCode ||
-            !string.Equals(response.Content.Headers.ContentType?.MediaType, "application/json", StringComparison.OrdinalIgnoreCase))
-            return false; // a 200 HTML page is not a relay ACK
+        var json = string.Equals(response.Content.Headers.ContentType?.MediaType, "application/json", StringComparison.OrdinalIgnoreCase);
+        if (!response.IsSuccessStatusCode || !json)
+        {
+            // A 200 HTML page is not a relay ACK either. Keep the cloud's error code for the panel.
+            string? code = null;
+            if (json)
+            {
+                try { using var error = await ReadJsonAsync(response, cancellationToken); code = Str(error.RootElement, "error"); }
+                catch (JsonException) { }
+            }
+            return new RemoteRelayResult(false, null, null, null,
+                $"HTTP {(int)response.StatusCode}{(string.IsNullOrWhiteSpace(code) ? "" : " " + code)}");
+        }
         using var document = await ReadJsonAsync(response, cancellationToken);
-        return Bool(document.RootElement, "ok") == true && Str(document.RootElement, "eventId") == eventId;
+        var root = document.RootElement;
+        if (Bool(root, "ok") != true || Str(root, "eventId") != eventId)
+            return new RemoteRelayResult(false, null, null, null, "Unexpected answer from PROGNODE Cloud");
+        static int? Int(JsonElement e, string name) =>
+            e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetInt32(out var n) ? n : null;
+        return new RemoteRelayResult(true, Int(root, "pushed"), Int(root, "pushTargets"), Bool(root, "pushConfigured"), null);
     }
 
     internal async Task<IReadOnlyList<RemoteAccessCommand>> GetCommandsAsync(string token, CancellationToken cancellationToken = default)
@@ -358,3 +373,6 @@ public sealed class RemoteAccessCloudClient(HttpClient httpClient, CoreCloudLice
 
     private static string Truncate(string value, int max) => value.Length <= max ? value : value[..max];
 }
+
+/// <summary>Result of relaying one alarm to PROGNODE Cloud, with the cloud's push delivery facts.</summary>
+internal sealed record RemoteRelayResult(bool Accepted, int? Pushed, int? PushTargets, bool? PushConfigured, string? Error);

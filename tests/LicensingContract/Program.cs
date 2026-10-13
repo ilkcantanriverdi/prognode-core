@@ -259,12 +259,14 @@ if (OperatingSystem.IsWindows())
         new CoreCloudLicenseOptions { BaseUrl = CoreCloudLicenseOptions.ProductionBaseUrl });
     var occurrence = Guid.NewGuid();
 
-    handler.Reply = _ => ("{\"ok\":true,\"eventId\":\"" + occurrence + "\"}", 200);
+    handler.Reply = _ => ("{\"ok\":true,\"eventId\":\"" + occurrence + "\",\"pushed\":1,\"pushTargets\":2,\"pushConfigured\":true}", 200);
     var published = await relay.PublishNotificationAsync("activation-token", new Prognode.Contracts.Notifications.NotificationEvent(
         42, "HIGH", "Tank 3 high level", "Level 97.4 % at 10:15", DateTimeOffset.Parse("2026-10-08T10:15:00Z"),
         RequiresAcknowledgement: true, RepeatSequence: 2, OccurrenceId: occurrence, EventType: "ALARM_ACTIVE", SourceName: "Tank 3 high level"));
     var sent = handler.Requests[^1];
-    Check(published, "A relay ACK for the same event id counts as delivered.");
+    Check(published.Accepted, "A relay ACK for the same event id counts as delivered.");
+    Check(published.Pushed == 1 && published.PushTargets == 2 && published.PushConfigured == true,
+        "The cloud's push delivery facts reach Core for the Remote Access panel.");
     Check(sent.Url == "https://account.prognode.io/api/remote-access/alarms/events" && sent.Auth == "Bearer activation-token",
         "Alarm events go to PROGNODE Cloud with the Core activation token.");
     var eventBody = JsonNode.Parse(sent.Body!)!.AsObject();
@@ -274,8 +276,12 @@ if (OperatingSystem.IsWindows())
     Check(!sent.Body!.Contains("97.4") && !eventBody.ContainsKey("message"), "Process values in the message text never leave the site.");
 
     handler.Reply = _ => ("<html>login</html>", 200);
-    Check(!await relay.PublishNotificationAsync("activation-token", new Prognode.Contracts.Notifications.NotificationEvent(1, "LOW", "x", "", DateTimeOffset.UtcNow)),
+    Check(!(await relay.PublishNotificationAsync("activation-token", new Prognode.Contracts.Notifications.NotificationEvent(1, "LOW", "x", "", DateTimeOffset.UtcNow))).Accepted,
         "An HTML page is never mistaken for a relay ACK.");
+    handler.Reply = _ => ("{\"error\":\"remote_access_not_active\"}", 403);
+    var refused = await relay.PublishNotificationAsync("activation-token", new Prognode.Contracts.Notifications.NotificationEvent(2, "LOW", "x", "", DateTimeOffset.UtcNow));
+    Check(!refused.Accepted && refused.Error == "HTTP 403 remote_access_not_active",
+        "A refused relay keeps the cloud's status and error code for the Remote Access panel.");
 
     var commandId = Guid.NewGuid();
     var remoteClientId = Guid.NewGuid();

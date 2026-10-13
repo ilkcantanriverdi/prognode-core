@@ -1028,6 +1028,24 @@ function renderRemoteAccess() {
   if ($("remoteAccessLastSync")) $("remoteAccessLastSync").textContent = status.lastSyncedAtUtc ? new Date(status.lastSyncedAtUtc).toLocaleString() : "—";
   if ($("remoteAccessBind")) $("remoteAccessBind").disabled = !entitled || !status.cloudConfigured || bound || !canMutateConfiguration();
   if ($("remoteAccessSync")) $("remoteAccessSync").disabled = !entitled || !status.cloudConfigured || !bound || !canMutateConfiguration();
+  const relayLine = $("remoteAccessRelay");
+  if (relayLine) {
+    const relay = status.relay;
+    const when = value => value ? new Date(value).toLocaleString() : "—";
+    let text = "No alarm has been sent to PROGNODE Cloud since Core started.", warn = false;
+    if (relay?.lastError) {
+      text = `Last alarm could not be sent to PROGNODE Cloud (${when(relay.lastAttemptUtc)}): ${relay.lastError}. Core keeps retrying.`;
+      warn = true;
+    } else if (relay?.lastSuccessUtc) {
+      text = `Last alarm sent to PROGNODE Cloud: ${when(relay.lastSuccessUtc)}`;
+      if (relay.pushConfigured === false) { text += " · push notifications are not set up in PROGNODE Cloud"; warn = true; }
+      else if (relay.lastPushTargets === 0) { text += " · no phone has push notifications registered"; warn = true; }
+      else if (relay.lastPushTargets != null) text += ` · notified ${relay.lastPushed ?? 0} of ${relay.lastPushTargets} phone(s)`;
+    }
+    relayLine.textContent = text;
+    relayLine.classList.toggle("warning", warn);
+    relayLine.hidden = !(entitled && bound);
+  }
   if ($("remoteAccessNote")) {
     $("remoteAccessNote").textContent = status.lastError
       ? `${t("remoteAccessLocalNote")} · ${status.lastError}`
