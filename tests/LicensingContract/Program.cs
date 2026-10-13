@@ -275,6 +275,24 @@ if (OperatingSystem.IsWindows())
         "The event carries the occurrence id, state, severity and reminder number.");
     Check(!sent.Body!.Contains("97.4") && !eventBody.ContainsKey("message"), "Process values in the message text never leave the site.");
 
+    handler.Reply = _ => ("{\"ok\":true,\"eventId\":\"" + occurrence + "\"}", 200);
+    await relay.PublishNotificationAsync("activation-token", new Prognode.Contracts.Notifications.NotificationEvent(
+        43, "HIGH", "HIGH Alarm", "Boiler PLC • Tank 3 high level", DateTimeOffset.Parse("2026-10-08T10:15:00Z"),
+        OccurrenceId: occurrence, EventType: "ACTIVE", SourceName: "LT-301"), default,
+        new Prognode.RemoteAccess.RemoteAlarmLabel("Tank 3 high level", "Boiler PLC · LT-301"));
+    var labelled = JsonNode.Parse(handler.Requests[^1].Body!)!.AsObject();
+    Check(labelled["alarmName"]!.GetValue<string>() == "Tank 3 high level" &&
+          labelled["displayMetadata"]!["source"]!.GetValue<string>() == "Boiler PLC · LT-301" && !labelled.ContainsKey("message"),
+        "Off-site phones get the configured alarm text and its source, not the message.");
+
+    handler.Reply = _ => ("{\"ok\":true,\"cleared\":2}", 200);
+    var synced = await relay.SyncActiveAlarmsAsync("activation-token",
+        [new Prognode.RemoteAccess.RemoteActiveAlarm(occurrence.ToString("D"), "ACKNOWLEDGED")], DateTimeOffset.Parse("2026-10-08T10:20:00Z"));
+    var syncBody = JsonNode.Parse(handler.Requests[^1].Body!)!.AsObject();
+    Check(synced && handler.Requests[^1].Url == "https://account.prognode.io/api/remote-access/alarms/active" &&
+          syncBody["alarms"]![0]!["state"]!.GetValue<string>() == "ACKNOWLEDGED" && syncBody["takenAtUtc"] is not null,
+        "Core sends its active alarms so cleared ones are cleared for off-site phones too.");
+
     handler.Reply = _ => ("<html>login</html>", 200);
     Check(!(await relay.PublishNotificationAsync("activation-token", new Prognode.Contracts.Notifications.NotificationEvent(1, "LOW", "x", "", DateTimeOffset.UtcNow))).Accepted,
         "An HTML page is never mistaken for a relay ACK.");

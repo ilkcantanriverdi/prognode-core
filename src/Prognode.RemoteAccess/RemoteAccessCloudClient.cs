@@ -150,14 +150,16 @@ public sealed class RemoteAccessCloudClient(HttpClient httpClient, CoreCloudLice
         return new RemoteAccessCloudOperationResponse { Success = true, Code = "REVOKED", Message = "Remote Access revoked and the seat was released. LAN pairing remains available." };
     }
 
-    internal async Task<RemoteRelayResult> PublishNotificationAsync(string token, NotificationEvent notification, CancellationToken cancellationToken = default)
+    internal async Task<RemoteRelayResult> PublishNotificationAsync(string token, NotificationEvent notification, CancellationToken cancellationToken = default, RemoteAlarmLabel? label = null)
     {
         // Decision: only alarm name, severity, state and time leave the site. Message text (which
         // may contain process values) is never sent.
         var eventId = notification.OccurrenceId is { } occurrence && occurrence != Guid.Empty
             ? occurrence.ToString("D")
             : "notification-" + notification.Id.ToString(CultureInfo.InvariantCulture);
-        var alarmName = string.IsNullOrWhiteSpace(notification.SourceName) ? notification.Title : notification.SourceName!;
+        // The configured alarm text ("Tank 3 high level") when Core knows it; never the message, which may hold values.
+        var alarmName = !string.IsNullOrWhiteSpace(label?.Text) ? label!.Text
+            : string.IsNullOrWhiteSpace(notification.SourceName) ? notification.Title : notification.SourceName!;
         using var response = await SendAsync(HttpMethod.Post, "/api/remote-access/alarms/events", token, new
         {
             eventId,
@@ -165,7 +167,8 @@ public sealed class RemoteAccessCloudClient(HttpClient httpClient, CoreCloudLice
             severity = Truncate(string.IsNullOrWhiteSpace(notification.Severity) ? "INFO" : notification.Severity, 64),
             state = Truncate(CloudState(notification), 64),
             timestampUtc = (notification.ActiveAtUtc ?? notification.Timestamp).ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
-            displayMetadata = new { repeatSequence = notification.RepeatSequence, requiresAcknowledgement = notification.RequiresAcknowledgement },
+            displayMetadata = new { repeatSequence = notification.RepeatSequence, requiresAcknowledgement = notification.RequiresAcknowledgement,
+                source = label?.Source is { Length: > 0 } source ? Truncate(source, 240) : null },
         }, cancellationToken);
         var json = string.Equals(response.Content.Headers.ContentType?.MediaType, "application/json", StringComparison.OrdinalIgnoreCase);
         if (!response.IsSuccessStatusCode || !json)
@@ -308,6 +311,27 @@ public sealed class RemoteAccessCloudClient(HttpClient httpClient, CoreCloudLice
         return "OTHER";
     }
 
+    /// <summary>
+    /// Tells PROGNODE Cloud which alarms are active right now. Alarms it has as active that are not in
+    /// the list (and are older than <paramref name="takenAtUtc"/>) become cleared; no push is sent.
+    /// Clears are relayed this way because a cleared alarm only creates a notification when the
+    /// alarm is set to notify on clear.
+    /// </summary>
+    internal async Task<bool> SyncActiveAlarmsAsync(string token, IReadOnlyCollection<RemoteActiveAlarm> active,
+        DateTimeOffset takenAtUtc, CancellationToken cancellationToken = default)
+    {
+        using var response = await SendAsync(HttpMethod.Post, "/api/remote-access/alarms/active", token, new
+        {
+            takenAtUtc = takenAtUtc.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
+            alarms = active.Take(1000).Select(a => new { eventId = a.EventId, state = a.State }).ToArray(),
+        }, cancellationToken);
+        if (!response.IsSuccessStatusCode ||
+            !string.Equals(response.Content.Headers.ContentType?.MediaType, "application/json", StringComparison.OrdinalIgnoreCase))
+            return false;
+        using var document = await ReadJsonAsync(response, cancellationToken);
+        return Bool(document.RootElement, "ok") == true;
+    }
+
     private static string CloudState(NotificationEvent notification)
     {
         var type = (notification.EventType ?? "INFO").ToUpperInvariant();
@@ -376,3 +400,9 @@ public sealed class RemoteAccessCloudClient(HttpClient httpClient, CoreCloudLice
 
 /// <summary>Result of relaying one alarm to PROGNODE Cloud, with the cloud's push delivery facts.</summary>
 internal sealed record RemoteRelayResult(bool Accepted, int? Pushed, int? PushTargets, bool? PushConfigured, string? Error);
+
+/// <summary>How an alarm is named off site: its configured text and where it comes from (device · tag).</summary>
+public sealed record RemoteAlarmLabel(string Text, string? Source);
+
+/// <summary>One alarm that is active on Core now; State is ACTIVE or ACKNOWLEDGED.</summary>
+public sealed record RemoteActiveAlarm(string EventId, string State);

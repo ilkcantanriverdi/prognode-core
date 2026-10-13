@@ -325,6 +325,25 @@ durableNotifications.SetRemoteEligibility(() =>
         string.Equals(status.SubscriptionStatus,"ACTIVE",StringComparison.OrdinalIgnoreCase);
 });
 
+// Off-site phones show an alarm by its configured text and source (device · Tag), never by the
+// notification message, which may contain process values. The engine's message is
+// "<device> • <alarm text>", so the device is only taken from it when that suffix matches.
+var alarmsForRemote=app.Services.GetRequiredService<AlarmService>();
+accessForNotifications.SetAlarmDescriber(async (notification,ct) =>
+{
+    var key=notification.AlarmKey;
+    if(key is null || !key.StartsWith("alarm:",StringComparison.Ordinal) ||
+       !Guid.TryParseExact(key["alarm:".Length..],"N",out var definitionId))
+        return null;
+    var definition=(await alarmsForRemote.GetDefinitionsAsync(ct)).FirstOrDefault(d=>d.Id==definitionId);
+    if(definition is null || string.IsNullOrWhiteSpace(definition.Text)) return null;
+    var suffix=" • "+definition.Text;
+    var device=notification.Message.EndsWith(suffix,StringComparison.Ordinal)
+        ? notification.Message[..^suffix.Length].Trim() : null;
+    var parts=new[]{device,notification.SourceName}.Where(x=>!string.IsNullOrWhiteSpace(x)).Distinct().ToArray();
+    return new RemoteAlarmLabel(definition.Text.Trim(),parts.Length==0?null:string.Join(" · ",parts));
+});
+
 // Remote API clients are paired once and then authenticate with a stable token.
 // Local browser/Agent traffic on loopback remains frictionless.
 app.Use(async (context, next) =>
