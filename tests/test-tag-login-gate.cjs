@@ -27,5 +27,6 @@ assert(source.includes('saveButton.disabled = !good || !canMutateConfiguration()
 assert(source.includes('saveButton.disabled=!good||!canMutateConfiguration()'),'S7 validation may not unlock Save while signed out');
 assert(source.includes('if (!requireConfigurationAccess()) return;\n        const tag ='),'Tag delete handler must enforce login');
 assert(source.includes('applyAccessMode();\n}\n\nfunction populateTagDeviceSelect'),'Tag table rerender must reapply login gate');
-assert(host.includes('if (!sessions.Validate(sessionToken) && !occurrenceAckRoute)'),'server must reject unauthenticated mutations');
+assert(host.includes('if (!sessions.Validate(sessionToken) && !occurrenceAckRoute && !pairedSelfRemoteRoute)'),'server must reject unauthenticated mutations');
+assert(host.includes('var pairedSelfRemoteRoute = context.Items.ContainsKey("PROGNODE_CLIENT_ID") &&'),'Remote Access self-registration is open only to a validated paired device');
 console.log('PASS: signed-out Tag creation, editing, deletion and Save stay locked in UI and API');
