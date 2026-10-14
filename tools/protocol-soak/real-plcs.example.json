@@ -1,0 +1,47 @@
+{
+  "targets": [
+    {
+      "name": "Line 1 S7-1500",
+      "protocol": "Siemens S7",
+      "host": "192.168.0.10",
+      "port": 102,
+      "pollMs": 1000,
+      "tags": [
+        { "name": "Motor speed", "address": "DB10.DBD0", "type": "Float32" },
+        { "name": "Running", "address": "DB10.DBX4.0", "type": "Bool" },
+        { "name": "Test constant", "address": "DB10.DBW6", "type": "Word", "expect": 1234 }
+      ]
+    },
+    {
+      "name": "Pump skid Modbus",
+      "protocol": "Modbus TCP",
+      "host": "192.168.0.20",
+      "port": 502,
+      "unitId": 1,
+      "pollMs": 1000,
+      "tags": [
+        { "name": "Pressure", "address": "40001", "type": "Float32", "byteOrder": "CDAB" },
+        { "name": "Level x100", "address": "40003", "type": "Int16", "decimals": 2 }
+      ]
+    },
+    {
+      "name": "S7-1500 OPC UA",
+      "protocol": "OPC UA",
+      "host": "opc.tcp://192.168.0.10:4840/",
+      "pollMs": 1000,
+      "tags": [
+        { "name": "Temperature", "address": "ns=3;s=\"DB_Process\".\"Temperature\"", "type": "Float32" }
+      ]
+    },
+    {
+      "name": "Plant broker",
+      "protocol": "MQTT",
+      "host": "mqtt://192.168.0.30",
+      "port": 1883,
+      "pollMs": 1000,
+      "tags": [
+        { "name": "Flow", "address": "plant/line1/flow", "type": "Float32" }
+      ]
+    }
+  ]
+}
