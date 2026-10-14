@@ -42,7 +42,7 @@ public static class BackupArchive
         {
             var snapshot = Path.Combine(temp, "prognode.db");
             var db = Path.Combine(dataRoot, "prognode.db");
-            if (!File.Exists(db)) throw new FileNotFoundException("Core database not found", db);
+            if (!File.Exists(db)) throw new FileNotFoundException("PROGNODE Monitor database not found", db);
             using (var source = new SqliteConnection(new SqliteConnectionStringBuilder
                 { DataSource = db, Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString()))
             using (var dest = new SqliteConnection(new SqliteConnectionStringBuilder
@@ -155,9 +155,9 @@ public static class BackupArchive
            !adoptSourceIdentity)
             throw new InvalidOperationException("BACKUP_DIFFERENT_SERVER_ID: source and target installation identities differ. This verified backup is safe, but restoring it requires explicit offline --adopt-source-identity approval. The existing data remains unchanged.");
         if (manifest.DatabaseSchema > 9 && !allowOlderSchema)
-            throw new InvalidDataException("This backup needs a newer PROGNODE Core database schema.");
+            throw new InvalidDataException("This backup needs a newer PROGNODE Monitor database schema.");
         if (!manifest.Files.Any(x => x.Path == "data/prognode.db"))
-            throw new InvalidDataException("Backup has no Core database.");
+            throw new InvalidDataException("Backup has no PROGNODE Monitor database.");
         var staging = dataRoot + ".restore-" + Guid.NewGuid().ToString("N");
         Directory.CreateDirectory(staging);
         try
@@ -181,7 +181,7 @@ public static class BackupArchive
             {
                 var currentSchema = ReadSchema(Path.Combine(dataRoot, "prognode.db"));
                 if (manifest.DatabaseSchema > currentSchema)
-                    throw new InvalidOperationException($"Backup DB schema {manifest.DatabaseSchema} exceeds local {currentSchema}. Upgrade Core first.");
+                    throw new InvalidOperationException($"Backup DB schema {manifest.DatabaseSchema} exceeds local {currentSchema}. Upgrade PROGNODE Monitor first.");
             }
             // Restore TLS/network settings only as a review file, and write it BEFORE swapping data.
             // A failed review-file write must never leave an ambiguous partial data restore.

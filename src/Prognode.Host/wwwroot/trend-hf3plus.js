@@ -56,7 +56,7 @@ async function api(path){
  let token='';try{token=sessionStorage.getItem('prognode.accessSession')||''}catch{}
  const resp=await fetch(path,{cache:'no-store',headers:token?{'X-PROGNODE-Session':token}:{}});
  const text=await resp.text();let json;
- try{json=JSON.parse(text)}catch{throw Error(`Core API: HTTP ${resp.status}, non-JSON response at ${path.split('?')[0]}`)}
+ try{json=JSON.parse(text)}catch{throw Error(`PROGNODE Monitor API: HTTP ${resp.status}, non-JSON response at ${path.split('?')[0]}`)}
  if(!resp.ok)throw Error(json?.message||json?.title||`HTTP ${resp.status}`);
  return json;
 }
@@ -531,7 +531,7 @@ async function storeLayout(){if(!requireTrendEdit()||!await refreshTrendAuth())r
  try{
    const session=sessionStorage.getItem('prognode.accessSession')||'';
    const resp=await fetch('/api/backup/layout',{method:'POST',headers:{'Content-Type':'application/json','X-PROGNODE-Session':session},body:JSON.stringify(data)});
-   if(!resp.ok)throw Error('Core layout save failed (sign in as Core owner)');
+   if(!resp.ok)throw Error('PROGNODE Monitor layout save failed (sign in as PROGNODE Monitor owner)');
    localStorage.setItem(STORE_KEY,JSON.stringify(data));
    S.savedAt=data.savedAt;toast(tx('layoutSaved'));byId('save-layout').classList.add('layout-saved');resizeLayout()}
  catch(e){toast('Layout not saved. Check your authorized session.');void refreshTrendAuth()}}
@@ -549,7 +549,7 @@ byId('reset-layout').onclick=async()=>{
  try{
   const token=sessionStorage.getItem('prognode.accessSession')||'';
   const response=await fetch('/api/backup/layout',{method:'DELETE',headers:{'X-PROGNODE-Session':token}});
-  if(!response.ok)throw Error('Core rejected the reset');
+  if(!response.ok)throw Error('PROGNODE Monitor rejected the reset');
   localStorage.removeItem(STORE_KEY);
   S.charts=[];S.leftPercent=50;S.layout='auto';S.maximized=null;S.activeId=null;
   S.linkedCursor=false;S.linkedTime=null;S.savedAt=null;S.compare=false;S.compareIds.clear();S.live=true;
@@ -593,8 +593,8 @@ byId('grid').addEventListener('drop',e=>{
 
 
 document.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>setLang(b.dataset.lang));
-byId('help').onclick=()=>{S.help=!S.help;byId('help-panel').classList.toggle('hidden',!S.help);byId('help-panel').innerHTML=`<strong>${tx('helpTitle')}</strong><br><br>1. ${tx('add')} → ${tx('dragGuide')}<br>2. ${tx('zoomhint')}<br>3. ${tx('maximize')} · ${tx('settingsChart')}<br>4. ${tx('compare')} → ${tx('chooseTwo')}<br><br>${'Live Core Historian data'}`};
-document.querySelectorAll('[data-nav]').forEach(b=>{if(b.dataset.nav!=='trend')b.onclick=()=>toast('Use the Core navigation.')});
+byId('help').onclick=()=>{S.help=!S.help;byId('help-panel').classList.toggle('hidden',!S.help);byId('help-panel').innerHTML=`<strong>${tx('helpTitle')}</strong><br><br>1. ${tx('add')} → ${tx('dragGuide')}<br>2. ${tx('zoomhint')}<br>3. ${tx('maximize')} · ${tx('settingsChart')}<br>4. ${tx('compare')} → ${tx('chooseTwo')}<br><br>${'Live PROGNODE Monitor Historian data'}`};
+document.querySelectorAll('[data-nav]').forEach(b=>{if(b.dataset.nav!=='trend')b.onclick=()=>toast('Use the PROGNODE Monitor navigation.')});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDrawer();byId('compare-overlay').classList.add('hidden');S.overlay=false;S.maximized=null;renderLayout()}});
 // Dynamic chart cards are rebuilt after every layout operation. Re-apply the
 // validated access state without changing page layout or chart rendering.

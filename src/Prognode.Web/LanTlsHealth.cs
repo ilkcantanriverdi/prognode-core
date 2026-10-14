@@ -50,7 +50,7 @@ public static class LanTlsHealth
         catch (Exception ex) when (ex is CryptographicException or UnauthorizedAccessException or InvalidOperationException or NotSupportedException)
         {
             return new(false, false, false, "TLS_PRIVATE_KEY_ACCESS_DENIED",
-                "Core service identity cannot sign with the configured private key; request local UAC repair. " + ex.GetType().Name);
+                "PROGNODE Monitor service identity cannot sign with the configured private key; request local UAC repair. " + ex.GetType().Name);
         }
 
         var expectedPin = expected.CertificateSha256.Replace(" ", "", StringComparison.Ordinal);
@@ -87,7 +87,7 @@ public static class LanTlsHealth
             using var json = await JsonDocument.ParseAsync(stream, cancellationToken: linked.Token).ConfigureAwait(false);
             if (!json.RootElement.TryGetProperty("serverId", out var value) || value.ValueKind != JsonValueKind.String ||
                 !Guid.TryParse(value.GetString(), out var serverId) || serverId != expected.ServerId)
-                return new(false, true, true, "TLS_SERVER_ID_MISMATCH", "Pinned TLS endpoint returned an unexpected Core identity.");
+                return new(false, true, true, "TLS_SERVER_ID_MISMATCH", "Pinned TLS endpoint returned an unexpected PROGNODE Monitor identity.");
             return new(true, true, true, "TLS_OK", null);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or System.IO.IOException)

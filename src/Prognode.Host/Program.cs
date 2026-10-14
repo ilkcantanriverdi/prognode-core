@@ -514,9 +514,9 @@ static IResult? BackupAdmin(HttpContext context, LocalAccessSessionService sessi
 {
     var ip = context.Connection.RemoteIpAddress;
     if (ip is null || !IPAddress.IsLoopback(ip))
-        return Results.Json(new { message="Backup Center is local Core administrator only." },statusCode:403);
+        return Results.Json(new { message="Backup Center is local PROGNODE Monitor administrator only." },statusCode:403);
     var status = sessions.GetStatus(context.Request.Headers["X-PROGNODE-Session"].ToString());
-    if (!status.Authenticated) return Results.Json(new { message="Sign in on Core to use Backup Center." },statusCode:401);
+    if (!status.Authenticated) return Results.Json(new { message="Sign in on PROGNODE Monitor to use Backup Center." },statusCode:401);
     if (status.PortalRole is not ("OWNER" or "ORGANIZATION_ADMIN"))
         return Results.Json(new { message="An administrator account is required." },statusCode:403);
     return null;
@@ -610,7 +610,7 @@ app.MapPost("/api/backup/restore", async (HttpContext ctx, BackupRestoreRequest 
     catch(Exception e) when(e is System.Security.Cryptography.CryptographicException or InvalidDataException or EndOfStreamException)
     {return Results.BadRequest(new {message="The passphrase is wrong or the backup file is damaged. Nothing was changed."});}
     catch(InvalidOperationException e) when(e.Message.StartsWith("BACKUP_DIFFERENT_SERVER_ID",StringComparison.Ordinal))
-    {return Results.Json(new {code="DIFFERENT_SERVER",message="This backup comes from a different PROGNODE Core. Confirm that this PC should take over its identity and paired devices."},statusCode:409);}
+    {return Results.Json(new {code="DIFFERENT_SERVER",message="This backup comes from a different PROGNODE Monitor. Confirm that this PC should take over its identity and paired devices."},statusCode:409);}
     catch(InvalidOperationException e){return Results.Json(new {message=e.Message+" Nothing was changed."},statusCode:409);}
     backup.Audit(actor,"BACKUP_RESTORE_SCHEDULED",Path.GetFileName(file),true);
     // Restart after this response. The Windows service restarts through its recovery actions; the helper
@@ -652,7 +652,7 @@ app.MapPost("/api/backup/inspect", async (HttpContext ctx, LocalAccessSessionSer
         // Verify every AES-GCM record, final seal, manifest entry and SHA256 before retaining it.
         var manifest=await Task.Run(()=>BackupArchive.Verify(stage,password),ctx.RequestAborted);
         if(manifest.DatabaseSchema>9)
-            return Results.BadRequest(new {message="Backup schema is newer than this Core; upgrade first."});
+            return Results.BadRequest(new {message="Backup schema is newer than this PROGNODE Monitor; upgrade first."});
         var name="IMPORTED-"+DateTimeOffset.UtcNow.ToString("yyyyMMdd-HHmmss")+"-"+
             Guid.NewGuid().ToString("N")+".pgnbackup";
         File.Move(stage,Path.Combine(backup.BackupRoot,name));stage=null;
@@ -686,7 +686,7 @@ app.MapGet("/api/backup/layout", (HttpContext ctx, ProjectBackupService backup) 
 {
     ctx.Response.Headers.CacheControl="no-store";
     if (ctx.Connection.RemoteIpAddress is not { } ip || !IPAddress.IsLoopback(ip))
-        return Results.Json(new { message="The trend layout is available on the Core PC only." },statusCode:403);
+        return Results.Json(new { message="The trend layout is available on the PROGNODE Monitor PC only." },statusCode:403);
     return Results.Ok(backup.GetLayout());
 });
 app.MapPost("/api/backup/layout", (HttpContext ctx, System.Text.Json.JsonElement layout,

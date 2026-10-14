@@ -4,7 +4,7 @@
 const byId=id=>document.getElementById(id);
 const lang=()=>'en';
 const words={
-  en:{overview:'Overview',devices:'Devices',tags:'Tags',alarms:'Alarms',trends:'Trend Studio',historian:'Historian',notifications:'Notifications',license:'License',settings:'Settings',diagnostics:'Diagnostics',running:'Local Core online',offline:'Core unavailable',awaiting:'Checking Core',done:'Done',pending:'Pending',configured:'Recording enabled',unconfigured:'Set up local signal recording',live:'Local monitoring'}
+  en:{overview:'Overview',devices:'Devices',tags:'Tags',alarms:'Alarms',trends:'Trend Studio',historian:'Historian',notifications:'Notifications',license:'License',settings:'Settings',diagnostics:'Diagnostics',running:'PROGNODE Monitor online',offline:'Monitor unavailable',awaiting:'Checking Monitor',done:'Done',pending:'Pending',configured:'Recording enabled',unconfigured:'Set up local signal recording',live:'Local monitoring'}
 };
 function locale(){return words[lang()];}
 function navigateTo(page){const nav=document.querySelector('.nav-item[data-page="'+page+'"]');if(nav)nav.click();else if(typeof navigate==='function')navigate(page);}

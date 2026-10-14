@@ -61,11 +61,11 @@ public static class EndpointExtensions
     {
         var ip = context.Connection.RemoteIpAddress;
         if (ip is null || !System.Net.IPAddress.IsLoopback(ip))
-            return Results.Json(new { code = "LOCAL_ADMIN_ONLY", message = "QR creation is allowed only on the Core computer." }, statusCode: 403);
+            return Results.Json(new { code = "LOCAL_ADMIN_ONLY", message = "QR creation is allowed only on the PROGNODE Monitor computer." }, statusCode: 403);
         var token = context.Request.Headers["X-PROGNODE-Session"].ToString();
         var session = sessions.GetStatus(token);
         if (!session.Authenticated)
-            return Results.Json(new { code = "SIGN_IN_REQUIRED", message = "Sign in on the Core computer." }, statusCode: 401);
+            return Results.Json(new { code = "SIGN_IN_REQUIRED", message = "Sign in on the PROGNODE Monitor computer." }, statusCode: 401);
         if (session.PortalRole is not ("OWNER" or "ORGANIZATION_ADMIN"))
             return Results.Json(new { code = "ADMIN_REQUIRED", message = "A licensed administrator must authorize QR pairing." }, statusCode: 403);
         return null;
@@ -243,7 +243,7 @@ public static class EndpointExtensions
                 if (pending is null)
                     return (IResult)Results.Json(new {
                         code = "NO_PENDING_LAN_REQUEST",
-                        message = "Prepare LAN access on the local Core and confirm it in the Windows tray within three minutes."
+                        message = "Prepare LAN access on the local PROGNODE Monitor and confirm it in the Windows tray within three minutes."
                     }, statusCode: 404);
                 return (IResult)Results.Ok(pending);
             });
@@ -320,10 +320,10 @@ public static class EndpointExtensions
                 LicenseService license, ILogger<QrPairingService> logger) =>
             {
                 if (serverAccess.Identity.SecureApiPort is null)
-                    return Results.Json(new { code = "HTTPS_NOT_READY", message = "LAN HTTPS is not configured on this Core." }, statusCode: 409);
+                    return Results.Json(new { code = "HTTPS_NOT_READY", message = "LAN HTTPS is not configured on this PROGNODE Monitor." }, statusCode: 409);
                 if (!ctx.Request.IsHttps ||
                     ctx.Connection.LocalPort != serverAccess.Identity.SecureApiPort)
-                    return Results.Json(new { code = "HTTPS_REQUIRED", message = "Use the Core LAN HTTPS endpoint in the scanned QR." }, statusCode: 426);
+                    return Results.Json(new { code = "HTTPS_REQUIRED", message = "Use the PROGNODE Monitor LAN HTTPS endpoint in the scanned QR." }, statusCode: 426);
                 if (!license.HasModule("ALARM") || !license.IsLifecycleOperational)
                     return Results.Json(new { code = "ALARM_LICENSE_REQUIRED", message = "LAN pairing requires an operational Alarm license." }, statusCode: 403);
                 try

@@ -117,7 +117,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
             </svg>
             <span class="alarm-bell-count" id="alarmBellCount">0</span>
           </button></div>
-        <div class="server-clock" id="serverClock" title="PROGNODE Core PC time">
+        <div class="server-clock" id="serverClock" title="PROGNODE Monitor PC time">
             <span class="server-clock-time" id="serverClockTime">--:--:--</span>
             <span class="server-clock-date" id="serverClockDate">--.--.----</span>
           </div>
@@ -136,7 +136,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
       <div class="sidebar-footer">
         <div class="health-dot ok"></div>
         <div>
-          <strong data-i18n="coreRunning">Core Running</strong>
+          <strong data-i18n="coreRunning">Monitor running</strong>
           <span id="sidebarVersion"></span>
           <button id="sidebarUpdate" class="sidebar-update hidden" type="button"></button>
         </div>
@@ -147,7 +147,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
       <button class="mobile-menu mobile-shell-menu" id="mobileMenu" type="button" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">☰</button>
       <header class="customer-toolbar" aria-label="Workspace">
         <div class="customer-crumb"><span>PROGNODE</span><span aria-hidden="true">/</span><strong id="customerPageName">Overview</strong></div>
-        <div class="customer-tools"><span class="customer-core-pill"><span class="health-dot ok" id="customerCoreDot"></span><span id="customerCoreText">Checking Core</span></span><span class="customer-local-badge" id="customerLocalLabel">LOCAL · ON-SITE</span><button type="button" class="customer-notification-button" id="customerNotification" title="Notifications" aria-label="Notifications"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></button></div>
+        <div class="customer-tools"><span class="customer-core-pill"><span class="health-dot ok" id="customerCoreDot"></span><span id="customerCoreText">Checking Monitor</span></span><span class="customer-local-badge" id="customerLocalLabel">LOCAL · ON-SITE</span><button type="button" class="customer-notification-button" id="customerNotification" title="Notifications" aria-label="Notifications"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></button></div>
       </header>
       <div class="content">
         <section class="page active" id="page-overview">
@@ -178,7 +178,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
               <div><span data-i18n="connectivity">Connectivity</span><strong id="overviewConnectivity">0/0 online</strong><small id="overviewConnectivityDetail">No devices configured</small></div>
               <div><span data-i18n="alarmPosture">Alarm posture</span><strong id="overviewAlarmPosture">Clear</strong><small id="overviewAlarmDetail">No active alarms</small></div>
               <div><span data-i18n="recordingState">Local recording</span><strong id="overviewRecordingPosture">Not configured</strong><small id="overviewRecordingDetail">Historian idle</small></div>
-              <div><span data-i18n="coreHealth">Core Health</span><strong id="overviewCorePosture">Healthy</strong><small id="overviewCoreDetail">PROGNODE Core</small></div>
+              <div><span data-i18n="coreHealth">System health</span><strong id="overviewCorePosture">Healthy</strong><small id="overviewCoreDetail">PROGNODE Monitor</small></div>
               <div><span data-i18n="license">License</span><strong id="overviewLicensePosture">—</strong><small id="overviewLicenseDetail">Local entitlement</small></div>
             </div>
 
@@ -216,7 +216,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
               <span class="metric-card-chevron">›</span>
             </article>
             <article class="metric-card overview-metric-card">
-              <div class="metric-card-heading"><span class="metric-icon"><svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3.4 8.2-8 10-4.6-1.8-8-5-8-10V6l8-3Z"></path><path d="m8.5 12 2.2 2.2L15.8 9"></path></svg></span><span data-i18n="coreHealth">Core Health</span></div>
+              <div class="metric-card-heading"><span class="metric-icon"><svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3.4 8.2-8 10-4.6-1.8-8-5-8-10V6l8-3Z"></path><path d="m8.5 12 2.2 2.2L15.8 9"></path></svg></span><span data-i18n="coreHealth">System health</span></div>
               <strong class="healthy-text" id="metricCoreHealth" data-i18n="healthy">Healthy</strong>
               <small id="metricCoreVersion">PROGNODE</small>
               <span class="metric-card-chevron">›</span>
@@ -565,7 +565,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
                   <div id="trendList" class="trend-list studio-saved-list"></div>
                   <button class="studio-link-btn" id="trendsAddTrend" data-studio-i18n="saveOptional">Optional: save this view</button>
                 </details>
-                <div class="studio-side-links"><span class="studio-footnote"><i></i><span data-studio-i18n="localData">Data stays on this Core</span></span><button id="studioClearTags" class="studio-link-btn" data-studio-i18n="clearSelection">Clear selection</button></div>
+                <div class="studio-side-links"><span class="studio-footnote"><i></i><span data-studio-i18n="localData">Data stays on this PROGNODE Monitor</span></span><button id="studioClearTags" class="studio-link-btn" data-studio-i18n="clearSelection">Clear selection</button></div>
               </div>
             </aside>
 
@@ -703,9 +703,9 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
 
         <section class="page" id="page-diagnostics">
           <div class="diagnostics-page">
-            <div class="page-actions"><div><span class="kicker">PROGNODE CORE</span><h2 data-i18n="diagnostics">Diagnostics</h2><p data-customer-en="Live status from this Core PC. A configured device is not assumed to be connected.">Live status from this Core PC. A configured device is not assumed to be connected.</p></div><button type="button" class="secondary" id="diagnosticsRefresh" data-customer-en="Refresh status">Refresh status</button></div>
+            <div class="page-actions"><div><span class="kicker">PROGNODE CORE</span><h2 data-i18n="diagnostics">Diagnostics</h2><p data-customer-en="Live status from this PROGNODE Monitor PC. A configured device is not assumed to be connected.">Live status from this PROGNODE Monitor PC. A configured device is not assumed to be connected.</p></div><button type="button" class="secondary" id="diagnosticsRefresh" data-customer-en="Refresh status">Refresh status</button></div>
             <div class="diagnostics-cards" aria-live="polite">
-              <article class="diagnostics-card"><span data-customer-en="Core service">Core service</span><strong id="diagnosticsCoreStatus">—</strong><small id="diagnosticsCoreVersion">—</small></article>
+              <article class="diagnostics-card"><span data-customer-en="PROGNODE Monitor service">PROGNODE Monitor service</span><strong id="diagnosticsCoreStatus">—</strong><small id="diagnosticsCoreVersion">—</small></article>
               <article class="diagnostics-card"><span data-customer-en="Windows Agent">Windows Agent</span><strong id="diagnosticsAgentStatus">—</strong><small id="diagnosticsAgentDetail">—</small></article>
               <article class="diagnostics-card"><span data-customer-en="Tag quality">Tag quality</span><strong id="diagnosticsTagQuality">—</strong><small id="diagnosticsTagDetail">—</small></article>
               <article class="diagnostics-card"><span>Historian</span><strong id="diagnosticsHistorianSamples">—</strong><small id="diagnosticsHistorianSize">—</small></article>
@@ -746,7 +746,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
               </div>
               <p class="panel-copy" data-i18n="agentHelp">The Windows Client runs in the system tray and shows alarm notifications even when the browser is closed. Download it from PROGNODE Account.</p>
               <div class="status-stack">
-                <div class="status-row"><div><span class="status-dot ok"></span><span data-i18n="coreNotificationApi">Core Notification API</span></div><strong data-i18n="running">Running</strong></div>
+                <div class="status-row"><div><span class="status-dot ok"></span><span data-i18n="coreNotificationApi">PROGNODE Monitor Notification API</span></div><strong data-i18n="running">Running</strong></div>
                 <div class="status-row"><div><span class="status-dot pending" id="trayAgentDot"></span><span data-i18n="trayAgent">Windows Agent</span></div><strong id="trayAgentStatus" data-i18n="checking">Checking...</strong></div>
                 <div class="agent-detail" id="trayAgentDetail"></div>
               </div>
@@ -846,7 +846,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
             <article class="panel license-actions-card">
               <span class="panel-kicker" data-i18n="licenseActions">LICENSE ACTIONS</span>
               <h3 data-i18n="manageLicense">Manage your license</h3>
-              <p class="panel-copy" data-i18n="manageLicenseHelp">Buy, renew or change your plan in PROGNODE Account. An activated Core with internet installs renewed licenses automatically; offline sites import the new file here.</p>
+              <p class="panel-copy" data-i18n="manageLicenseHelp">Buy, renew or change your plan in PROGNODE Account. An activated PROGNODE Monitor with internet installs renewed licenses automatically; offline sites import the new file here.</p>
               <button class="primary license-action-full" id="licenseConnectButton">Start free trial / Connect account</button>
               <a class="secondary license-action-full" href="https://account.prognode.io/subscription" target="_blank" rel="noopener noreferrer" data-i18n="openPrognodeStore">Open PROGNODE Account ↗</a>
               <div class="license-divider"><span data-i18n="orImportLicense">OR IMPORT A LICENSE</span></div>
@@ -890,12 +890,12 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
             <article class="panel lan-wizard-panel settings-pane" id="lanWizardPanel" data-settings-panel="lan">
               <div class="panel-head"><div><span class="panel-kicker" data-i18n="lanWizardKicker">MOBILE ACCESS</span>
                 <h3 data-i18n="lanWizardTitle">Enable LAN Access</h3></div><span class="active-badge" id="lanWizardBadge">NOT CONFIGURED</span></div>
-              <p class="panel-copy" id="lanWizardIntroText" data-i18n="lanWizardIntro">Grant this Core's mobile HTTPS port access only on the chosen plant LAN. No Windows profile change, remote license or manual firewall commands.</p>
+              <p class="panel-copy" id="lanWizardIntroText" data-i18n="lanWizardIntro">Grant this PROGNODE Monitor's mobile HTTPS port access only on the chosen plant LAN. No Windows profile change, remote license or manual firewall commands.</p>
               <div class="lan-auto-box hidden" id="lanAutoBox" role="status">
-                <p><strong data-i18n="lanAutoOn">LAN access is on.</strong> <span data-i18n="lanAutoWhat">PROGNODE Clients and phones on this network find this Core by themselves. Each one still needs the pairing code or QR code from this Core before it can see anything.</span></p>
+                <p><strong data-i18n="lanAutoOn">LAN access is on.</strong> <span data-i18n="lanAutoWhat">PROGNODE Clients and phones on this network find this PROGNODE Monitor by themselves. Each one still needs the pairing code or QR code from this PROGNODE Monitor before it can see anything.</span></p>
                 <p class="lan-wizard-note" id="lanAutoAddresses"></p>
                 <ol class="lan-auto-steps">
-                  <li data-i18n="lanAutoStepPc">Windows PC: install PROGNODE Client. It finds this Core; enter the 6-digit pairing code shown under Server &amp; QR.</li>
+                  <li data-i18n="lanAutoStepPc">Windows PC: install PROGNODE Client. It finds this PROGNODE Monitor; enter the 6-digit pairing code shown under Server &amp; QR.</li>
                   <li data-i18n="lanAutoStepPhone">Phone: open the PROGNODE app and scan the QR code.</li>
                 </ol>
                 <div class="lan-wizard-actions"><button type="button" class="primary" id="lanAutoQr" data-i18n="lanWizardQr">Continue to QR pairing</button></div>
@@ -930,7 +930,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
                 </div>
                 <p id="lanWizardPhoneUrl" class="lan-wizard-note" role="status"></p>
                 <div id="lanWizardPhoneQr" class="qr-code-frame hidden" aria-label="Phone LAN test QR"></div>
-                <p class="lan-wizard-note" data-i18n="lanWizardIt">If guest VLAN/client isolation or enterprise GPO blocks traffic, request TCP 5443 from the approved device/subnet to the selected Core IP from your IT administrator. PROGNODE does not bypass policy.</p>
+                <p class="lan-wizard-note" data-i18n="lanWizardIt">If guest VLAN/client isolation or enterprise GPO blocks traffic, request TCP 5443 from the approved device/subnet to the selected PROGNODE Monitor IP from your IT administrator. PROGNODE does not bypass policy.</p>
               </div>
             </article>
             <article class="panel server-access-panel settings-pane" id="settingsPanelGeneral" data-settings-panel="general">
@@ -968,7 +968,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
               <div class="qr-enroll-card" id="pairQrPanel" role="tabpanel" aria-labelledby="pairModeQr">
                 <div class="qr-enroll-head">
                   <div><strong data-i18n="qrPairTitle">Pair a phone by QR</strong>
-                    <p data-i18n="qrPairIntro">Scan on the Core PC. No IP, code or certificate fingerprint to type.</p></div>
+                    <p data-i18n="qrPairIntro">Scan on the PROGNODE Monitor PC. No IP, code or certificate fingerprint to type.</p></div>
                   <button class="primary" type="button" id="qrPairStart" data-i18n="qrPairStart">+ Pair by QR</button>
                 </div>
                 <section id="qrPairBox" class="qr-pair-box hidden" aria-live="polite">
@@ -987,7 +987,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
                     <button class="secondary" type="button" id="qrPairRenew" data-i18n="qrPairRenew">Renew QR</button>
                     <button class="ghost-button" type="button" id="qrPairCancel" data-i18n="qrPairCancel">Cancel</button>
                   </div>
-                  <small class="qr-pair-note" data-i18n="qrPairWarning">QR is valid for 120 seconds, once, only from the authorized Core screen. Use local HTTPS.</small>
+                  <small class="qr-pair-note" data-i18n="qrPairWarning">QR is valid for 120 seconds, once, only from the authorized PROGNODE Monitor screen. Use local HTTPS.</small>
                 </section>
               </div>
               <section class="hf64-device-panel" aria-label="Paired mobile device permissions">
@@ -1041,11 +1041,11 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
               <p id="backupLastRestore" role="status" class="backup-status hidden"></p>
               <div class="backup-box backup-restore hidden" id="backupRestorePanel" role="region" aria-labelledby="backupRestoreName">
                 <strong id="backupRestoreName"></strong>
-                <p class="backup-info" data-i18n="backupRestoreWhat">Core checks this backup, restarts and replaces its data with it. The current data is kept in a data.before-restore folder next to it, so nothing is lost.</p>
+                <p class="backup-info" data-i18n="backupRestoreWhat">PROGNODE Monitor checks this backup, restarts and replaces its data with it. The current data is kept in a data.before-restore folder next to it, so nothing is lost.</p>
                 <label class="field"><span data-i18n="backupRestorePassword">Backup passphrase</span>
                   <input id="backupRestorePassword" type="text" class="secret-input" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" /></label>
                 <label class="backup-restore-check hidden" id="backupRestoreAdoptRow"><input type="checkbox" id="backupRestoreAdopt" />
-                  <span data-i18n="backupRestoreAdopt">This backup is from another PROGNODE Core. Use its identity and paired devices on this PC (the license and HTTPS certificate of this PC are not taken over).</span></label>
+                  <span data-i18n="backupRestoreAdopt">This backup is from another PROGNODE Monitor. Use its identity and paired devices on this PC (the license and HTTPS certificate of this PC are not taken over).</span></label>
                 <div class="backup-last-chance" role="alert">
                   <strong data-i18n="backupRestoreLastChance">Last chance before the restore</strong>
                   <p id="backupRestoreWarningText"></p>
@@ -1055,7 +1055,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
                 <div class="backup-progress hidden" id="backupRestoreProgress" aria-live="polite">
                   <div class="backup-progress-bar"><span id="backupRestoreBar"></span></div><span class="backup-progress-pct" id="backupRestorePct">0%</span></div>
                 <div class="backup-actions">
-                  <button class="primary" id="backupRestoreRun" type="button" data-i18n="backupRestoreRun">Restore and restart Core</button>
+                  <button class="primary" id="backupRestoreRun" type="button" data-i18n="backupRestoreRun">Restore and restart PROGNODE Monitor</button>
                   <button class="secondary" id="backupRestoreCancel" type="button" data-i18n="backupRestoreCancel">Cancel</button></div>
                 <p id="backupRestoreStatus" role="status" class="backup-status"></p>
               </div>
@@ -1331,7 +1331,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
             <label class="field wide"><span>OPC UA Endpoint URL</span><input id="opcUaUrl" placeholder="opc.tcp://192.168.1.20:4840/" /></label>
             <label class="field"><span>Poll interval (ms)</span><input id="opcUaPoll" type="number" min="100" value="1000" /></label>
           </div>
-          <div class="info-box">Read-only NodeId polling. Only SignAndEncrypt endpoints are accepted. An administrator must trust the server certificate in the Core OPC UA PKI store; unknown certificates are never accepted automatically.</div>
+          <div class="info-box">Read-only NodeId polling. Only SignAndEncrypt endpoints are accepted. An administrator must trust the server certificate in the PROGNODE Monitor OPC UA PKI store; unknown certificates are never accepted automatically.</div>
           <button type="button" class="secondary" id="inspectOpcUaCertificate">Inspect server certificate</button>
           <div id="opcUaCertificateResult" class="test-result hidden"></div>
         </div>
@@ -1554,7 +1554,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
         <input id="alarmRequiresAcknowledgement" type="checkbox" checked />
         <div>
           <strong data-i18n="requiresAcknowledgement">Require operator ACK</strong>
-          <span data-i18n="requiresAcknowledgementHelp">Show an ACK action in Core and mobile for this alarm.</span>
+          <span data-i18n="requiresAcknowledgementHelp">Show an ACK action in PROGNODE Monitor and mobile for this alarm.</span>
         </div>
       </label>
 
@@ -1713,13 +1713,13 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
           <div id="accountConnectStart">
             <span class="panel-kicker">GET STARTED</span>
             <strong>Start your 14-day free trial</strong>
-            <small>Connect this Core to your PROGNODE account. Alarm + Historian, 20 Tags and Remote Access for 2 phones. No payment details, no license file. Already have a license? Choose it on the same page.</small>
+            <small>Connect this PROGNODE Monitor to your PROGNODE account. Alarm + Historian, 20 Tags and Remote Access for 2 phones. No payment details, no license file. Already have a license? Choose it on the same page.</small>
             <button class="primary" id="accountConnectButton">Start free trial / Connect account</button>
           </div>
           <div id="accountConnectWaiting" class="hidden">
             <span class="panel-kicker">WAITING FOR PROGNODE ACCOUNT</span>
             <strong>Finish in your browser</strong>
-            <small>Sign in or create your account, then confirm this code. Core installs the license by itself.</small>
+            <small>Sign in or create your account, then confirm this code. PROGNODE Monitor installs the license by itself.</small>
             <div class="account-connect-code" id="accountConnectCode">—</div>
             <div class="account-connect-actions">
               <a class="secondary" id="accountConnectOpen" href="https://account.prognode.io/link" target="_blank" rel="noopener noreferrer">Open PROGNODE Account ↗</a>
@@ -1744,7 +1744,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
         <section class="account-license-import account-activation hidden" id="accountActivationSection">
           <div class="account-license-import-copy">
             <span class="panel-kicker">ACTIVATION</span>
-            <strong id="accountActivationState">Activating this PROGNODE Core…</strong>
+            <strong id="accountActivationState">Activating this PROGNODE Monitor…</strong>
             <small id="accountActivationHint">Connecting to PROGNODE Account. This takes a few seconds when the PC has internet access.</small>
           </div>
           <div class="account-license-import-actions account-activation-actions">

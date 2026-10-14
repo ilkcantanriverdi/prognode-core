@@ -55,7 +55,7 @@ public static class BackupCommandLine
                     adoptSourceIdentity: args.Length==5 && args[4]=="--adopt-source-identity");
                 Console.WriteLine($"RESTORED: {manifest.Files.Count} files, schema {manifest.DatabaseSchema}");
                 Console.WriteLine("Before-restore data directory is preserved next to the restored data directory.");
-                Console.WriteLine("Review restored appsettings, local license, machine-bound TLS certificate and remote binding before starting Core.");
+                Console.WriteLine("Review restored appsettings, local license, machine-bound TLS certificate and remote binding before starting PROGNODE Monitor.");
             }
         }
         catch (Exception ex)

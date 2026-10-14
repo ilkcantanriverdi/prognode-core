@@ -37,9 +37,9 @@ function lastGood(data){return [...(data?.points||[])].reverse().find(real)||nul
 function alertLimits(s){return store.definitions.filter(a=>a.tagId===s.id && a.enabled!==false &&
  ['GreaterThan','GreaterThanOrEqual','LessThan','LessThanOrEqual'].includes(a.condition) && a.threshold!=null && Number.isFinite(+a.threshold)).map(a=>({...a,threshold:+a.threshold,high:a.condition.startsWith('Greater')}));}
 function severity(s,v){if(!Number.isFinite(v))return 'UNKNOWN';const l=alertLimits(s);return l.some(a=>a.high&&(a.condition==='GreaterThan'?v>a.threshold:v>=a.threshold))?'HIGH':l.some(a=>!a.high&&(a.condition==='LessThan'?v<a.threshold:v<=a.threshold))?'LOW':'NORMAL'}
-function reportError(error){store.error=String(error?.message||error);$('statusText').textContent='Core: '+store.error;notify('Core API: '+store.error)}
+function reportError(error){store.error=String(error?.message||error);$('statusText').textContent='PROGNODE Monitor: '+store.error;notify('PROGNODE Monitor API: '+store.error)}
 async function api(path){const token=sessionStorage.getItem('prognode.accessSession')||'';const r=await fetch(path,{headers:token?{'X-PROGNODE-Session':token}:{},cache:'no-store'});
- const raw=await r.text();let obj;try{obj=JSON.parse(raw)}catch{throw new Error('Core API did not return JSON: '+path+' ('+r.status+')')}
+ const raw=await r.text();let obj;try{obj=JSON.parse(raw)}catch{throw new Error('PROGNODE Monitor API did not return JSON: '+path+' ('+r.status+')')}
  if(!r.ok)throw new Error(obj?.message||obj?.title||`HTTP ${r.status} ${path}`);return obj;}
 function move(page){try{if(window.parent&&window.parent!==window&&typeof window.parent.navigate==='function')window.parent.navigate(page);else window.location.href='/?page='+encodeURIComponent(page)}catch{window.location.href='/?page='+encodeURIComponent(page)}}
 function syncParentAppearance(){try{const p=window.parent;if(!p||p===window){
@@ -87,7 +87,7 @@ function render(){syncButtons();const w=$('workspace');if(store.comparison){rend
 function syncButtons(){document.querySelectorAll('[data-period]').forEach(b=>b.classList.toggle('active',b.dataset.period===store.period&&!store.custom));
  $('liveButton').textContent=store.live?'● LIVE · PAUSE':'Ⅱ PAUSED · RESUME';$('liveButton').className='action '+(store.live?'live':'pause');
  $('flagButton').classList.toggle('active',store.flags);$('thresholdButton').classList.toggle('active',store.levels);$('pointButton').classList.toggle('active',store.points);$('compareButton').classList.toggle('active',store.compareMode||store.comparison);
- $('compareBar').classList.toggle('visible',store.compareMode);$('statusText').textContent=store.error?'Core connection: '+store.error:`${store.live?'LIVE':'PAUSED'} · ${store.selected.length} ${'charts'} · ${store.lastSynced?localDate(store.lastSynced):'Waiting for data'}`;
+ $('compareBar').classList.toggle('visible',store.compareMode);$('statusText').textContent=store.error?'PROGNODE Monitor connection: '+store.error:`${store.live?'LIVE':'PAUSED'} · ${store.selected.length} ${'charts'} · ${store.lastSynced?localDate(store.lastSynced):'Waiting for data'}`;
  $('launchCompare').textContent='Compare selected'+(store.comparing.size?' ('+store.comparing.size+')':'');
  $('cursorA').classList.toggle('active',store.cursorMode==='A');$('cursorB').classList.toggle('active',store.cursorMode==='B');
 }

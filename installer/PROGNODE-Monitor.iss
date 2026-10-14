@@ -1,5 +1,7 @@
-; PROGNODE Core installer (Inno Setup 6). Build with installer\build.ps1, which publishes the
-; self-contained Core and tray agent first and passes AppVersion / PublishDir.
+; PROGNODE Monitor installer (Inno Setup 6). Build with installer\build.ps1, which publishes the
+; self-contained server (Prognode.Host, shipped as PROGNODE.Core.exe) and tray agent first and passes
+; AppVersion / PublishDir. AppId, the service name PROGNODECore and the install folders are unchanged
+; from the PROGNODE Core installers, so existing installations upgrade in place.
 
 #ifndef AppVersion
   #define AppVersion "0.0.0-dev"
@@ -13,16 +15,16 @@
 
 [Setup]
 AppId={{6B1F2E7A-3C4D-4E8B-9A1F-5D2C8E7B4A10}
-AppName=PROGNODE Core
+AppName=PROGNODE Monitor
 AppVersion={#AppVersion}
-AppVerName=PROGNODE Core {#AppVersion}
+AppVerName=PROGNODE Monitor {#AppVersion}
 AppPublisher=Cordara Labs
 AppPublisherURL=https://prognode.io
 AppSupportURL=https://prognode.io/contact
 AppUpdatesURL=https://account.prognode.io/downloads
 VersionInfoVersion={#VersionInfo}
 VersionInfoCompany=Cordara Labs
-VersionInfoProductName=PROGNODE Core
+VersionInfoProductName=PROGNODE Monitor
 DefaultDirName={autopf}\PROGNODE
 DefaultGroupName=PROGNODE
 DisableProgramGroupPage=yes
@@ -31,10 +33,10 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.17763
 OutputDir=..\artifacts\installer
-OutputBaseFilename=PROGNODE-Core-Setup-{#AppVersion}
+OutputBaseFilename=PROGNODE-Monitor-Setup-{#AppVersion}
 SetupIconFile=..\src\Prognode.Agent.Windows\Assets\prognode.ico
 UninstallDisplayIcon={app}\Agent\PROGNODE.Agent.exe
-UninstallDisplayName=PROGNODE Core
+UninstallDisplayName=PROGNODE Monitor
 LicenseFile=license.txt
 WizardStyle=modern
 ShowLanguageDialog=no
@@ -58,6 +60,8 @@ Name: "{commonappdata}\PROGNODE\data"
 [InstallDelete]
 ; Restore moved into Settings > Backup & audit (beta.6); remove the earlier Start menu tool on upgrade.
 Type: files; Name: "{group}\Restore PROGNODE Backup.lnk"
+; Shortcut of the installers named PROGNODE Core.
+Type: files; Name: "{group}\Uninstall PROGNODE Core.lnk"
 Type: files; Name: "{app}\Setup\restore-backup.ps1"
 
 [Files]
@@ -71,7 +75,7 @@ Source: "PROGNODE.url"; DestDir: "{app}"; Flags: ignoreversion
 [Icons]
 Name: "{group}\PROGNODE"; Filename: "{app}\PROGNODE.url"; IconFilename: "{app}\Agent\PROGNODE.Agent.exe"
 Name: "{group}\PROGNODE Notifications"; Filename: "{app}\Agent\PROGNODE.Agent.exe"
-Name: "{group}\Uninstall PROGNODE Core"; Filename: "{uninstallexe}"
+Name: "{group}\Uninstall PROGNODE Monitor"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\PROGNODE"; Filename: "{app}\PROGNODE.url"; IconFilename: "{app}\Agent\PROGNODE.Agent.exe"; Tasks: desktopicon
 ; Tray notifications start for every user who signs in on this PC.
 Name: "{commonstartup}\PROGNODE Notifications"; Filename: "{app}\Agent\PROGNODE.Agent.exe"
@@ -79,7 +83,7 @@ Name: "{commonstartup}\PROGNODE Notifications"; Filename: "{app}\Agent\PROGNODE.
 [Run]
 ; LAN HTTPS certificate and firewall rules first, so the service starts with them.
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\Setup\enable-lan.ps1"" -InstallRoot ""{app}"""; StatusMsg: "Allowing PROGNODE Clients and phones on the local network..."; Flags: runhidden waituntilterminated; Tasks: lanaccess
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\Setup\install-service.ps1"" -InstallRoot ""{app}"" -DataRoot ""{commonappdata}\PROGNODE\data"""; StatusMsg: "Starting the PROGNODE Core service..."; Flags: runhidden waituntilterminated
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\Setup\install-service.ps1"" -InstallRoot ""{app}"" -DataRoot ""{commonappdata}\PROGNODE\data"""; StatusMsg: "Starting the PROGNODE Monitor service..."; Flags: runhidden waituntilterminated
 Filename: "{app}\Agent\PROGNODE.Agent.exe"; Description: "Start PROGNODE notifications"; Flags: nowait postinstall skipifsilent runasoriginaluser
 Filename: "{app}\PROGNODE.url"; Description: "Open PROGNODE"; Flags: shellexec nowait postinstall skipifsilent runasoriginaluser
 
@@ -136,5 +140,5 @@ begin
     DelTree(ExpandConstant('{commonappdata}\PROGNODE'), True, True, True);
   end
   else if not UninstallSilent then
-    MsgBox('PROGNODE Core was removed. Your data is kept in ' + ExpandConstant('{commonappdata}\PROGNODE') + '.', mbInformation, MB_OK);
+    MsgBox('PROGNODE Monitor was removed. Your data is kept in ' + ExpandConstant('{commonappdata}\PROGNODE') + '.', mbInformation, MB_OK);
 end;

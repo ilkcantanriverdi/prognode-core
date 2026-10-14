@@ -49,7 +49,7 @@ public sealed class FileBackedLicenseProvider(
     public ActivationCertificateV1 ImportActivation(byte[] certificateBytes)
     {
         if (activation is null)
-            throw new InvalidOperationException("Activation is not configured on this Core.");
+            throw new InvalidOperationException("Activation is not configured on this PROGNODE Monitor.");
         var payload = GetVerifiedCurrent().Payload;
         return activation.Import(certificateBytes, payload.LicenseId, payload.LicenseKey);
     }
@@ -59,7 +59,7 @@ public sealed class FileBackedLicenseProvider(
     public ActivationRequestV1 CreateActivationRequest(string serverName, string coreVersion)
     {
         if (activation is null)
-            throw new InvalidOperationException("Activation is not configured on this Core.");
+            throw new InvalidOperationException("Activation is not configured on this PROGNODE Monitor.");
         var payload = GetVerifiedCurrent().Payload;
         return activation.CreateRequest(payload.LicenseId, payload.LicenseKey, serverName, coreVersion);
     }

@@ -32,17 +32,17 @@ internal static class LanAccessSetup
         catch (JsonException ex)
         {
             throw new InvalidOperationException(
-                "The Core returned an invalid LAN setup response. Start the matching HF4.1.2 Core and Agent, " +
+                "The PROGNODE Monitor returned an invalid LAN setup response. Start the matching HF4.1.2 PROGNODE Monitor and Agent, " +
                 "then press Prepare LAN access again.", ex);
         }
     }
 
     private static void ShowPrepareAgain() =>
         MessageBox.Show(
-            "No active LAN setup request is available in this Core. Open Settings → Mobile Access, " +
+            "No active LAN setup request is available in this PROGNODE Monitor. Open Settings → Mobile Access, " +
             "confirm the selected Public LAN if applicable, and press Prepare LAN access again. " +
             "Complete the Agent action before the three-minute request expires. " +
-            "If it persists, confirm the Agent targets the same local Core (127.0.0.1:5080).",
+            "If it persists, confirm the Agent targets the same local PROGNODE Monitor (127.0.0.1:5080).",
             "PROGNODE LAN Access", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
     public static async Task RunAsync(HttpClient localCore)
@@ -50,7 +50,7 @@ internal static class LanAccessSetup
         try
         {
             if (!localCore.BaseAddress!.IsLoopback)
-                throw new InvalidOperationException("The setup helper only works against a loopback Core URL.");
+                throw new InvalidOperationException("The setup helper only works against a loopback PROGNODE Monitor URL.");
             using var pendingResponse = await localCore.GetAsync("/api/mobile-access/agent/pending");
             if (pendingResponse.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.NoContent)
             {
@@ -58,8 +58,8 @@ internal static class LanAccessSetup
                 return;
             }
             if (!pendingResponse.IsSuccessStatusCode)
-                throw new InvalidOperationException($"Core rejected the pending LAN request (HTTP {(int)pendingResponse.StatusCode}). " +
-                    "Check that the Agent and Core are running from the same HF4.1.2 package and the Agent uses localhost:5080.");
+                throw new InvalidOperationException($"PROGNODE Monitor rejected the pending LAN request (HTTP {(int)pendingResponse.StatusCode}). " +
+                    "Check that the Agent and PROGNODE Monitor are running from the same HF4.1.2 package and the Agent uses localhost:5080.");
             var pending = await ReadPendingAsync(pendingResponse);
             if (pending is null || pending.ExpiresAtUtc <= DateTimeOffset.UtcNow)
             {
@@ -103,7 +103,7 @@ internal static class LanAccessSetup
             }) psi.ArgumentList.Add(parameter);
             Process.Start(psi);
             MessageBox.Show("Complete the UAC confirmation and wait for the helper result. " +
-                "The installed Core service or the supervised source pilot restarts automatically after a successful repair. If using direct Visual Studio debugging, restart that debug process once. Then press Verify and test from your phone.",
+                "The installed PROGNODE Monitor service or the supervised source pilot restarts automatically after a successful repair. If using direct Visual Studio debugging, restart that debug process once. Then press Verify and test from your phone.",
                 "PROGNODE LAN Access", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         catch (Win32Exception error) when (error.NativeErrorCode == 1223)

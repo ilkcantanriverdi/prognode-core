@@ -67,7 +67,7 @@ public sealed class UpdateCheckService(CoreCloudLicenseOptions options, ILogger<
                         Text(core, "sha256") is { Length: 64 } sha && sha.All(Uri.IsHexDigit)
                         ? new Installer(latest!, setup, sha.ToLowerInvariant()) : null;
                     _status = new Status(ProductVersion.Current, latest, newer, page, DateTimeOffset.UtcNow);
-                    if (newer) logger.LogInformation("PROGNODE Core {Latest} is available (running {Current}).", latest, ProductVersion.Current);
+                    if (newer) logger.LogInformation("PROGNODE Monitor {Latest} is available (running {Current}).", latest, ProductVersion.Current);
                     return _status;
                 }
                 catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
@@ -100,11 +100,11 @@ public sealed class UpdateCheckService(CoreCloudLicenseOptions options, ILogger<
     private async Task InstallAsync(Installer installer)
     {
         var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "PROGNODE", "updates");
-        var file = Path.Combine(folder, $"PROGNODE-Core-Setup-{installer.Version}.exe");
+        var file = Path.Combine(folder, $"PROGNODE-Monitor-Setup-{installer.Version}.exe");
         try
         {
             Directory.CreateDirectory(folder);
-            foreach (var old in Directory.GetFiles(folder, "PROGNODE-Core-Setup-*.exe")) File.Delete(old);
+            foreach (var old in Directory.GetFiles(folder, "PROGNODE-*-Setup-*.exe")) File.Delete(old);
             using (var response = await _download.GetAsync(installer.Url, HttpCompletionOption.ResponseHeadersRead))
             {
                 response.EnsureSuccessStatusCode();
@@ -127,7 +127,7 @@ public sealed class UpdateCheckService(CoreCloudLicenseOptions options, ILogger<
             }
 
             _status = _status with { State = "INSTALLING", Progress = 100, Message = "PROGNODE is updating and restarts in about a minute. This page reconnects by itself." };
-            logger.LogWarning("Installing PROGNODE Core {Version}; the service restarts.", installer.Version);
+            logger.LogWarning("Installing PROGNODE Monitor {Version}; the service restarts.", installer.Version);
             // The installer stops this service, replaces the files and starts the new version; data stays in ProgramData.
             Process.Start(new ProcessStartInfo(file,
                 $"/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LOG=\"{Path.Combine(folder, "update.log")}\"")
@@ -135,7 +135,7 @@ public sealed class UpdateCheckService(CoreCloudLicenseOptions options, ILogger<
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "PROGNODE Core update {Version} failed before installation.", installer.Version);
+            logger.LogError(ex, "PROGNODE Monitor update {Version} failed before installation.", installer.Version);
             try { File.Delete(file); } catch (IOException) { }
             _status = _status with { State = "FAILED", Progress = null, Message = $"The update could not be installed: {ex.Message}" };
             Interlocked.Exchange(ref _installing, 0);

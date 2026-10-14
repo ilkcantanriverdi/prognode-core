@@ -160,7 +160,7 @@ public sealed class QrPairingService(ServerAccessService serverAccess)
             try
             {
                 if (serverId != serverAccess.Identity.ServerId)
-                    throw new QrPairingProblem("SERVER_MISMATCH", "Scanned QR belongs to another PROGNODE Core.");
+                    throw new QrPairingProblem("SERVER_MISMATCH", "Scanned QR belongs to another PROGNODE Monitor.");
                 if (pairingTicket is null || pairingTicket.Length != 43 ||
                     pairingTicket.Any(c => !char.IsAsciiLetterOrDigit(c) && c is not ('-' or '_')))
                     throw new QrPairingProblem("INVALID_TICKET", "Invalid QR pairing ticket.");
