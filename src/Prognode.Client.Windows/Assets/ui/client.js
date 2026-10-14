@@ -32,7 +32,7 @@ function show(next) {
   });
   $("viewTitle").textContent = VIEWS[view];
   $("refreshBtn").hidden = view === "connect";
-  $("viewSub").textContent = view === "alarms" ? "Active alarms on PROGNODE Core" : view === "history" ? "Most recent first" : "";
+  $("viewSub").textContent = view === "alarms" ? "Active alarms on PROGNODE Monitor" : view === "history" ? "Most recent first" : "";
   if (view === "history") send({ cmd: "history", offset: historyOffset });
 }
 
@@ -41,9 +41,9 @@ function renderState() {
   const c = state.connection || {};
   const pill = $("sidePill");
   pill.className = "pill " + (state.paired ? (c.online ? "online" : "offline") : "");
-  $("sidePillText").textContent = !state.paired ? "Not connected" : c.online ? "Connected" : "Core not reachable";
+  $("sidePillText").textContent = !state.paired ? "Not connected" : c.online ? "Connected" : "PROGNODE Monitor not reachable";
   $("sidePc").textContent = state.paired ? state.pcName || "" : "";
-  $("sideCore").textContent = state.server ? `Core: ${state.server.name} · ${state.server.host}` : "";
+  $("sideCore").textContent = state.server ? `PROGNODE Monitor: ${state.server.name} · ${state.server.host}` : "";
   $("sideVersion").textContent = state.version ? `Version ${state.version}` : "";
   $("autostart").checked = !!state.autostart;
   if (state.server) {
@@ -54,7 +54,7 @@ function renderState() {
   $("connLast").textContent = c.lastContactUtc ? ago(c.lastContactUtc) : "—";
   const a = state.access;
   $("connAccess").textContent = !a ? "—" : a.canAcknowledge && a.deviceAck ? `${state.pcName || "This PC"} · may view and acknowledge alarms` : `${state.pcName || "This PC"} · may view alarms`;
-  $("ackHint").textContent = a && !a.deviceAck ? "View only. A Core administrator can allow acknowledgement for this PC in Settings › Server & QR › Paired devices." : "";
+  $("ackHint").textContent = a && !a.deviceAck ? "View only. A PROGNODE Monitor administrator can allow acknowledgement for this PC in Settings › Server & QR › Paired devices." : "";
   renderAlarms();
 }
 
@@ -72,7 +72,7 @@ function renderAlarms() {
   $("navCount").hidden = !alarms.length; $("navCount").textContent = String(alarms.length);
   if (!alarms.length) {
     const td = document.createElement("td"); td.colSpan = 5; td.className = "empty";
-    td.append(text("strong", "No active alarms"), text("span", state.connection?.online === false ? "Core is not reachable right now; the list updates when it is back." : "New alarms appear here and as Windows notifications."));
+    td.append(text("strong", "No active alarms"), text("span", state.connection?.online === false ? "PROGNODE Monitor is not reachable right now; the list updates when it is back." : "New alarms appear here and as Windows notifications."));
     const tr = document.createElement("tr"); tr.append(td); rows.append(tr);
     return;
   }
@@ -120,7 +120,7 @@ function renderHistory(msg) {
 // ---------- connect flow ----------
 function renderCores(items) {
   const list = $("coreList"); list.replaceChildren();
-  if (!items.length) { list.append(text("p", "No Core answered on this network yet. Enter its address below, or check that the Core PC is on.", "note")); return; }
+  if (!items.length) { list.append(text("p", "No PROGNODE Monitor answered on this network yet. Enter its address below, or check that the PROGNODE Monitor PC is on.", "note")); return; }
   items.forEach((core, i) => {
     const b = document.createElement("button"); b.type = "button"; b.className = "core-option";
     b.append(text("strong", core.displayName), text("span", core.address, "muted num"));
@@ -143,14 +143,14 @@ function receive(msg) {
     case "state": state = { ...state, ...msg }; if (!state.paired && view !== "connect") show("connect"); else if (state.paired && view === "connect") show("alarms"); renderState(); break;
     case "history": renderHistory(msg); break;
     case "select": selected = msg.occurrenceId; show("alarms"); renderAlarms(); break;
-    case "discovered": $("searchBtn").disabled = false; renderCores(msg.items || []); connectStatus(msg.items?.length ? "Select your Core and choose Continue." : ""); break;
+    case "discovered": $("searchBtn").disabled = false; renderCores(msg.items || []); connectStatus(msg.items?.length ? "Select your PROGNODE Monitor and choose Continue." : ""); break;
     case "candidate":
       $("inspectBtn").disabled = false;
       if (msg.error) { connectStatus(msg.error, true); break; }
       candidate = msg; $("checkCode").textContent = msg.checkCode; $("verifyStep").hidden = false; $("pairStep").hidden = false;
       connectStatus(`Reached ${msg.displayName}. Compare the code, then enter the pairing code.`);
       break;
-    case "paired": $("pairBtn").disabled = false; if (msg.error) connectStatus(msg.error, true); else { connectStatus(""); toast("This PC is now connected to PROGNODE Core.", "ok"); } break;
+    case "paired": $("pairBtn").disabled = false; if (msg.error) connectStatus(msg.error, true); else { connectStatus(""); toast("This PC is now connected to PROGNODE Monitor.", "ok"); } break;
     case "toast": toast(msg.text, msg.kind); if (msg.reenable) document.querySelectorAll(`#${msg.reenable}`).forEach(b => b.disabled = false); break;
   }
 }
@@ -173,9 +173,9 @@ $("searchBtn").addEventListener("click", () => { $("searchBtn").disabled = true;
 $("hostInput").addEventListener("input", () => { delete $("hostInput").dataset.serverId; resetVerify(); });
 $("inspectBtn").addEventListener("click", () => {
   const address = $("hostInput").value.trim(), port = Number($("portInput").value);
-  if (!address) return connectStatus("Select a Core or enter its address.", true);
+  if (!address) return connectStatus("Select a PROGNODE Monitor or enter its address.", true);
   if (!Number.isInteger(port) || port < 1 || port > 65535) return connectStatus("Enter a valid HTTPS port (default 5443).", true);
-  resetVerify(); $("inspectBtn").disabled = true; connectStatus("Checking the Core certificate…");
+  resetVerify(); $("inspectBtn").disabled = true; connectStatus("Checking the PROGNODE Monitor certificate…");
   send({ cmd: "inspect", host: address, port, serverId: $("hostInput").dataset.serverId || null });
 });
 const pairReady = () => { $("pairBtn").disabled = !(candidate && $("codeMatches").checked && /^\d{6}$/.test($("pairCode").value.trim())); };

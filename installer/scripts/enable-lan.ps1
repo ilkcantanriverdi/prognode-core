@@ -1,7 +1,7 @@
 param(
   [Parameter(Mandatory = $true)][string]$InstallRoot
 )
-# Lets PROGNODE Clients and phones on the local network reach this Core (run by Setup as admin,
+# Lets PROGNODE Clients and phones on the local network reach this PROGNODE Monitor (run by Setup as admin,
 # before the service starts). Idempotent: an upgrade keeps the existing certificate, so paired
 # devices keep their certificate pin.
 #  - HTTPS certificate in LocalMachine\My (reused when one exists) + ProgramData\PROGNODE\config\lan-https.json
@@ -61,9 +61,9 @@ Move-Item -LiteralPath $stage -Destination $configPath -Force
 foreach ($name in "PROGNODE-LAN-HTTPS", "PROGNODE-LAN-DISCOVERY") {
   Get-NetFirewallRule -Name $name -ErrorAction SilentlyContinue | Remove-NetFirewallRule
 }
-New-NetFirewallRule -Name "PROGNODE-LAN-HTTPS" -DisplayName "PROGNODE Core LAN (HTTPS)" -Group $group `
+New-NetFirewallRule -Name "PROGNODE-LAN-HTTPS" -DisplayName "PROGNODE Monitor LAN (HTTPS)" -Group $group `
   -Direction Inbound -Action Allow -Protocol TCP -LocalPort 5443 -Program $exe `
   -RemoteAddress LocalSubnet -Profile Any -EdgeTraversalPolicy Block | Out-Null
-New-NetFirewallRule -Name "PROGNODE-LAN-DISCOVERY" -DisplayName "PROGNODE Core LAN (discovery)" -Group $group `
+New-NetFirewallRule -Name "PROGNODE-LAN-DISCOVERY" -DisplayName "PROGNODE Monitor LAN (discovery)" -Group $group `
   -Direction Inbound -Action Allow -Protocol UDP -LocalPort 5081 -Program $exe `
   -RemoteAddress LocalSubnet -Profile Any -EdgeTraversalPolicy Block | Out-Null

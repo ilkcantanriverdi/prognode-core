@@ -400,7 +400,7 @@ public sealed class CoreCloudLicenseClient
             if (code == "installation_limit_reached")
             {
                 var machine = GetString(root, "activeMachineName");
-                return $"installation_limit_reached: This license is already active on another PROGNODE Core{(string.IsNullOrWhiteSpace(machine) ? "" : $" ({machine})")}. Release it in PROGNODE Account, then activate this PC.";
+                return $"installation_limit_reached: This license is already active on another PROGNODE Monitor{(string.IsNullOrWhiteSpace(machine) ? "" : $" ({machine})")}. Release it in PROGNODE Account, then activate this PC.";
             }
             if (!string.IsNullOrWhiteSpace(code))
                 return string.IsNullOrWhiteSpace(details) ? code : $"{code}: {details}";

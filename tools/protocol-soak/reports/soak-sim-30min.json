@@ -1,0 +1,1456 @@
+{
+  "options": {
+    "Minutes": 30,
+    "Counters": 200,
+    "FaultEveryMinutes": 2,
+    "FaultDownSeconds": 20,
+    "ConfigPath": null,
+    "ReportPath": "C:\\claude\\prognode-core\\tools\\protocol-soak\\reports\\soak-sim-30min.md",
+    "Python": null,
+    "Faults": [
+      "modbus",
+      "s7",
+      "opcua",
+      "mqtt-broker",
+      "mqtt"
+    ]
+  },
+  "targets": [
+    {
+      "Name": "Modbus sim",
+      "Protocol": "Modbus TCP",
+      "TagCount": 308,
+      "Reads": 1734,
+      "FailedReads": 29,
+      "Samples": 525140,
+      "Good": 525140,
+      "NotGood": 0,
+      "Mismatches": 0,
+      "OutageSamples": 0,
+      "GoodPercentOutsideOutages": 100,
+      "LatencyP50": 2.2271,
+      "LatencyP95": 3.6411,
+      "LatencyMax": 2032.9615,
+      "Outages": [
+        {
+          "Start": "2026-10-14T06:07:28.0410674+00:00",
+          "Restored": "2026-10-14T06:07:48.0778341+00:00",
+          "DetectSeconds": 0.1557398,
+          "RecoverSeconds": 0.2166755,
+          "LastProblem": "IOException: Modbus TCP timeout after 2000 ms."
+        },
+        {
+          "Start": "2026-10-14T06:19:08.2153092+00:00",
+          "Restored": "2026-10-14T06:19:28.2326202+00:00",
+          "DetectSeconds": 0.5139112,
+          "RecoverSeconds": 0.5755966,
+          "LastProblem": "IOException: Modbus TCP timeout after 2000 ms."
+        },
+        {
+          "Start": "2026-10-14T06:30:48.3602759+00:00",
+          "Restored": "2026-10-14T06:31:08.380723+00:00",
+          "DetectSeconds": 0.9608919,
+          "RecoverSeconds": 0.5459687,
+          "LastProblem": "IOException: Modbus TCP timeout after 2000 ms."
+        }
+      ],
+      "Examples": [],
+      "Errors": {
+        "IOException: Modbus TCP timeout after 2000 ms.": 29
+      }
+    },
+    {
+      "Name": "S7 sim",
+      "Protocol": "Siemens S7",
+      "TagCount": 208,
+      "Reads": 1735,
+      "FailedReads": 30,
+      "Samples": 354640,
+      "Good": 354640,
+      "NotGood": 0,
+      "Mismatches": 0,
+      "OutageSamples": 0,
+      "GoodPercentOutsideOutages": 100,
+      "LatencyP50": 0.5904,
+      "LatencyP95": 1.3256,
+      "LatencyMax": 2051.7918,
+      "Outages": [
+        {
+          "Start": "2026-10-14T06:09:48.0873175+00:00",
+          "Restored": "2026-10-14T06:10:08.1216097+00:00",
+          "DetectSeconds": 0.5302973,
+          "RecoverSeconds": 0.7766281,
+          "LastProblem": "SocketException: No connection could be made because the target machine actively refused it."
+        },
+        {
+          "Start": "2026-10-14T06:21:28.235759+00:00",
+          "Restored": "2026-10-14T06:21:48.2595155+00:00",
+          "DetectSeconds": 0.3942823,
+          "RecoverSeconds": 0.6733602,
+          "LastProblem": "SocketException: No connection could be made because the target machine actively refused it."
+        },
+        {
+          "Start": "2026-10-14T06:33:08.3826866+00:00",
+          "Restored": "2026-10-14T06:33:28.4101807+00:00",
+          "DetectSeconds": 0.3419597,
+          "RecoverSeconds": 0.5302424,
+          "LastProblem": "SocketException: No connection could be made because the target machine actively refused it."
+        }
+      ],
+      "Examples": [],
+      "Errors": {
+        "SocketException: No connection could be made because the target machine actively refused it.": 27,
+        "IOException: Unable to write data to the transport connection: An existing connection was forcibly closed by the remote ": 3
+      }
+    },
+    {
+      "Name": "OPC UA sim",
+      "Protocol": "OPC UA",
+      "TagCount": 206,
+      "Reads": 1743,
+      "FailedReads": 20,
+      "Samples": 354938,
+      "Good": 354938,
+      "NotGood": 0,
+      "Mismatches": 0,
+      "OutageSamples": 0,
+      "GoodPercentOutsideOutages": 100,
+      "LatencyP50": 3.9878,
+      "LatencyP95": 5.6547,
+      "LatencyMax": 2069.6119,
+      "Outages": [
+        {
+          "Start": "2026-10-14T06:12:08.1317932+00:00",
+          "Restored": "2026-10-14T06:12:28.1580442+00:00",
+          "DetectSeconds": 0.6847629,
+          "RecoverSeconds": 1.6669228,
+          "LastProblem": "SocketException: No connection could be made because the target machine actively refused it."
+        },
+        {
+          "Start": "2026-10-14T06:23:48.2717441+00:00",
+          "Restored": "2026-10-14T06:24:08.3026721+00:00",
+          "DetectSeconds": 0.1716056,
+          "RecoverSeconds": 1.6822807,
+          "LastProblem": "SocketException: No connection could be made because the target machine actively refused it."
+        }
+      ],
+      "Examples": [],
+      "Errors": {
+        "SocketException: No connection could be made because the target machine actively refused it.": 18,
+        "ServiceResultException: [80AE0000] (BadConnectionClosed)": 2
+      }
+    },
+    {
+      "Name": "MQTT sim",
+      "Protocol": "MQTT",
+      "TagCount": 53,
+      "Reads": 1745,
+      "FailedReads": 18,
+      "Samples": 91531,
+      "Good": 89994,
+      "NotGood": 0,
+      "Mismatches": 0,
+      "OutageSamples": 1537,
+      "GoodPercentOutsideOutages": 100,
+      "LatencyP50": 0.0962,
+      "LatencyP95": 0.2104,
+      "LatencyMax": 2060.1007,
+      "Outages": [
+        {
+          "Start": "2026-10-14T06:14:28.1601159+00:00",
+          "Restored": "2026-10-14T06:14:48.1775146+00:00",
+          "DetectSeconds": 0.9470581,
+          "RecoverSeconds": 2.3820211,
+          "LastProblem": "Bool: Uncertain Waiting for first topic message."
+        },
+        {
+          "Start": "2026-10-14T06:16:48.1802518+00:00",
+          "Restored": "2026-10-14T06:17:08.2045733+00:00",
+          "DetectSeconds": 9.6093627,
+          "RecoverSeconds": 1.692358,
+          "LastProblem": "Bool: Stale No recent MQTT message."
+        },
+        {
+          "Start": "2026-10-14T06:26:08.3110422+00:00",
+          "Restored": "2026-10-14T06:26:28.321961+00:00",
+          "DetectSeconds": 0.5910723,
+          "RecoverSeconds": 2.0638948,
+          "LastProblem": "Bool: Uncertain Waiting for first topic message."
+        },
+        {
+          "Start": "2026-10-14T06:28:28.3348658+00:00",
+          "Restored": "2026-10-14T06:28:48.35944+00:00",
+          "DetectSeconds": 10.3239503,
+          "RecoverSeconds": 1.3957185,
+          "LastProblem": "Bool: Stale No recent MQTT message."
+        }
+      ],
+      "Examples": [],
+      "Errors": {
+        "MqttCommunicationException: Error while connecting host \u0027Unspecified/127.0.0.1:11883\u0027.": 18
+      }
+    }
+  ],
+  "resources": [
+    {
+      "At": "2026-10-14T06:05:28.0359349+00:00",
+      "ManagedBytes": 6060920,
+      "PrivateBytes": 27418624,
+      "Threads": 27,
+      "Handles": 456
+    },
+    {
+      "At": "2026-10-14T06:05:38.0540639+00:00",
+      "ManagedBytes": 4065088,
+      "PrivateBytes": 29876224,
+      "Threads": 30,
+      "Handles": 599
+    },
+    {
+      "At": "2026-10-14T06:05:48.0724256+00:00",
+      "ManagedBytes": 6571784,
+      "PrivateBytes": 29282304,
+      "Threads": 29,
+      "Handles": 600
+    },
+    {
+      "At": "2026-10-14T06:05:58.0875508+00:00",
+      "ManagedBytes": 3910584,
+      "PrivateBytes": 30240768,
+      "Threads": 31,
+      "Handles": 601
+    },
+    {
+      "At": "2026-10-14T06:06:08.0977906+00:00",
+      "ManagedBytes": 6851208,
+      "PrivateBytes": 28958720,
+      "Threads": 32,
+      "Handles": 607
+    },
+    {
+      "At": "2026-10-14T06:06:18.1119335+00:00",
+      "ManagedBytes": 3803944,
+      "PrivateBytes": 27312128,
+      "Threads": 29,
+      "Handles": 604
+    },
+    {
+      "At": "2026-10-14T06:06:28.1283107+00:00",
+      "ManagedBytes": 6790856,
+      "PrivateBytes": 27779072,
+      "Threads": 29,
+      "Handles": 606
+    },
+    {
+      "At": "2026-10-14T06:06:38.1359303+00:00",
+      "ManagedBytes": 3785848,
+      "PrivateBytes": 28135424,
+      "Threads": 29,
+      "Handles": 606
+    },
+    {
+      "At": "2026-10-14T06:06:48.1556038+00:00",
+      "ManagedBytes": 6712848,
+      "PrivateBytes": 28643328,
+      "Threads": 29,
+      "Handles": 607
+    },
+    {
+      "At": "2026-10-14T06:06:58.1729025+00:00",
+      "ManagedBytes": 3324856,
+      "PrivateBytes": 27172864,
+      "Threads": 29,
+      "Handles": 607
+    },
+    {
+      "At": "2026-10-14T06:07:08.1856721+00:00",
+      "ManagedBytes": 6314296,
+      "PrivateBytes": 27332608,
+      "Threads": 28,
+      "Handles": 602
+    },
+    {
+      "At": "2026-10-14T06:07:18.2033024+00:00",
+      "ManagedBytes": 3067504,
+      "PrivateBytes": 27246592,
+      "Threads": 29,
+      "Handles": 605
+    },
+    {
+      "At": "2026-10-14T06:07:28.2128205+00:00",
+      "ManagedBytes": 1752976,
+      "PrivateBytes": 27693056,
+      "Threads": 31,
+      "Handles": 625
+    },
+    {
+      "At": "2026-10-14T06:07:38.2309372+00:00",
+      "ManagedBytes": 2690272,
+      "PrivateBytes": 28045312,
+      "Threads": 30,
+      "Handles": 623
+    },
+    {
+      "At": "2026-10-14T06:07:48.2461104+00:00",
+      "ManagedBytes": 5238000,
+      "PrivateBytes": 28270592,
+      "Threads": 27,
+      "Handles": 622
+    },
+    {
+      "At": "2026-10-14T06:07:58.2627412+00:00",
+      "ManagedBytes": 2143168,
+      "PrivateBytes": 30138368,
+      "Threads": 29,
+      "Handles": 628
+    },
+    {
+      "At": "2026-10-14T06:08:08.2725847+00:00",
+      "ManagedBytes": 5094704,
+      "PrivateBytes": 28602368,
+      "Threads": 28,
+      "Handles": 625
+    },
+    {
+      "At": "2026-10-14T06:08:18.2882707+00:00",
+      "ManagedBytes": 1867480,
+      "PrivateBytes": 27750400,
+      "Threads": 29,
+      "Handles": 628
+    },
+    {
+      "At": "2026-10-14T06:08:28.3021885+00:00",
+      "ManagedBytes": 5042520,
+      "PrivateBytes": 27660288,
+      "Threads": 27,
+      "Handles": 623
+    },
+    {
+      "At": "2026-10-14T06:08:38.3130902+00:00",
+      "ManagedBytes": 9959248,
+      "PrivateBytes": 27672576,
+      "Threads": 27,
+      "Handles": 624
+    },
+    {
+      "At": "2026-10-14T06:08:48.3323486+00:00",
+      "ManagedBytes": 5009392,
+      "PrivateBytes": 27566080,
+      "Threads": 26,
+      "Handles": 621
+    },
+    {
+      "At": "2026-10-14T06:08:58.3422997+00:00",
+      "ManagedBytes": 9711408,
+      "PrivateBytes": 27758592,
+      "Threads": 28,
+      "Handles": 631
+    },
+    {
+      "At": "2026-10-14T06:09:08.3534107+00:00",
+      "ManagedBytes": 4825056,
+      "PrivateBytes": 28368896,
+      "Threads": 29,
+      "Handles": 635
+    },
+    {
+      "At": "2026-10-14T06:09:18.3588918+00:00",
+      "ManagedBytes": 9483008,
+      "PrivateBytes": 27930624,
+      "Threads": 27,
+      "Handles": 631
+    },
+    {
+      "At": "2026-10-14T06:09:28.3781513+00:00",
+      "ManagedBytes": 3396480,
+      "PrivateBytes": 27754496,
+      "Threads": 27,
+      "Handles": 631
+    },
+    {
+      "At": "2026-10-14T06:09:38.3881126+00:00",
+      "ManagedBytes": 6827536,
+      "PrivateBytes": 27746304,
+      "Threads": 27,
+      "Handles": 631
+    },
+    {
+      "At": "2026-10-14T06:09:48.4006997+00:00",
+      "ManagedBytes": 5112192,
+      "PrivateBytes": 28504064,
+      "Threads": 28,
+      "Handles": 636
+    },
+    {
+      "At": "2026-10-14T06:09:58.4088663+00:00",
+      "ManagedBytes": 6705512,
+      "PrivateBytes": 29024256,
+      "Threads": 27,
+      "Handles": 629
+    },
+    {
+      "At": "2026-10-14T06:10:08.413407+00:00",
+      "ManagedBytes": 2080800,
+      "PrivateBytes": 28979200,
+      "Threads": 25,
+      "Handles": 625
+    },
+    {
+      "At": "2026-10-14T06:10:18.419161+00:00",
+      "ManagedBytes": 5096968,
+      "PrivateBytes": 28422144,
+      "Threads": 28,
+      "Handles": 627
+    },
+    {
+      "At": "2026-10-14T06:10:28.4339635+00:00",
+      "ManagedBytes": 9747656,
+      "PrivateBytes": 29286400,
+      "Threads": 30,
+      "Handles": 637
+    },
+    {
+      "At": "2026-10-14T06:10:38.450178+00:00",
+      "ManagedBytes": 4754648,
+      "PrivateBytes": 28667904,
+      "Threads": 30,
+      "Handles": 637
+    },
+    {
+      "At": "2026-10-14T06:10:48.4656014+00:00",
+      "ManagedBytes": 7677880,
+      "PrivateBytes": 28315648,
+      "Threads": 28,
+      "Handles": 633
+    },
+    {
+      "At": "2026-10-14T06:10:58.4741703+00:00",
+      "ManagedBytes": 4387680,
+      "PrivateBytes": 28180480,
+      "Threads": 28,
+      "Handles": 632
+    },
+    {
+      "At": "2026-10-14T06:11:08.4890793+00:00",
+      "ManagedBytes": 7367904,
+      "PrivateBytes": 28180480,
+      "Threads": 28,
+      "Handles": 632
+    },
+    {
+      "At": "2026-10-14T06:11:18.5066025+00:00",
+      "ManagedBytes": 3828832,
+      "PrivateBytes": 28209152,
+      "Threads": 28,
+      "Handles": 632
+    },
+    {
+      "At": "2026-10-14T06:11:28.5225505+00:00",
+      "ManagedBytes": 5982144,
+      "PrivateBytes": 28528640,
+      "Threads": 29,
+      "Handles": 635
+    },
+    {
+      "At": "2026-10-14T06:11:38.5379869+00:00",
+      "ManagedBytes": 3176064,
+      "PrivateBytes": 28557312,
+      "Threads": 28,
+      "Handles": 633
+    },
+    {
+      "At": "2026-10-14T06:11:48.5540524+00:00",
+      "ManagedBytes": 5350544,
+      "PrivateBytes": 28561408,
+      "Threads": 28,
+      "Handles": 633
+    },
+    {
+      "At": "2026-10-14T06:11:58.5684153+00:00",
+      "ManagedBytes": 2542448,
+      "PrivateBytes": 28700672,
+      "Threads": 26,
+      "Handles": 633
+    },
+    {
+      "At": "2026-10-14T06:12:08.5836779+00:00",
+      "ManagedBytes": 7604904,
+      "PrivateBytes": 29478912,
+      "Threads": 27,
+      "Handles": 643
+    },
+    {
+      "At": "2026-10-14T06:12:18.594815+00:00",
+      "ManagedBytes": 3239672,
+      "PrivateBytes": 30527488,
+      "Threads": 29,
+      "Handles": 653
+    },
+    {
+      "At": "2026-10-14T06:12:28.6092053+00:00",
+      "ManagedBytes": 5136432,
+      "PrivateBytes": 32452608,
+      "Threads": 28,
+      "Handles": 657
+    },
+    {
+      "At": "2026-10-14T06:12:38.6194391+00:00",
+      "ManagedBytes": 7881240,
+      "PrivateBytes": 29392896,
+      "Threads": 25,
+      "Handles": 649
+    },
+    {
+      "At": "2026-10-14T06:12:48.6245728+00:00",
+      "ManagedBytes": 5266152,
+      "PrivateBytes": 29454336,
+      "Threads": 25,
+      "Handles": 649
+    },
+    {
+      "At": "2026-10-14T06:12:58.6415736+00:00",
+      "ManagedBytes": 7744216,
+      "PrivateBytes": 28864512,
+      "Threads": 26,
+      "Handles": 654
+    },
+    {
+      "At": "2026-10-14T06:13:08.6602112+00:00",
+      "ManagedBytes": 5019048,
+      "PrivateBytes": 29679616,
+      "Threads": 27,
+      "Handles": 657
+    },
+    {
+      "At": "2026-10-14T06:13:18.674513+00:00",
+      "ManagedBytes": 7199864,
+      "PrivateBytes": 29761536,
+      "Threads": 28,
+      "Handles": 662
+    },
+    {
+      "At": "2026-10-14T06:13:28.6803914+00:00",
+      "ManagedBytes": 3777648,
+      "PrivateBytes": 29323264,
+      "Threads": 28,
+      "Handles": 659
+    },
+    {
+      "At": "2026-10-14T06:13:38.6944277+00:00",
+      "ManagedBytes": 7275968,
+      "PrivateBytes": 29167616,
+      "Threads": 27,
+      "Handles": 659
+    },
+    {
+      "At": "2026-10-14T06:13:48.7051585+00:00",
+      "ManagedBytes": 3952096,
+      "PrivateBytes": 29229056,
+      "Threads": 28,
+      "Handles": 662
+    },
+    {
+      "At": "2026-10-14T06:13:58.7222096+00:00",
+      "ManagedBytes": 6685288,
+      "PrivateBytes": 29257728,
+      "Threads": 27,
+      "Handles": 659
+    },
+    {
+      "At": "2026-10-14T06:14:08.7277637+00:00",
+      "ManagedBytes": 3291288,
+      "PrivateBytes": 29167616,
+      "Threads": 28,
+      "Handles": 662
+    },
+    {
+      "At": "2026-10-14T06:14:18.7344777+00:00",
+      "ManagedBytes": 6150400,
+      "PrivateBytes": 29114368,
+      "Threads": 27,
+      "Handles": 661
+    },
+    {
+      "At": "2026-10-14T06:14:28.7498646+00:00",
+      "ManagedBytes": 3949408,
+      "PrivateBytes": 31170560,
+      "Threads": 26,
+      "Handles": 656
+    },
+    {
+      "At": "2026-10-14T06:14:38.7710207+00:00",
+      "ManagedBytes": 9883216,
+      "PrivateBytes": 30949376,
+      "Threads": 25,
+      "Handles": 655
+    },
+    {
+      "At": "2026-10-14T06:14:48.782273+00:00",
+      "ManagedBytes": 9663632,
+      "PrivateBytes": 30416896,
+      "Threads": 23,
+      "Handles": 657
+    },
+    {
+      "At": "2026-10-14T06:14:58.7948428+00:00",
+      "ManagedBytes": 4783736,
+      "PrivateBytes": 29982720,
+      "Threads": 28,
+      "Handles": 677
+    },
+    {
+      "At": "2026-10-14T06:15:08.8133411+00:00",
+      "ManagedBytes": 7784448,
+      "PrivateBytes": 29511680,
+      "Threads": 28,
+      "Handles": 678
+    },
+    {
+      "At": "2026-10-14T06:15:18.8182305+00:00",
+      "ManagedBytes": 4615976,
+      "PrivateBytes": 29749248,
+      "Threads": 28,
+      "Handles": 673
+    },
+    {
+      "At": "2026-10-14T06:15:28.8355299+00:00",
+      "ManagedBytes": 7611856,
+      "PrivateBytes": 31367168,
+      "Threads": 29,
+      "Handles": 676
+    },
+    {
+      "At": "2026-10-14T06:15:38.8441856+00:00",
+      "ManagedBytes": 5075296,
+      "PrivateBytes": 30683136,
+      "Threads": 29,
+      "Handles": 679
+    },
+    {
+      "At": "2026-10-14T06:15:48.8557985+00:00",
+      "ManagedBytes": 7791192,
+      "PrivateBytes": 29990912,
+      "Threads": 28,
+      "Handles": 676
+    },
+    {
+      "At": "2026-10-14T06:15:58.8738888+00:00",
+      "ManagedBytes": 11047120,
+      "PrivateBytes": 29990912,
+      "Threads": 28,
+      "Handles": 677
+    },
+    {
+      "At": "2026-10-14T06:16:08.8835192+00:00",
+      "ManagedBytes": 7033608,
+      "PrivateBytes": 29990912,
+      "Threads": 28,
+      "Handles": 677
+    },
+    {
+      "At": "2026-10-14T06:16:18.89233+00:00",
+      "ManagedBytes": 10667360,
+      "PrivateBytes": 29945856,
+      "Threads": 30,
+      "Handles": 687
+    },
+    {
+      "At": "2026-10-14T06:16:28.905843+00:00",
+      "ManagedBytes": 6688440,
+      "PrivateBytes": 29843456,
+      "Threads": 27,
+      "Handles": 684
+    },
+    {
+      "At": "2026-10-14T06:16:38.9118215+00:00",
+      "ManagedBytes": 9890400,
+      "PrivateBytes": 29843456,
+      "Threads": 27,
+      "Handles": 684
+    },
+    {
+      "At": "2026-10-14T06:16:48.9276046+00:00",
+      "ManagedBytes": 7145160,
+      "PrivateBytes": 29954048,
+      "Threads": 28,
+      "Handles": 687
+    },
+    {
+      "At": "2026-10-14T06:16:58.9397587+00:00",
+      "ManagedBytes": 6464120,
+      "PrivateBytes": 30662656,
+      "Threads": 28,
+      "Handles": 687
+    },
+    {
+      "At": "2026-10-14T06:17:08.9473365+00:00",
+      "ManagedBytes": 5736456,
+      "PrivateBytes": 30134272,
+      "Threads": 22,
+      "Handles": 685
+    },
+    {
+      "At": "2026-10-14T06:17:18.9640457+00:00",
+      "ManagedBytes": 9703048,
+      "PrivateBytes": 29769728,
+      "Threads": 26,
+      "Handles": 703
+    },
+    {
+      "At": "2026-10-14T06:17:28.9744472+00:00",
+      "ManagedBytes": 5807984,
+      "PrivateBytes": 31182848,
+      "Threads": 28,
+      "Handles": 712
+    },
+    {
+      "At": "2026-10-14T06:17:38.9945221+00:00",
+      "ManagedBytes": 8871256,
+      "PrivateBytes": 29884416,
+      "Threads": 27,
+      "Handles": 709
+    },
+    {
+      "At": "2026-10-14T06:17:49.006132+00:00",
+      "ManagedBytes": 6036488,
+      "PrivateBytes": 29917184,
+      "Threads": 27,
+      "Handles": 709
+    },
+    {
+      "At": "2026-10-14T06:17:59.0162659+00:00",
+      "ManagedBytes": 8848736,
+      "PrivateBytes": 29913088,
+      "Threads": 26,
+      "Handles": 707
+    },
+    {
+      "At": "2026-10-14T06:18:09.0251867+00:00",
+      "ManagedBytes": 5562184,
+      "PrivateBytes": 29855744,
+      "Threads": 26,
+      "Handles": 707
+    },
+    {
+      "At": "2026-10-14T06:18:19.0335876+00:00",
+      "ManagedBytes": 8427480,
+      "PrivateBytes": 29855744,
+      "Threads": 26,
+      "Handles": 707
+    },
+    {
+      "At": "2026-10-14T06:18:29.0521678+00:00",
+      "ManagedBytes": 5128112,
+      "PrivateBytes": 33280000,
+      "Threads": 27,
+      "Handles": 710
+    },
+    {
+      "At": "2026-10-14T06:18:39.0619557+00:00",
+      "ManagedBytes": 7985704,
+      "PrivateBytes": 30232576,
+      "Threads": 26,
+      "Handles": 707
+    },
+    {
+      "At": "2026-10-14T06:18:49.0784151+00:00",
+      "ManagedBytes": 11672144,
+      "PrivateBytes": 30232576,
+      "Threads": 26,
+      "Handles": 707
+    },
+    {
+      "At": "2026-10-14T06:18:59.0826155+00:00",
+      "ManagedBytes": 5416192,
+      "PrivateBytes": 31318016,
+      "Threads": 27,
+      "Handles": 624
+    },
+    {
+      "At": "2026-10-14T06:19:09.0869107+00:00",
+      "ManagedBytes": 3957592,
+      "PrivateBytes": 32722944,
+      "Threads": 29,
+      "Handles": 633
+    },
+    {
+      "At": "2026-10-14T06:19:19.0961171+00:00",
+      "ManagedBytes": 5375856,
+      "PrivateBytes": 31764480,
+      "Threads": 28,
+      "Handles": 628
+    },
+    {
+      "At": "2026-10-14T06:19:29.1005901+00:00",
+      "ManagedBytes": 7398904,
+      "PrivateBytes": 32354304,
+      "Threads": 26,
+      "Handles": 629
+    },
+    {
+      "At": "2026-10-14T06:19:39.109323+00:00",
+      "ManagedBytes": 4441832,
+      "PrivateBytes": 31027200,
+      "Threads": 29,
+      "Handles": 642
+    },
+    {
+      "At": "2026-10-14T06:19:49.1212398+00:00",
+      "ManagedBytes": 7216344,
+      "PrivateBytes": 31051776,
+      "Threads": 29,
+      "Handles": 641
+    },
+    {
+      "At": "2026-10-14T06:19:59.1275143+00:00",
+      "ManagedBytes": 2339520,
+      "PrivateBytes": 31043584,
+      "Threads": 29,
+      "Handles": 642
+    },
+    {
+      "At": "2026-10-14T06:20:09.1447109+00:00",
+      "ManagedBytes": 6569664,
+      "PrivateBytes": 31182848,
+      "Threads": 28,
+      "Handles": 639
+    },
+    {
+      "At": "2026-10-14T06:20:19.1562778+00:00",
+      "ManagedBytes": 10038312,
+      "PrivateBytes": 31219712,
+      "Threads": 29,
+      "Handles": 642
+    },
+    {
+      "At": "2026-10-14T06:20:29.1650465+00:00",
+      "ManagedBytes": 6012640,
+      "PrivateBytes": 31215616,
+      "Threads": 29,
+      "Handles": 642
+    },
+    {
+      "At": "2026-10-14T06:20:39.1748588+00:00",
+      "ManagedBytes": 9591632,
+      "PrivateBytes": 31223808,
+      "Threads": 29,
+      "Handles": 643
+    },
+    {
+      "At": "2026-10-14T06:20:49.1843849+00:00",
+      "ManagedBytes": 5091608,
+      "PrivateBytes": 30941184,
+      "Threads": 28,
+      "Handles": 636
+    },
+    {
+      "At": "2026-10-14T06:20:59.1949925+00:00",
+      "ManagedBytes": 7009448,
+      "PrivateBytes": 31002624,
+      "Threads": 27,
+      "Handles": 636
+    },
+    {
+      "At": "2026-10-14T06:21:09.2115271+00:00",
+      "ManagedBytes": 4804032,
+      "PrivateBytes": 31002624,
+      "Threads": 27,
+      "Handles": 636
+    },
+    {
+      "At": "2026-10-14T06:21:19.2287146+00:00",
+      "ManagedBytes": 6215480,
+      "PrivateBytes": 30879744,
+      "Threads": 27,
+      "Handles": 636
+    },
+    {
+      "At": "2026-10-14T06:21:29.2454667+00:00",
+      "ManagedBytes": 5895648,
+      "PrivateBytes": 31240192,
+      "Threads": 28,
+      "Handles": 643
+    },
+    {
+      "At": "2026-10-14T06:21:39.247893+00:00",
+      "ManagedBytes": 7276088,
+      "PrivateBytes": 31383552,
+      "Threads": 27,
+      "Handles": 639
+    },
+    {
+      "At": "2026-10-14T06:21:49.2597903+00:00",
+      "ManagedBytes": 9622184,
+      "PrivateBytes": 31481856,
+      "Threads": 27,
+      "Handles": 649
+    },
+    {
+      "At": "2026-10-14T06:21:59.2787558+00:00",
+      "ManagedBytes": 5796304,
+      "PrivateBytes": 31346688,
+      "Threads": 27,
+      "Handles": 647
+    },
+    {
+      "At": "2026-10-14T06:22:09.2909168+00:00",
+      "ManagedBytes": 9185856,
+      "PrivateBytes": 31510528,
+      "Threads": 27,
+      "Handles": 647
+    },
+    {
+      "At": "2026-10-14T06:22:19.3048858+00:00",
+      "ManagedBytes": 5084816,
+      "PrivateBytes": 31539200,
+      "Threads": 27,
+      "Handles": 647
+    },
+    {
+      "At": "2026-10-14T06:22:29.3190311+00:00",
+      "ManagedBytes": 7807328,
+      "PrivateBytes": 31580160,
+      "Threads": 27,
+      "Handles": 648
+    },
+    {
+      "At": "2026-10-14T06:22:39.3359898+00:00",
+      "ManagedBytes": 4441184,
+      "PrivateBytes": 30990336,
+      "Threads": 27,
+      "Handles": 648
+    },
+    {
+      "At": "2026-10-14T06:22:49.3472371+00:00",
+      "ManagedBytes": 5877736,
+      "PrivateBytes": 30994432,
+      "Threads": 27,
+      "Handles": 650
+    },
+    {
+      "At": "2026-10-14T06:22:59.362855+00:00",
+      "ManagedBytes": 3860544,
+      "PrivateBytes": 30793728,
+      "Threads": 25,
+      "Handles": 646
+    },
+    {
+      "At": "2026-10-14T06:23:09.3701221+00:00",
+      "ManagedBytes": 5253832,
+      "PrivateBytes": 30867456,
+      "Threads": 27,
+      "Handles": 656
+    },
+    {
+      "At": "2026-10-14T06:23:19.3864262+00:00",
+      "ManagedBytes": 1977664,
+      "PrivateBytes": 30965760,
+      "Threads": 28,
+      "Handles": 659
+    },
+    {
+      "At": "2026-10-14T06:23:29.3953746+00:00",
+      "ManagedBytes": 6394792,
+      "PrivateBytes": 30896128,
+      "Threads": 26,
+      "Handles": 651
+    },
+    {
+      "At": "2026-10-14T06:23:39.40787+00:00",
+      "ManagedBytes": 9978672,
+      "PrivateBytes": 30834688,
+      "Threads": 26,
+      "Handles": 651
+    },
+    {
+      "At": "2026-10-14T06:23:49.4215267+00:00",
+      "ManagedBytes": 7517864,
+      "PrivateBytes": 31289344,
+      "Threads": 28,
+      "Handles": 659
+    },
+    {
+      "At": "2026-10-14T06:23:59.4333979+00:00",
+      "ManagedBytes": 9852848,
+      "PrivateBytes": 32784384,
+      "Threads": 28,
+      "Handles": 658
+    },
+    {
+      "At": "2026-10-14T06:24:09.4412716+00:00",
+      "ManagedBytes": 4619680,
+      "PrivateBytes": 33722368,
+      "Threads": 26,
+      "Handles": 660
+    },
+    {
+      "At": "2026-10-14T06:24:19.4502647+00:00",
+      "ManagedBytes": 6341400,
+      "PrivateBytes": 31813632,
+      "Threads": 25,
+      "Handles": 657
+    },
+    {
+      "At": "2026-10-14T06:24:29.4682197+00:00",
+      "ManagedBytes": 4272168,
+      "PrivateBytes": 33251328,
+      "Threads": 27,
+      "Handles": 665
+    },
+    {
+      "At": "2026-10-14T06:24:39.4737066+00:00",
+      "ManagedBytes": 7219152,
+      "PrivateBytes": 31424512,
+      "Threads": 26,
+      "Handles": 662
+    },
+    {
+      "At": "2026-10-14T06:24:49.4861028+00:00",
+      "ManagedBytes": 3610216,
+      "PrivateBytes": 31424512,
+      "Threads": 26,
+      "Handles": 662
+    },
+    {
+      "At": "2026-10-14T06:24:59.4927407+00:00",
+      "ManagedBytes": 6513368,
+      "PrivateBytes": 31178752,
+      "Threads": 25,
+      "Handles": 660
+    },
+    {
+      "At": "2026-10-14T06:25:09.5047651+00:00",
+      "ManagedBytes": 9908584,
+      "PrivateBytes": 31379456,
+      "Threads": 27,
+      "Handles": 668
+    },
+    {
+      "At": "2026-10-14T06:25:19.5142776+00:00",
+      "ManagedBytes": 5906416,
+      "PrivateBytes": 31334400,
+      "Threads": 26,
+      "Handles": 665
+    },
+    {
+      "At": "2026-10-14T06:25:29.5203448+00:00",
+      "ManagedBytes": 7338000,
+      "PrivateBytes": 31334400,
+      "Threads": 26,
+      "Handles": 665
+    },
+    {
+      "At": "2026-10-14T06:25:39.5356475+00:00",
+      "ManagedBytes": 5527992,
+      "PrivateBytes": 31215616,
+      "Threads": 26,
+      "Handles": 665
+    },
+    {
+      "At": "2026-10-14T06:25:49.5442858+00:00",
+      "ManagedBytes": 6942248,
+      "PrivateBytes": 31215616,
+      "Threads": 26,
+      "Handles": 665
+    },
+    {
+      "At": "2026-10-14T06:25:59.5596785+00:00",
+      "ManagedBytes": 5159224,
+      "PrivateBytes": 31215616,
+      "Threads": 26,
+      "Handles": 665
+    },
+    {
+      "At": "2026-10-14T06:26:09.571696+00:00",
+      "ManagedBytes": 7501816,
+      "PrivateBytes": 32006144,
+      "Threads": 26,
+      "Handles": 664
+    },
+    {
+      "At": "2026-10-14T06:26:19.5899294+00:00",
+      "ManagedBytes": 6224760,
+      "PrivateBytes": 32096256,
+      "Threads": 26,
+      "Handles": 661
+    },
+    {
+      "At": "2026-10-14T06:26:29.6051815+00:00",
+      "ManagedBytes": 5941104,
+      "PrivateBytes": 34226176,
+      "Threads": 23,
+      "Handles": 660
+    },
+    {
+      "At": "2026-10-14T06:26:39.6173449+00:00",
+      "ManagedBytes": 9927976,
+      "PrivateBytes": 31444992,
+      "Threads": 26,
+      "Handles": 678
+    },
+    {
+      "At": "2026-10-14T06:26:49.6278501+00:00",
+      "ManagedBytes": 5977048,
+      "PrivateBytes": 31444992,
+      "Threads": 26,
+      "Handles": 679
+    },
+    {
+      "At": "2026-10-14T06:26:59.6429503+00:00",
+      "ManagedBytes": 7246704,
+      "PrivateBytes": 31072256,
+      "Threads": 26,
+      "Handles": 679
+    },
+    {
+      "At": "2026-10-14T06:27:09.6589664+00:00",
+      "ManagedBytes": 3703800,
+      "PrivateBytes": 31072256,
+      "Threads": 26,
+      "Handles": 679
+    },
+    {
+      "At": "2026-10-14T06:27:19.6733943+00:00",
+      "ManagedBytes": 8192544,
+      "PrivateBytes": 31129600,
+      "Threads": 26,
+      "Handles": 679
+    },
+    {
+      "At": "2026-10-14T06:27:29.6920724+00:00",
+      "ManagedBytes": 4946752,
+      "PrivateBytes": 31158272,
+      "Threads": 26,
+      "Handles": 680
+    },
+    {
+      "At": "2026-10-14T06:27:39.7079125+00:00",
+      "ManagedBytes": 7737032,
+      "PrivateBytes": 31158272,
+      "Threads": 26,
+      "Handles": 681
+    },
+    {
+      "At": "2026-10-14T06:27:49.7159858+00:00",
+      "ManagedBytes": 4294344,
+      "PrivateBytes": 31191040,
+      "Threads": 27,
+      "Handles": 686
+    },
+    {
+      "At": "2026-10-14T06:27:59.731722+00:00",
+      "ManagedBytes": 7502552,
+      "PrivateBytes": 31195136,
+      "Threads": 27,
+      "Handles": 686
+    },
+    {
+      "At": "2026-10-14T06:28:09.7486984+00:00",
+      "ManagedBytes": 8789888,
+      "PrivateBytes": 31010816,
+      "Threads": 25,
+      "Handles": 682
+    },
+    {
+      "At": "2026-10-14T06:28:19.7681746+00:00",
+      "ManagedBytes": 6918848,
+      "PrivateBytes": 31469568,
+      "Threads": 26,
+      "Handles": 688
+    },
+    {
+      "At": "2026-10-14T06:28:29.7814722+00:00",
+      "ManagedBytes": 4662056,
+      "PrivateBytes": 31236096,
+      "Threads": 28,
+      "Handles": 694
+    },
+    {
+      "At": "2026-10-14T06:28:39.7927812+00:00",
+      "ManagedBytes": 10929088,
+      "PrivateBytes": 31043584,
+      "Threads": 26,
+      "Handles": 687
+    },
+    {
+      "At": "2026-10-14T06:28:49.8024853+00:00",
+      "ManagedBytes": 8616432,
+      "PrivateBytes": 31268864,
+      "Threads": 25,
+      "Handles": 704
+    },
+    {
+      "At": "2026-10-14T06:28:59.8112031+00:00",
+      "ManagedBytes": 6931048,
+      "PrivateBytes": 31404032,
+      "Threads": 27,
+      "Handles": 711
+    },
+    {
+      "At": "2026-10-14T06:29:09.8279948+00:00",
+      "ManagedBytes": 8379280,
+      "PrivateBytes": 31404032,
+      "Threads": 27,
+      "Handles": 711
+    },
+    {
+      "At": "2026-10-14T06:29:19.8404791+00:00",
+      "ManagedBytes": 6008448,
+      "PrivateBytes": 31367168,
+      "Threads": 25,
+      "Handles": 701
+    },
+    {
+      "At": "2026-10-14T06:29:29.8461931+00:00",
+      "ManagedBytes": 7839680,
+      "PrivateBytes": 30998528,
+      "Threads": 25,
+      "Handles": 695
+    },
+    {
+      "At": "2026-10-14T06:29:39.8594982+00:00",
+      "ManagedBytes": 5894712,
+      "PrivateBytes": 31215616,
+      "Threads": 27,
+      "Handles": 705
+    },
+    {
+      "At": "2026-10-14T06:29:49.8775307+00:00",
+      "ManagedBytes": 7773776,
+      "PrivateBytes": 31248384,
+      "Threads": 27,
+      "Handles": 705
+    },
+    {
+      "At": "2026-10-14T06:29:59.888442+00:00",
+      "ManagedBytes": 4495328,
+      "PrivateBytes": 31240192,
+      "Threads": 26,
+      "Handles": 703
+    },
+    {
+      "At": "2026-10-14T06:30:09.9005623+00:00",
+      "ManagedBytes": 8361800,
+      "PrivateBytes": 31219712,
+      "Threads": 28,
+      "Handles": 713
+    },
+    {
+      "At": "2026-10-14T06:30:19.9103372+00:00",
+      "ManagedBytes": 5193000,
+      "PrivateBytes": 31223808,
+      "Threads": 28,
+      "Handles": 713
+    },
+    {
+      "At": "2026-10-14T06:30:29.9208153+00:00",
+      "ManagedBytes": 6874056,
+      "PrivateBytes": 31199232,
+      "Threads": 28,
+      "Handles": 714
+    },
+    {
+      "At": "2026-10-14T06:30:39.9313015+00:00",
+      "ManagedBytes": 4552208,
+      "PrivateBytes": 31092736,
+      "Threads": 26,
+      "Handles": 703
+    },
+    {
+      "At": "2026-10-14T06:30:49.9448421+00:00",
+      "ManagedBytes": 8833768,
+      "PrivateBytes": 32223232,
+      "Threads": 28,
+      "Handles": 628
+    },
+    {
+      "At": "2026-10-14T06:30:59.9586457+00:00",
+      "ManagedBytes": 3576288,
+      "PrivateBytes": 31678464,
+      "Threads": 28,
+      "Handles": 626
+    },
+    {
+      "At": "2026-10-14T06:31:09.9641543+00:00",
+      "ManagedBytes": 5931232,
+      "PrivateBytes": 33054720,
+      "Threads": 26,
+      "Handles": 629
+    },
+    {
+      "At": "2026-10-14T06:31:19.9793116+00:00",
+      "ManagedBytes": 9911184,
+      "PrivateBytes": 31924224,
+      "Threads": 25,
+      "Handles": 627
+    },
+    {
+      "At": "2026-10-14T06:31:29.9945635+00:00",
+      "ManagedBytes": 5438912,
+      "PrivateBytes": 31678464,
+      "Threads": 27,
+      "Handles": 637
+    },
+    {
+      "At": "2026-10-14T06:31:40.0122247+00:00",
+      "ManagedBytes": 9427648,
+      "PrivateBytes": 31186944,
+      "Threads": 27,
+      "Handles": 637
+    },
+    {
+      "At": "2026-10-14T06:31:50.0313471+00:00",
+      "ManagedBytes": 5073936,
+      "PrivateBytes": 31080448,
+      "Threads": 27,
+      "Handles": 644
+    },
+    {
+      "At": "2026-10-14T06:32:00.0380916+00:00",
+      "ManagedBytes": 9063288,
+      "PrivateBytes": 31080448,
+      "Threads": 27,
+      "Handles": 644
+    },
+    {
+      "At": "2026-10-14T06:32:10.0551163+00:00",
+      "ManagedBytes": 4120928,
+      "PrivateBytes": 31145984,
+      "Threads": 28,
+      "Handles": 648
+    },
+    {
+      "At": "2026-10-14T06:32:20.0703724+00:00",
+      "ManagedBytes": 7068440,
+      "PrivateBytes": 31174656,
+      "Threads": 28,
+      "Handles": 645
+    },
+    {
+      "At": "2026-10-14T06:32:30.0763844+00:00",
+      "ManagedBytes": 3817120,
+      "PrivateBytes": 31178752,
+      "Threads": 27,
+      "Handles": 646
+    },
+    {
+      "At": "2026-10-14T06:32:40.0857699+00:00",
+      "ManagedBytes": 6771688,
+      "PrivateBytes": 31178752,
+      "Threads": 27,
+      "Handles": 646
+    },
+    {
+      "At": "2026-10-14T06:32:50.1036245+00:00",
+      "ManagedBytes": 3419216,
+      "PrivateBytes": 31113216,
+      "Threads": 26,
+      "Handles": 644
+    },
+    {
+      "At": "2026-10-14T06:33:00.1117764+00:00",
+      "ManagedBytes": 6193680,
+      "PrivateBytes": 31117312,
+      "Threads": 26,
+      "Handles": 644
+    },
+    {
+      "At": "2026-10-14T06:33:10.1249861+00:00",
+      "ManagedBytes": 4691024,
+      "PrivateBytes": 32014336,
+      "Threads": 28,
+      "Handles": 652
+    },
+    {
+      "At": "2026-10-14T06:33:20.1336142+00:00",
+      "ManagedBytes": 5374304,
+      "PrivateBytes": 31428608,
+      "Threads": 28,
+      "Handles": 651
+    },
+    {
+      "At": "2026-10-14T06:33:30.1485732+00:00",
+      "ManagedBytes": 7263048,
+      "PrivateBytes": 35180544,
+      "Threads": 27,
+      "Handles": 655
+    },
+    {
+      "At": "2026-10-14T06:33:40.1559671+00:00",
+      "ManagedBytes": 4308664,
+      "PrivateBytes": 31096832,
+      "Threads": 26,
+      "Handles": 652
+    },
+    {
+      "At": "2026-10-14T06:33:50.1725446+00:00",
+      "ManagedBytes": 7153864,
+      "PrivateBytes": 31096832,
+      "Threads": 26,
+      "Handles": 652
+    },
+    {
+      "At": "2026-10-14T06:34:00.1780679+00:00",
+      "ManagedBytes": 3571800,
+      "PrivateBytes": 31096832,
+      "Threads": 26,
+      "Handles": 652
+    },
+    {
+      "At": "2026-10-14T06:34:10.1972239+00:00",
+      "ManagedBytes": 6505600,
+      "PrivateBytes": 31096832,
+      "Threads": 26,
+      "Handles": 652
+    },
+    {
+      "At": "2026-10-14T06:34:20.2114038+00:00",
+      "ManagedBytes": 3249504,
+      "PrivateBytes": 31195136,
+      "Threads": 28,
+      "Handles": 662
+    },
+    {
+      "At": "2026-10-14T06:34:30.216786+00:00",
+      "ManagedBytes": 6223728,
+      "PrivateBytes": 31195136,
+      "Threads": 28,
+      "Handles": 662
+    },
+    {
+      "At": "2026-10-14T06:34:40.2226346+00:00",
+      "ManagedBytes": 10186296,
+      "PrivateBytes": 31125504,
+      "Threads": 27,
+      "Handles": 660
+    },
+    {
+      "At": "2026-10-14T06:34:50.2359598+00:00",
+      "ManagedBytes": 5712544,
+      "PrivateBytes": 31260672,
+      "Threads": 28,
+      "Handles": 656
+    },
+    {
+      "At": "2026-10-14T06:35:00.2499302+00:00",
+      "ManagedBytes": 9806456,
+      "PrivateBytes": 31256576,
+      "Threads": 28,
+      "Handles": 658
+    },
+    {
+      "At": "2026-10-14T06:35:10.270132+00:00",
+      "ManagedBytes": 5268432,
+      "PrivateBytes": 31420416,
+      "Threads": 29,
+      "Handles": 661
+    },
+    {
+      "At": "2026-10-14T06:35:20.2797839+00:00",
+      "ManagedBytes": 7864128,
+      "PrivateBytes": 31244288,
+      "Threads": 26,
+      "Handles": 654
+    }
+  ]
+}

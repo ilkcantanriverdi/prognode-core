@@ -1,5 +1,5 @@
 ; PROGNODE Client installer (Inno Setup 6) for office and control-room PCs that receive alarm
-; notifications from PROGNODE Core over the plant network. Per-user install, no admin rights needed.
+; notifications from PROGNODE Monitor over the plant network. Per-user install, no admin rights needed.
 ; Build with installer\build.ps1.
 
 #ifndef AppVersion

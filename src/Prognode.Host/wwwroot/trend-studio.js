@@ -37,7 +37,7 @@
     updateCounts();
   }
   const studioStrings={
-    en:{signalExplorer:'Signals',searchPlaceholder:'Search tags or devices...',loading:'Loading Historian Tags…',addHistorian:'＋ Add Tag to Historian',compareSignals:'Compare trends',compareHelp:'Keep individual charts and add one overlay for selected signals.',savedViews:'Saved views',saveOptional:'Optional: save this view',localData:'Data stays on this Core',clearSelection:'Clear selection',selectSignals:'Select a signal to see its trend',historianLocal:'LOCAL HISTORIAN',custom:'Custom',from:'From',to:'To',applyRange:'Apply range',alarmScale:'Y axis also includes configured alarm thresholds',compareTitle:'COMPARISON OF SELECTED SIGNALS',navigator:'TIME NAVIGATOR',navigationHelp:'Drag to zoom · Mouse wheel scrolls · Double-click to reset',statistics:'Signal statistics',selectedRange:'SELECTED RANGE',processContext:'Process events',alarmEvents:'Alarm events',alarmFlags:'Chart flags',alarmThresholds:'Alarm thresholds',batch:'Batch / Lot',systemAlarms:'System alarms',lastSample:'Latest sample',noSamples:'No samples in this range',recordedOnly:'Only Tags added to Historian are shown.',noHistorian:'No Tags added to Historian yet.',live:'LIVE · PAUSE',paused:'PAUSED · RESUME',pointCount:'rendered points',ready:'CORE CONNECTED',empty:'First add a Tag to Historian to chart it.'}
+    en:{signalExplorer:'Signals',searchPlaceholder:'Search tags or devices...',loading:'Loading Historian Tags…',addHistorian:'＋ Add Tag to Historian',compareSignals:'Compare trends',compareHelp:'Keep individual charts and add one overlay for selected signals.',savedViews:'Saved views',saveOptional:'Optional: save this view',localData:'Data stays on this PROGNODE Monitor',clearSelection:'Clear selection',selectSignals:'Select a signal to see its trend',historianLocal:'LOCAL HISTORIAN',custom:'Custom',from:'From',to:'To',applyRange:'Apply range',alarmScale:'Y axis also includes configured alarm thresholds',compareTitle:'COMPARISON OF SELECTED SIGNALS',navigator:'TIME NAVIGATOR',navigationHelp:'Drag to zoom · Mouse wheel scrolls · Double-click to reset',statistics:'Signal statistics',selectedRange:'SELECTED RANGE',processContext:'Process events',alarmEvents:'Alarm events',alarmFlags:'Chart flags',alarmThresholds:'Alarm thresholds',batch:'Batch / Lot',systemAlarms:'System alarms',lastSample:'Latest sample',noSamples:'No samples in this range',recordedOnly:'Only Tags added to Historian are shown.',noHistorian:'No Tags added to Historian yet.',live:'LIVE · PAUSE',paused:'PAUSED · RESUME',pointCount:'rendered points',ready:'CORE CONNECTED',empty:'First add a Tag to Historian to chart it.'}
   };
   function studioText(key){return (studioStrings[state.language]||studioStrings.en)[key]||studioStrings.en[key]||key;}
   function applyStudioLanguage(){
@@ -225,7 +225,7 @@
     const secs=Math.round(age/1000),lag=secs<60?secs+'s':Math.round(secs/60)+'m';
     badge.textContent=(stale?'No new samples · ':'Latest sample · ')+fmtTime(latest)+(ui.live?' · '+lag+' ago':'');
     badge.dataset.health=stale?'stale':'good';
-    badge.title=stale?'Chart is still running, but Core Historian has no newer samples. Check tag quality and recording settings.':'';
+    badge.title=stale?'Chart is still running, but PROGNODE Monitor Historian has no newer samples. Check tag quality and recording settings.':'';
   }
 
   function updateModeControls(){

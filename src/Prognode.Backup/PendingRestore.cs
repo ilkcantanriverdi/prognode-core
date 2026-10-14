@@ -60,7 +60,7 @@ public static class PendingRestore
                 throw new InvalidDataException("The staged restore folder is missing or not next to the data folder.");
             staging = candidate;
             if (!TrustedOwner(marker) || !TrustedOwner(staging))
-                throw new UnauthorizedAccessException("The restore request was not created by PROGNODE Core or an administrator.");
+                throw new UnauthorizedAccessException("The restore request was not created by PROGNODE Monitor or an administrator.");
             var rollback = BackupArchive.ApplyStagedRestore(staging, dataRoot);
             result = new Result(true, $"Restored {Path.GetFileName(request.SourceFile)}.", rollback, DateTimeOffset.UtcNow);
         }

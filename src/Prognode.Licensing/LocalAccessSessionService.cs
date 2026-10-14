@@ -86,7 +86,7 @@ public sealed class LocalAccessSessionService(
         var snapshot = provider.GetCurrent();
         if (!snapshot.IsValid)
             throw new InvalidOperationException(snapshot.Status == FileBackedLicenseProvider.ActivationRequiredStatus
-                ? "Activate this PROGNODE Core before signing in."
+                ? "Activate this PROGNODE Monitor before signing in."
                 : "Import a valid signed PROGNODE license before signing in.");
 
 

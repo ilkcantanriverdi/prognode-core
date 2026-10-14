@@ -167,7 +167,7 @@ public sealed class LicenseActivationService(
             throw new InvalidOperationException(reason switch
             {
                 "license_mismatch" => "This activation file belongs to a different license.",
-                "server_mismatch" => "This activation file was issued for a different PROGNODE Core installation.",
+                "server_mismatch" => "This activation file was issued for a different PROGNODE Monitor installation.",
                 _ => "This activation file was issued for a different computer.",
             });
         store.WriteAtomic(certificateBytes);

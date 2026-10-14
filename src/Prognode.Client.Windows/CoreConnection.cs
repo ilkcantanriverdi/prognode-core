@@ -78,7 +78,7 @@ public sealed class CoreConnection : IDisposable
                 var port = Field(root, "secureApiPort") is { ValueKind: JsonValueKind.Number } sp ? sp.GetInt32() : 5443;
                 if (found.Any(x => x.ServerId == id)) continue;
                 var name = Field(root, "displayName") is { ValueKind: JsonValueKind.String } dn ? dn.GetString() : null;
-                found.Add(new DiscoveredCore(id, string.IsNullOrWhiteSpace(name) ? "PROGNODE Core" : name, result.RemoteEndPoint.Address, port));
+                found.Add(new DiscoveredCore(id, string.IsNullOrWhiteSpace(name) ? "PROGNODE Monitor" : name, result.RemoteEndPoint.Address, port));
             }
             catch (OperationCanceledException) { break; }
             catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { }
@@ -109,15 +109,15 @@ public sealed class CoreConnection : IDisposable
             X509Certificate? captured = null;
             await using var ssl = new SslStream(tcp.GetStream(), false, (_, cert, _, _) => { captured = cert; return true; });
             await ssl.AuthenticateAsClientAsync(new SslClientAuthenticationOptions { TargetHost = host }, timeout.Token);
-            der = captured?.GetRawCertData() ?? throw new InvalidOperationException("PROGNODE Core did not present a certificate.");
+            der = captured?.GetRawCertData() ?? throw new InvalidOperationException("PROGNODE Monitor did not present a certificate.");
         }
         var pin = Convert.ToHexString(SHA256.HashData(der));
         using var pinned = new CoreConnection(host, port, pin);
         var identity = await pinned._http.GetFromJsonAsync<JsonElement>("api/server/identity", ct);
         var serverId = identity.GetProperty("serverId").GetGuid();
         if (expectedServerId is { } expected && expected != serverId)
-            throw new InvalidOperationException("The discovered Core and the Core answering on HTTPS are not the same.");
-        var name = identity.TryGetProperty("displayName", out var dn) ? dn.GetString() ?? "PROGNODE Core" : "PROGNODE Core";
+            throw new InvalidOperationException("The discovered PROGNODE Monitor and the PROGNODE Monitor answering on HTTPS are not the same.");
+        var name = identity.TryGetProperty("displayName", out var dn) ? dn.GetString() ?? "PROGNODE Monitor" : "PROGNODE Monitor";
         return new CoreCandidate(serverId, name, host, port, pin, CheckCode(serverId, der));
     }
 
@@ -157,7 +157,7 @@ public sealed class CoreConnection : IDisposable
             var message = body.ValueKind == JsonValueKind.Object && body.TryGetProperty("message", out var m) ? m.GetString() : null;
             throw new InvalidOperationException(message ?? $"Pairing was refused (HTTP {(int)response.StatusCode}). Check the code and that it has not expired.");
         }
-        return (body.GetProperty("clientId").GetGuid(), body.GetProperty("accessToken").GetString() ?? throw new InvalidOperationException("Core returned no access token."));
+        return (body.GetProperty("clientId").GetGuid(), body.GetProperty("accessToken").GetString() ?? throw new InvalidOperationException("PROGNODE Monitor returned no access token."));
     }
 
     public async Task<DeviceAccess?> GetAccessAsync(CancellationToken ct = default)
@@ -202,14 +202,14 @@ public sealed class CoreConnection : IDisposable
         if (response.StatusCode == HttpStatusCode.Conflict)
             throw new InvalidOperationException("The alarm restarted or was already handled. Refresh and try again.");
         if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
-            throw new InvalidOperationException("This PC is not allowed to acknowledge alarms. A Core administrator can allow it in Settings › Mobile Access › Paired devices.");
+            throw new InvalidOperationException("This PC is not allowed to acknowledge alarms. A PROGNODE Monitor administrator can allow it in Settings › Mobile Access › Paired devices.");
         response.EnsureSuccessStatusCode();
     }
 
     private static void EnsureAuthorized(HttpResponseMessage response)
     {
         if (response.StatusCode == HttpStatusCode.Unauthorized)
-            throw new UnauthorizedAccessException("This PC is no longer paired with PROGNODE Core.");
+            throw new UnauthorizedAccessException("This PC is no longer paired with PROGNODE Monitor.");
         response.EnsureSuccessStatusCode();
     }
 

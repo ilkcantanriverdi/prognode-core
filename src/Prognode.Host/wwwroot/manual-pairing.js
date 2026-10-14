@@ -16,7 +16,7 @@ async function request(path,method='GET'){
 }
 async function cancel(){clear();try{await request('/api/client/manual-pairing/cancel','POST');}catch{ /* no secrets cached */ }}
 async function generate(){if(requesting)return;requesting=true;const renewing=expireAt>0;clear();byId('manualRefresh').disabled=true;
- byId('manualStatus').textContent='Checking actual Core TLS and administrator session…';
+ byId('manualStatus').textContent='Checking actual PROGNODE Monitor TLS and administrator session…';
  try{if(renewing)await request('/api/client/manual-pairing/cancel','POST');const b=await request('/api/client/manual-pairing');
   byId('serverPairingCode').textContent=b.pairingCode;byId('manualSasCode').textContent=b.certificateCheckCode;expireAt=Date.now()+1000*(b.expiresInSeconds||120);
   byId('manualStatus').textContent='Compare the PHONE-computed 12 characters with this trusted PC screen; cancel on any mismatch.';

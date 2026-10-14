@@ -40,7 +40,7 @@ public sealed class LanAutoRestartHostedService(
                         requested <= DateTimeOffset.UtcNow.AddSeconds(10) &&
                         DateTimeOffset.UtcNow - requested < TimeSpan.FromMinutes(3))
                     {
-                        log.LogInformation("Locally approved LAN setup requires Core restart; stopping cleanly under the local supervisor.");
+                        log.LogInformation("Locally approved LAN setup requires PROGNODE Monitor restart; stopping cleanly under the local supervisor.");
                         lifetime.StopApplication();
                         return;
                     }

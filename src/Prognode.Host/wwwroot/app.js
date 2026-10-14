@@ -55,7 +55,7 @@ const state = {
 const translations = {
   en: {
     industrialMonitoring:"Industrial Monitoring", operations:"OPERATIONS", overview:"Overview", devices:"Devices", tags:"Tags", alarms:"Alarms", trends:"Trends", historian:"Historian", system:"SYSTEM", diagnostics:"Diagnostics", notifications:"Notifications", license:"License", settings:"Settings",
-    coreRunning:"Core Running", localSystem:"LOCAL SYSTEM", systemHealthy:"System Healthy", localByDesign:"LOCAL BY DESIGN", knowBefore:"Know before it stops.",
+    coreRunning:"Monitor running", localSystem:"LOCAL SYSTEM", systemHealthy:"System Healthy", localByDesign:"LOCAL BY DESIGN", knowBefore:"Know before it stops.",
     heroText:"Connect industrial devices, verify live data, create alarms and start recording — without sending process data to the cloud.",
     addFirstDevice:"+ Add your first device", monitoredTags:"Monitored Tags", tagPollingActive:"Live tag polling runtime is active", activeAlarms:"Active Alarms", alarmEngineNext:"Alarm evaluation is active", healthy:"Healthy",
     quickStart:"QUICK START", commissioningPath:"15-minute commissioning path", serviceFoundationRunning:"Service foundation is running", devEntitlementActive:"Local entitlement is active",
@@ -69,7 +69,7 @@ const translations = {
     tag:"Tag", address:"Address", datatype:"Datatype", value:"Value", dataStatus:"Status", updated:"Updated", edit:"Edit",
     alarmsPlaceholder:"Alarm definitions will reference existing Tags. BOOL and integer WORD Tags can be selected as digital alarm sources and assigned alarm text.", trendsPlaceholder:"Fast local trends with time-range-aware historian queries.", historianPlaceholder:"Retention, storage health, CSV export and recorded tag configuration.", diagnosticsPlaceholder:"Connection latency, last poll, retry count, communication errors and device health.", modbusDiagnosticsSoon:"Connection health, polling and communication diagnostics.", nextMilestone:"System detail",
     notificationsText:"Alarm notifications on the PCs of your plant network, through the PROGNODE Windows Client.", sendTestNotification:"Send test notification", agentStatus:"WINDOWS CLIENT",
-    agentHelp:"The Windows Client runs in the system tray and shows alarm notifications even when the browser is closed. Download it from PROGNODE Account.", coreNotificationApi:"Core Notification API", trayAgent:"Windows Client on this PC", runSeparately:"Run separately", recentEvents:"RECENT EVENTS",
+    agentHelp:"The Windows Client runs in the system tray and shows alarm notifications even when the browser is closed. Download it from PROGNODE Account.", coreNotificationApi:"PROGNODE Monitor Notification API", trayAgent:"Windows Client on this PC", runSeparately:"Run separately", recentEvents:"RECENT EVENTS",
     entitlements:"ENTITLEMENTS", licenseText:"Your signed offline license controls enabled PROGNODE modules while runtime data remains local.", currentLicense:"CURRENT LICENSE", plan:"Plan", alarmDefinitions:"Alarm Definitions", recordedTags:"Recorded Tags", features:"FEATURES", licensedProtocols:"Licensed Protocols",
     settingsPlaceholder:"Users, backup/restore, network, update, security and data-flow settings will live here.",
     commissioning:"COMMISSIONING", configure:"Configuration", chooseProtocolText:"Choose how PROGNODE will communicate with the industrial device.", backProtocols:"← Back to protocols", selectedProtocol:"Selected protocol", deviceName:"PLC / Asset name", deviceNameHelp:"Use a globally clear equipment name, e.g. Boiler PLC, Main Pump PLC or Packaging Line PLC.", mockInfo:"Protocol-specific settings are stored in the local configuration database.",
@@ -104,7 +104,7 @@ Object.assign(translations.en, {
   notifyOnActiveHelp:"Recommended default",
   notificationMode:"Mobile notification mode", notifyOnce:"Notify once", repeatUntilAck:"Repeat at interval while active", repeatEvery:"Repeat every",
   ackPolicyHelp:"ACK confirms the alarm was seen; it does not clear the process alarm. Interval reminders continue while the alarm remains active, even after ACK.",
-  requiresAcknowledgement:"Require operator ACK", requiresAcknowledgementHelp:"Show an ACK action in Core and mobile for this alarm.", ackRequiredShort:"ACK required", ackNotRequiredShort:"No ACK", repeatActiveShort:"Repeat",
+  requiresAcknowledgement:"Require operator ACK", requiresAcknowledgementHelp:"Show an ACK action in PROGNODE Monitor and mobile for this alarm.", ackRequiredShort:"ACK required", ackNotRequiredShort:"No ACK", repeatActiveShort:"Repeat",
   continueAfterClear:"Continue reminders after CLEAR until ACK", continueAfterClearHelp:"Useful for short critical events that must still be seen.",
   notifyOnCleared:"Notify when CLEARED",
   notifyOnClearedHelp:"Optional recovery notification",
@@ -198,7 +198,7 @@ Object.assign(translations.en, {
   plantPerformance:"Plant performance at a glance", monitor:"MONITOR", monitorHelp:"Live data from your assets",
   detect:"DETECT", detectHelp:"Alarms and anomalies", analyze:"ANALYZE", analyzeHelp:"Trends and historical data",
   keepRunning:"KEEP RUNNING", keepRunningHelp:"Higher uptime, lower risk", builtCloser:"PROCESS DATA STAYS ON-SITE.", processDataOnSite:"Process data stays on-site", noCloudRequired:"No cloud required", localFirst:"LOCAL-FIRST", sidebarDescriptor:"Industrial monitoring, without the cloud.",
-  liveTags:"Live Tags", coreHealth:"Core Health", deviceHealth:"DEVICE HEALTH", viewDevices:"View Devices →",
+  liveTags:"Live Tags", coreHealth:"System health", deviceHealth:"DEVICE HEALTH", viewDevices:"View Devices →",
   online:"Online", degraded:"Degraded", offline:"Offline", maintenance:"Maintenance", viewAlarms:"View Alarms →",
   recentNotifications:"RECENT NOTIFICATIONS", viewNotifications:"View All →", historianRecordingStatus:"HISTORIAN / RECORDING STATUS",
   openHistorian:"Open Historian →", quality:"Quality", pointsByTag:"Points by recording tag",
@@ -207,7 +207,7 @@ Object.assign(translations.en, {
   prognodeIndustrialMonitoring:"PROGNODE INDUSTRIAL MONITORING", totalDevices:"Total Devices", historianPointsToday:"Historian Points",
   viewAllDevices:"View All Devices →", viewAllAlarms:"View All Alarms →", viewAllNotifications:"View All Notifications →",
   addToHistorian:"Add to Historian", createTrend:"Create Trend",
-  subscription:"SUBSCRIPTION", licenseCustomerHelp:"Your PROGNODE license is verified locally. Process data remains on this Server.", buyRenewLicense:"Buy / Renew License ↗", validUntil:"VALID UNTIL", licensedTo:"Licensed to", organization:"Organization", alarmMonitoring:"Alarm Monitoring", moduleIncluded:"Included", offlineLogin:"Offline Login", lanClientAccess:"LAN Client Access", enabled:"Enabled", licenseActions:"LICENSE ACTIONS", manageLicense:"Manage your license", manageLicenseHelp:"Buy, renew or change your plan in PROGNODE Account. An activated Core with internet installs renewed licenses automatically; offline sites import the new file here.", openPrognodeStore:"Open PROGNODE Account ↗", orImportLicense:"OR IMPORT A LICENSE", licenseLocalNote:"Signature, expiry and account credentials are verified locally."
+  subscription:"SUBSCRIPTION", licenseCustomerHelp:"Your PROGNODE license is verified locally. Process data remains on this Server.", buyRenewLicense:"Buy / Renew License ↗", validUntil:"VALID UNTIL", licensedTo:"Licensed to", organization:"Organization", alarmMonitoring:"Alarm Monitoring", moduleIncluded:"Included", offlineLogin:"Offline Login", lanClientAccess:"LAN Client Access", enabled:"Enabled", licenseActions:"LICENSE ACTIONS", manageLicense:"Manage your license", manageLicenseHelp:"Buy, renew or change your plan in PROGNODE Account. An activated PROGNODE Monitor with internet installs renewed licenses automatically; offline sites import the new file here.", openPrognodeStore:"Open PROGNODE Account ↗", orImportLicense:"OR IMPORT A LICENSE", licenseLocalNote:"Signature, expiry and account credentials are verified locally."
 });
 
 Object.assign(translations.en, {
@@ -543,7 +543,7 @@ function renderAccount() {
     const error = state.activation?.lastError;
     if ($("accountActivationState")) $("accountActivationState").textContent = error
       ? 'Activation needs attention'
-      : 'Activating this PROGNODE Core…';
+      : 'Activating this PROGNODE Monitor…';
     if ($("accountActivationHint")) $("accountActivationHint").textContent = error
       ? error
       : 'This takes a few seconds when the PC has internet access. Without internet, use the three steps below.';
@@ -587,7 +587,7 @@ function renderAccount() {
             ? `${owner} • ${'sign in to continue'}`
             : ('License ready • sign in to continue'))
         : needsActivation
-          ? 'Activate this PROGNODE Core to continue'
+          ? 'Activate this PROGNODE Monitor to continue'
           : ('Import a valid .pgnlicense to continue');
     $("accountSessionState").classList.toggle('authenticated', authenticated);
   }
@@ -1032,9 +1032,9 @@ function renderRemoteAccess() {
   if (relayLine) {
     const relay = status.relay;
     const when = value => value ? new Date(value).toLocaleString() : "—";
-    let text = "No alarm has been sent to PROGNODE Cloud since Core started.", warn = false;
+    let text = "No alarm has been sent to PROGNODE Cloud since PROGNODE Monitor started.", warn = false;
     if (relay?.lastError) {
-      text = `Last alarm could not be sent to PROGNODE Cloud (${when(relay.lastAttemptUtc)}): ${relay.lastError}. Core keeps retrying.`;
+      text = `Last alarm could not be sent to PROGNODE Cloud (${when(relay.lastAttemptUtc)}): ${relay.lastError}. PROGNODE Monitor keeps retrying.`;
       warn = true;
     } else if (relay?.lastSuccessUtc) {
       text = `Last alarm sent to PROGNODE Cloud: ${when(relay.lastSuccessUtc)}`;
@@ -1155,7 +1155,7 @@ async function importActivationFromFile(file) {
   await loadActivationStatus();
   await refreshLicenseForSession();
   renderAccount();
-  showToast("PROGNODE Core activated. Sign in with your password.");
+  showToast("PROGNODE Monitor activated. Sign in with your password.");
 }
 
 // A newer Core release announced by PROGNODE Account. A signed-in user installs it when it suits the
@@ -1174,18 +1174,18 @@ async function renderUpdateNotice() {
   button.textContent = update.state === 'DOWNLOADING' ? `Downloading update… ${update.progress ?? 0}%`
     : update.state === 'INSTALLING' ? 'Installing update…'
     : `Install update v${update.latestVersion}`;
-  button.title = `PROGNODE Core ${update.latestVersion} is available. Monitoring pauses for about a minute while it installs; settings, license and history are kept.`;
+  button.title = `PROGNODE Monitor ${update.latestVersion} is available. Monitoring pauses for about a minute while it installs; settings, license and history are kept.`;
   if (update.state === 'FAILED' && update.message) showToast(update.message);
   if (!updateNoticeShown && !busy) {
     updateNoticeShown = true;
-    showToast(`PROGNODE Core ${update.latestVersion} is available. Click "Install update" in the sidebar when convenient.`);
+    showToast(`PROGNODE Monitor ${update.latestVersion} is available. Click "Install update" in the sidebar when convenient.`);
   }
 }
 
 async function installCoreUpdate() {
   if (!isLocalUserSignedIn()) { showToast('Sign in to install the update.'); openAccountModal(); return; }
   const version = updateState?.latestVersion || '';
-  if (!confirm(`Install PROGNODE Core ${version} now?\n\nMonitoring pauses for about a minute while PROGNODE restarts. Settings, license and recorded history are kept.`)) return;
+  if (!confirm(`Install PROGNODE Monitor ${version} now?\n\nMonitoring pauses for about a minute while PROGNODE restarts. Settings, license and recorded history are kept.`)) return;
   const response = await fetch('/api/system/update/install', { method:'POST', headers: { 'X-PROGNODE-Session': sessionStorage.getItem('prognode.accessSession') || '' } }).catch(() => null);
   const result = await response?.json().catch(() => null);
   if (!response?.ok || result?.state === 'FAILED') { showToast(result?.message || 'The update could not be started.'); return; }
@@ -1195,7 +1195,7 @@ async function installCoreUpdate() {
     const health = await fetch('/api/health').then(r => r.ok ? r.json() : null).catch(() => null);
     if (health?.coreVersion && fromVersion && health.coreVersion !== fromVersion) {
       clearInterval(timer);
-      showToast(`PROGNODE Core updated to ${health.coreVersion}.`);
+      showToast(`PROGNODE Monitor updated to ${health.coreVersion}.`);
       setTimeout(() => location.reload(), 1500);
     }
   }, 3000);
@@ -3345,9 +3345,9 @@ async function saveAlarm() {
     const verifySavedAckRequirement = saved => {
       const savedValue = getSavedAckRequirement(saved);
       if (savedValue === null)
-        throw new Error("The Core response does not include the ACK setting. Rebuild and restart Core.");
+        throw new Error("The PROGNODE Monitor response does not include the ACK setting. Rebuild and restart PROGNODE Monitor.");
       if (savedValue !== body.requiresAcknowledgement)
-        throw new Error(`Core saved ACK as ${savedValue ? "enabled" : "disabled"}, but ${body.requiresAcknowledgement ? "enabled" : "disabled"} was requested. Restart Core and try again.`);
+        throw new Error(`PROGNODE Monitor saved ACK as ${savedValue ? "enabled" : "disabled"}, but ${body.requiresAcknowledgement ? "enabled" : "disabled"} was requested. Restart PROGNODE Monitor and try again.`);
     };
 
     if (state.editingAlarmId)
@@ -4840,7 +4840,7 @@ async function syncServerClock() {
     };
     renderServerClock();
   } catch (error) {
-    console.warn("Core PC clock sync failed", error);
+    console.warn("PROGNODE Monitor PC clock sync failed", error);
   }
 }
 
@@ -4861,8 +4861,8 @@ function renderServerClock() {
   }).format(date);
 
   $("serverClock").title = state.serverClock.timeZone
-    ? `PROGNODE Core PC • ${state.serverClock.timeZone}`
-    : "PROGNODE Core PC time";
+    ? `PROGNODE Monitor PC • ${state.serverClock.timeZone}`
+    : "PROGNODE Monitor PC time";
 }
 
 async function loadAgentStatus() {
@@ -5028,7 +5028,7 @@ async function sendTestNotification() {
     if (state.agentStatus?.isOnline) {
       showToast(t("testNotificationQueued"));
     } else {
-      showToast("Notification was queued in Core, but the Windows Client is not running on this PC.");
+      showToast("Notification was queued in PROGNODE Monitor, but the Windows Client is not running on this PC.");
     }
   }
   catch(error) {
@@ -5227,7 +5227,7 @@ function updateOverviewCommandStrip() {
   $("overviewStatusBeacon")?.classList.toggle("stable", !needsAttention);
 
   const detail = [];
-  if (!coreRunning) detail.push("Core health requires attention");
+  if (!coreRunning) detail.push("System health requires attention");
   if (health.offline) detail.push(`${health.offline} device${health.offline===1?'':'s'} offline`);
   if (health.degraded) detail.push(`${health.degraded} device${health.degraded===1?'':'s'} degraded`);
   if (alarms) detail.push(`${alarms} active alarm${alarms===1?'':'s'}`);
@@ -5265,7 +5265,7 @@ function updateOverviewCommandStrip() {
     $("overviewCorePosture").classList.toggle("healthy-text", coreRunning);
     $("overviewCorePosture").classList.toggle("danger-text", !coreRunning);
   }
-  if ($("overviewCoreDetail")) $("overviewCoreDetail").textContent = state.health?.coreVersion ? `PROGNODE ${state.health.coreVersion}` : "PROGNODE Core";
+  if ($("overviewCoreDetail")) $("overviewCoreDetail").textContent = state.health?.coreVersion ? `PROGNODE ${state.health.coreVersion}` : "PROGNODE Monitor";
 
   const licenseLifecycle = String(state.license?.status || "").toUpperCase();
   const licenseWarning = licenseLifecycle === "EXPIRING_SOON";
@@ -6195,14 +6195,14 @@ async function refreshLiveValues() {
 }
 
 Object.assign(translations.en, {
-  qrPairTitle:"Pair a phone by QR", qrPairIntro:"Scan on the Core PC. No IP, code or fingerprint to type.",
+  qrPairTitle:"Pair a phone by QR", qrPairIntro:"Scan on the PROGNODE Monitor PC. No IP, code or fingerprint to type.",
   qrPairStart:"+ Pair by QR", qrLanLabel:"LAN address reachable by phone", qrPairRenew:"Renew QR",
-  qrPairCancel:"Cancel", qrPairWarning:"QR is valid once for 120 seconds. Only display it on the authorized Core screen.",
+  qrPairCancel:"Cancel", qrPairWarning:"QR is valid once for 120 seconds. Only display it on the authorized PROGNODE Monitor screen.",
   qrPairWait:"Ready to pair. Scan this QR in PROGNODE Mobile.", qrPairDone:"Device paired successfully.",
-  qrPairExpired:"QR expired. Renew to continue.", qrPairLocal:"Open PROGNODE on this Core PC and sign in as an administrator.",
+  qrPairExpired:"QR expired. Renew to continue.", qrPairLocal:"Open PROGNODE Monitor on this PC and sign in as an administrator.",
   qrPairTls:"LAN HTTPS is not ready. Open Settings → Mobile LAN and run Verify / Repair with local administrator approval. Your current certificate will be retained; manual pairing remains available.",
   qrTlsGuideTitle:"LAN HTTPS is required for a secure QR",
-  qrTlsGuideText:"Open Mobile LAN Access in Settings. Check HTTPS and repair it with the local Windows Agent if necessary. Restart the Core only when prompted. The working certificate and existing paired devices are preserved across updates.",
+  qrTlsGuideText:"Open Mobile LAN Access in Settings. Check HTTPS and repair it with the local Windows Agent if necessary. Restart the PROGNODE Monitor only when prompted. The working certificate and existing paired devices are preserved across updates.",
   qrTlsRecheck:"Recheck HTTPS",
   qrPairSelect:"Select an accessible network adapter first.", qrPairSeconds:"seconds left"
 });
@@ -6288,12 +6288,12 @@ Object.assign(translations.en,{
   lanWizardAdapter:"Plant / LAN interface (never Tailscale)",lanWizardChoose:"Choose interface",lanWizardScope:"Windows firewall access scope",lanWizardDevices:"Selected mobile device IPs",lanWizardSubnet:"Approved plant LAN subnet",
   lanWizardIps:"Approved mobile IPs (comma-separated, up to 8)",lanWizardSubnetWarning:"Every host in this subnet can reach the HTTPS port until authenticated. Prefer a dedicated plant VLAN.",
   lanWizardPublicConfirm:"This is a Public Windows network. I explicitly approve only this interface and source range.",lanWizardPrepare:"Prepare LAN access",lanWizardVerify:"Verify / refresh",lanWizardApprove:"On this PC, right-click the PROGNODE Windows tray Agent → Complete LAN Access Setup (UAC); review the rule and approve Windows UAC once.",
-  lanAutoOn:"LAN access is on.",lanAutoWhat:"PROGNODE Clients and phones on this network find this Core by themselves. Each one still needs the pairing code or QR code from this Core before it can see anything.",
-  lanAutoStepPc:"Windows PC: install PROGNODE Client. It finds this Core; enter the 6-digit pairing code shown under Server & QR.",
+  lanAutoOn:"LAN access is on.",lanAutoWhat:"PROGNODE Clients and phones on this network find this PROGNODE Monitor by themselves. Each one still needs the pairing code or QR code from this PROGNODE Monitor before it can see anything.",
+  lanAutoStepPc:"Windows PC: install PROGNODE Client. It finds this PROGNODE Monitor; enter the 6-digit pairing code shown under Server & QR.",
   lanAutoStepPhone:"Phone: open the PROGNODE app and scan the QR code.",
   lanAutoScope:"Allowed: devices on the same local network only (TCP 5443, UDP 5081). To restrict it further, your IT team can edit the \"PROGNODE LAN Access\" rules in Windows Firewall.",
-  lanAutoAddresses:"This Core on the network:",lanAutoHttpsPending:"LAN access is on, but HTTPS is not ready yet. Restart the PROGNODE Core service once; if this stays, reinstall PROGNODE Core.",
-  lanWizardProbe:"Test from phone",lanWizardRepair:"Repair rule",lanWizardDisable:"Disable LAN access",lanWizardQr:"Continue to QR pairing",lanWizardIt:"If guest VLAN/client isolation or enterprise GPO blocks access, request TCP 5443 from the approved sources to the selected Core IP from IT. PROGNODE never bypasses network policy."
+  lanAutoAddresses:"This PROGNODE Monitor on the network:",lanAutoHttpsPending:"LAN access is on, but HTTPS is not ready yet. Restart the PROGNODE Monitor service once; if this stays, reinstall PROGNODE Monitor.",
+  lanWizardProbe:"Test from phone",lanWizardRepair:"Repair rule",lanWizardDisable:"Disable LAN access",lanWizardQr:"Continue to QR pairing",lanWizardIt:"If guest VLAN/client isolation or enterprise GPO blocks access, request TCP 5443 from the approved sources to the selected PROGNODE Monitor IP from IT. PROGNODE never bypasses network policy."
 });
 
 let lanWizardStatus=null;
@@ -6471,7 +6471,7 @@ async function loadBackupCenter(){
     
     $('backupScheduleNote').textContent=data.autoEnabled
       ? (`Automatic: daily after ${String(data.dailyHourLocal).padStart(2,'0')}:00 · keeps ${data.retentionDays} days.`)
-      : ('Automatic backup disabled: set PROGNODE_BACKUP_PASSWORD for the Windows Core service (8+ characters with upper- and lower-case letters, a digit and a symbol).');
+      : ('Automatic backup disabled: set PROGNODE_BACKUP_PASSWORD for the PROGNODE Monitor Windows service (8+ characters with upper- and lower-case letters, a digit and a symbol).');
     window.__pgnBackupDirectory=data.backupDirectory;
     const list=$('backupList');list.replaceChildren();
     if(!data.backups?.length){list.textContent='No snapshots yet.';}
@@ -6499,11 +6499,11 @@ async function loadBackupCenter(){
   }catch(error){status.classList.add('error');status.textContent=error.message||String(error)}
 }
 Object.assign(translations.en,{
-  backupRestoreButton:"Restore",backupRestoreLastChance:"Last chance before the restore",backupRestoreConfirmText:"I understand that PROGNODE goes back to this backup and that changes made after it leave the live data.",backupRestorePassword:"Backup passphrase",backupRestoreRun:"Restore and restart Core",backupRestoreCancel:"Cancel",
-  backupRestoreWhat:"Core checks this backup, restarts and replaces its data with it. The current data is kept in a data.before-restore folder next to it, so nothing is lost.",
-  backupRestoreAdopt:"This backup is from another PROGNODE Core. Use its identity and paired devices on this PC (the license and HTTPS certificate of this PC are not taken over).",
-  backupRestoreChecking:"Checking the backup…",backupRestoreRestarting:"Backup checked. Core is restarting to restore it; this page reloads when Core is back.",
-  backupRestoreSlow:"Core has not come back yet. If it stays offline, start the PROGNODE Core service in Windows Services.",
+  backupRestoreButton:"Restore",backupRestoreLastChance:"Last chance before the restore",backupRestoreConfirmText:"I understand that PROGNODE goes back to this backup and that changes made after it leave the live data.",backupRestorePassword:"Backup passphrase",backupRestoreRun:"Restore and restart PROGNODE Monitor",backupRestoreCancel:"Cancel",
+  backupRestoreWhat:"PROGNODE Monitor checks this backup, restarts and replaces its data with it. The current data is kept in a data.before-restore folder next to it, so nothing is lost.",
+  backupRestoreAdopt:"This backup is from another PROGNODE Monitor. Use its identity and paired devices on this PC (the license and HTTPS certificate of this PC are not taken over).",
+  backupRestoreChecking:"Checking the backup…",backupRestoreRestarting:"Backup checked. PROGNODE Monitor is restarting to restore it; this page reloads when PROGNODE Monitor is back.",
+  backupRestoreSlow:"PROGNODE Monitor has not come back yet. If it stays offline, start the PROGNODE Monitor service in Windows Services.",
   backupRestoreAdoptNeeded:"Tick the box above to confirm, then choose Restore again.",
   backupRestoreDone:"Last restore:",backupRestoreFailed:"Last restore failed:"
 });
@@ -6556,8 +6556,8 @@ function backupRestoreOpen(fileName,createdAt,imported){
   $('backupRestoreStatus').textContent='';$('backupRestoreStatus').classList.remove('error');
   const when=createdAt?new Date(createdAt).toLocaleString():null;
   $('backupRestoreWarningText').textContent=(when&&!imported
-      ?`PROGNODE Core goes back to how it was on ${when}. `
-      :`PROGNODE Core goes back to the state stored in this backup${when?` (added here on ${when})`:''}. `)+
+      ?`PROGNODE Monitor goes back to how it was on ${when}. `
+      :`PROGNODE Monitor goes back to the state stored in this backup${when?` (added here on ${when})`:''}. `)+
     'Devices, Tags, alarm rules, alarm history, recorded data and settings all change to that state. Anything added or changed after it is no longer in the live data; the current data stays in a data.before-restore folder on this PC.';
   $('backupRestoreConfirm').checked=false;
   backupProgress('backupRestore',null);
@@ -6665,7 +6665,7 @@ $('backupInspect')?.addEventListener('click',async()=>{
         let pct=80;checking=setInterval(()=>{pct=Math.min(97,pct+1);backupProgress('backupImport',pct);},300);
       };
       xhr.onload=()=>{const body=xhr.response||{};xhr.status>=200&&xhr.status<300?resolve(body):reject(Error(body.message||`HTTP ${xhr.status}`));};
-      xhr.onerror=()=>reject(Error('The upload was interrupted. Check that PROGNODE Core is running and try again.'));
+      xhr.onerror=()=>reject(Error('The upload was interrupted. Check that PROGNODE Monitor is running and try again.'));
       xhr.send(form);
     });
     clearInterval(checking);backupProgress('backupImport',100);
@@ -6674,7 +6674,7 @@ $('backupInspect')?.addEventListener('click',async()=>{
     out.classList.toggle('backup-cross-server',different);
     out.textContent=('Backup checked; nothing has been restored yet. ')+
       `${result.files} files • ${result.overview?.devices??'—'} PLC • ${result.overview?.tags??'—'} Tags • ${result.overview?.historianSamples??'—'} samples. `+
-      (different ? ('This backup comes from a different PROGNODE Core; restoring it takes over that Core\'s identity and paired devices. ') : '')+
+      (different ? ('This backup comes from a different PROGNODE Monitor; restoring it takes over that PROGNODE Monitor\'s identity and paired devices. ') : '')+
       ('Confirm the restore below.');
     await loadBackupCenter();
     // Uploading is the first step of a restore: open the restore panel for this file, passphrase filled in.

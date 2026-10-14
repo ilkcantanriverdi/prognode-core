@@ -125,7 +125,7 @@ public sealed class LicenseSignatureVerifier(LicenseVerificationOptions options)
     private PublicKey LoadTrustedPublicKey(string keyId)
     {
         if (!options.TrustedPublicKeys.TryGetValue(keyId, out var configured) || string.IsNullOrWhiteSpace(configured))
-            throw new InvalidOperationException($"License signing key '{keyId}' is not trusted by this PROGNODE Core build.");
+            throw new InvalidOperationException($"License signing key '{keyId}' is not trusted by this PROGNODE Monitor build.");
 
         var pem = ResolvePem(configured);
         var (spkiDer, rawPublicKey) = ParseEd25519SpkiPem(pem);

@@ -28,7 +28,7 @@ public sealed class CoreLinkService(
 
     public async Task<Status> StartAsync(CancellationToken cancellationToken)
     {
-        if (!cloud.IsConfigured) return Set(new Status("FAILED", null, null, null, "PROGNODE Cloud is not configured on this Core."));
+        if (!cloud.IsConfigured) return Set(new Status("FAILED", null, null, null, "PROGNODE Cloud is not configured on this PROGNODE Monitor."));
         Cancel();
         try
         {

@@ -17,6 +17,6 @@ public static class DataRootLock
     {
         var path=LockPath(dataRoot);Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         try { return new FileStream(path,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None); }
-        catch(IOException e) { throw new InvalidOperationException("Core is running or another restore is active for this data directory. Stop Core first.",e); }
+        catch(IOException e) { throw new InvalidOperationException("PROGNODE Monitor is running or another restore is active for this data directory. Stop PROGNODE Monitor first.",e); }
     }
 }

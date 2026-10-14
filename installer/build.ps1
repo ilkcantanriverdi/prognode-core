@@ -3,7 +3,7 @@ param(
   [string]$Iscc = "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
 )
 # Builds into artifacts\installer:
-#   PROGNODE-Core-Setup-<version>.exe   Core service + tray agent for the plant PC (admin install)
+#   PROGNODE-Monitor-Setup-<version>.exe   PROGNODE Monitor service + tray agent for the plant PC (admin install)
 #   PROGNODE-Client-Setup-<version>.exe alarm client for other Windows PCs on the plant network (per-user)
 # Everything is published self-contained for win-x64, then compiled with Inno Setup 6.
 # Code signing: set PROGNODE_SIGN_CMD (e.g. a signtool command with {file}) to sign the binaries and the setup.
@@ -63,7 +63,7 @@ if ($env:PROGNODE_SIGN_CMD) {
   Get-ChildItem $publish -Recurse -Include "Prognode*.exe", "Prognode*.dll", "PROGNODE*.exe", "PROGNODE*.dll" | ForEach-Object { Invoke-Sign $_.FullName }
 }
 
-foreach ($product in "Core", "Client") {
+foreach ($product in "Monitor", "Client") {
   & $Iscc "/Q" "/DAppVersion=$Version" "/DVersionInfo=$numeric.0" "/DPublishDir=$publish" (Join-Path $PSScriptRoot "PROGNODE-$product.iss")
   if ($LASTEXITCODE -ne 0) { throw "Inno Setup compile failed: $product" }
   $setup = Join-Path $root "artifacts\installer\PROGNODE-$product-Setup-$Version.exe"

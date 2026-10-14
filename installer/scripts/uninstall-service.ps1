@@ -1,4 +1,4 @@
-# Stops and removes the PROGNODE Core Windows service. Data in ProgramData is kept.
+# Stops and removes the PROGNODE Monitor Windows service (PROGNODECore). Data in ProgramData is kept.
 $ErrorActionPreference = "SilentlyContinue"
 $name = "PROGNODECore"
 if (Get-Service -Name $name) {

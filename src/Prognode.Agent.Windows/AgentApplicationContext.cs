@@ -40,7 +40,7 @@ public sealed class AgentApplicationContext : ApplicationContext
         openItem.Click += (_, _) => OpenDashboard();
 
         _statusItem =
-            new ToolStripMenuItem("Core: Connecting...")
+            new ToolStripMenuItem("PROGNODE Monitor: connecting…")
             {
                 Enabled = false
             };
@@ -115,8 +115,8 @@ public sealed class AgentApplicationContext : ApplicationContext
 
             _statusItem.Text =
                 _windowsNotifications.IsAvailable
-                    ? "Core: Connected • Action Center Ready"
-                    : "Core: Connected • Tray Fallback";
+                    ? "PROGNODE Monitor: connected • notifications ready"
+                    : "PROGNODE Monitor: connected • tray notifications";
 
             using var heartbeat =
                 await _http.PostAsJsonAsync(
@@ -149,7 +149,7 @@ public sealed class AgentApplicationContext : ApplicationContext
         }
         catch
         {
-            _statusItem.Text = "Core: Disconnected";
+            _statusItem.Text = "PROGNODE Monitor: not connected";
         }
         finally
         {

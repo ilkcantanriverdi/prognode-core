@@ -177,14 +177,14 @@ public sealed class ClientContext : ApplicationContext
         }
         catch (Exception ex)
         {
-            _window?.Post(new { type = "candidate", error = $"Could not reach PROGNODE Core securely at {host}:{port}. {ex.Message}" });
+            _window?.Post(new { type = "candidate", error = $"Could not reach PROGNODE Monitor securely at {host}:{port}. {ex.Message}" });
         }
     }
 
     private async Task PairAsync(string code, string name)
     {
-        if (_candidate is null) { _window?.Post(new { type = "paired", error = "Find your Core and compare the check code first." }); return; }
-        if (code.Length != 6 || !code.All(char.IsDigit)) { _window?.Post(new { type = "paired", error = "Enter the 6-digit pairing code from the Core screen." }); return; }
+        if (_candidate is null) { _window?.Post(new { type = "paired", error = "Find your PROGNODE Monitor and compare the check code first." }); return; }
+        if (code.Length != 6 || !code.All(char.IsDigit)) { _window?.Post(new { type = "paired", error = "Enter the 6-digit pairing code from the PROGNODE Monitor screen." }); return; }
         var pcName = string.IsNullOrWhiteSpace(name) ? Environment.MachineName : name.Trim();
         try
         {
@@ -244,12 +244,12 @@ public sealed class ClientContext : ApplicationContext
             _pairing = null;
             _access = null;
             _alarms = [];
-            _tray.ShowBalloonTip(8000, "PROGNODE", "This PC was removed from PROGNODE Core. Pair it again to receive alarms.", ToolTipIcon.Warning);
+            _tray.ShowBalloonTip(8000, "PROGNODE", "This PC was removed from PROGNODE Monitor. Pair it again to receive alarms.", ToolTipIcon.Warning);
             OpenWindow(null);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException or JsonException)
         {
-            SetOnline(false, "PROGNODE Core is not reachable on the plant network. Retrying…");
+            SetOnline(false, "PROGNODE Monitor is not reachable on the plant network. Retrying…");
         }
         finally
         {
@@ -292,8 +292,8 @@ public sealed class ClientContext : ApplicationContext
         {
             await _core.AcknowledgeAsync(occurrenceId);
             _toasts.RemoveFor(occurrenceId);
-            if (_window is { Visible: true }) Toast("Core confirmed the acknowledgement.", "ok");
-            else _tray.ShowBalloonTip(3000, "PROGNODE", "Core confirmed the acknowledgement.", ToolTipIcon.Info);
+            if (_window is { Visible: true }) Toast("PROGNODE Monitor confirmed the acknowledgement.", "ok");
+            else _tray.ShowBalloonTip(3000, "PROGNODE", "PROGNODE Monitor confirmed the acknowledgement.", ToolTipIcon.Info);
         }
         catch (Exception ex)
         {
@@ -314,7 +314,7 @@ public sealed class ClientContext : ApplicationContext
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or InvalidOperationException or UnauthorizedAccessException)
         {
             var message = ex is HttpRequestException { StatusCode: System.Net.HttpStatusCode.NotFound }
-                ? "This PROGNODE Core does not offer alarm history to PCs yet. Update PROGNODE Core."
+                ? "This PROGNODE Monitor does not offer alarm history to PCs yet. Update PROGNODE Monitor."
                 : "Alarm history could not be loaded. Check the connection and try again.";
             _window?.Post(new { type = "history", items = Array.Empty<object>(), total = 0, error = message });
         }
@@ -325,7 +325,7 @@ public sealed class ClientContext : ApplicationContext
         if (online != _online)
         {
             _online = online;
-            if (!online) _tray.ShowBalloonTip(5000, "PROGNODE", "Connection to PROGNODE Core lost. Alarms resume when it is back.", ToolTipIcon.Warning);
+            if (!online) _tray.ShowBalloonTip(5000, "PROGNODE", "Connection to PROGNODE Monitor lost. Alarms resume when it is back.", ToolTipIcon.Warning);
         }
         _connection = message;
     }
@@ -341,16 +341,16 @@ public sealed class ClientContext : ApplicationContext
             _access = await _core.GetAccessAsync();
             _lastContact = DateTimeOffset.UtcNow;
             SetOnline(true, $"Connected · {_pairing.Host}");
-            Toast($"PROGNODE Core answered in {watch.ElapsedMilliseconds} ms. The connection is secure (certificate matches).", "ok", "checkBtn");
+            Toast($"PROGNODE Monitor answered in {watch.ElapsedMilliseconds} ms. The connection is secure (certificate matches).", "ok", "checkBtn");
         }
         catch (UnauthorizedAccessException)
         {
-            Toast("PROGNODE Core no longer accepts this PC. Pair it again.", "error", "checkBtn");
+            Toast("PROGNODE Monitor no longer accepts this PC. Pair it again.", "error", "checkBtn");
         }
         catch (Exception ex)
         {
-            SetOnline(false, "PROGNODE Core is not reachable on the plant network. Retrying…");
-            Toast($"No answer from {_pairing.Host}:{_pairing.Port}. {ex.Message} If Core moved to another IP address, use Find Core again.", "error", "checkBtn");
+            SetOnline(false, "PROGNODE Monitor is not reachable on the plant network. Retrying…");
+            Toast($"No answer from {_pairing.Host}:{_pairing.Port}. {ex.Message} If PROGNODE Monitor moved to another IP address, use Find PROGNODE Monitor again.", "error", "checkBtn");
         }
         PushState();
     }
@@ -364,7 +364,7 @@ public sealed class ClientContext : ApplicationContext
             var match = (await CoreConnection.DiscoverAsync()).FirstOrDefault(x => x.ServerId == _pairing.ServerId);
             if (match is null)
             {
-                Toast("Your PROGNODE Core did not answer on this network. Check that the Core PC is on and on the same network.", "error", "reconnectBtn");
+                Toast("Your PROGNODE Monitor did not answer on this network. Check that the PROGNODE Monitor PC is on and on the same network.", "error", "reconnectBtn");
                 return;
             }
             var address = match.Address.ToString();
@@ -373,7 +373,7 @@ public sealed class ClientContext : ApplicationContext
                 var candidate = await CoreConnection.InspectAsync(address, match.SecurePort, _pairing.ServerId);
                 if (!string.Equals(candidate.CertificateSha256, _pairing.CertificateSha256, StringComparison.OrdinalIgnoreCase))
                 {
-                    Toast($"A Core with this identity answered at {address}, but its certificate changed. For safety, disconnect and pair this PC again.", "error", "reconnectBtn");
+                    Toast($"A PROGNODE Monitor with this identity answered at {address}, but its certificate changed. For safety, disconnect and pair this PC again.", "error", "reconnectBtn");
                     return;
                 }
                 _pairing = _pairing with { Host = address, Port = match.SecurePort };
@@ -393,7 +393,7 @@ public sealed class ClientContext : ApplicationContext
     {
         Toast("A test notification appears in 5 seconds. You can close this window to check that it still arrives.", "ok");
         await Task.Delay(5000);
-        ShowNotification("PROGNODE test notification", "Alarm notifications from PROGNODE Core reach this PC.", null, false, false);
+        ShowNotification("PROGNODE test notification", "Alarm notifications from PROGNODE Monitor reach this PC.", null, false, false);
     }
 
     private void Disconnect()

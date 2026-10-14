@@ -327,7 +327,7 @@ public sealed class RemoteAccessService(
 
         var token = CloudToken();
         if (string.IsNullOrWhiteSpace(token))
-            return Failure("CORE_NOT_ACTIVATED", "This PROGNODE Core is not activated with PROGNODE Cloud. The remote seat was not released.");
+            return Failure("CORE_NOT_ACTIVATED", "This PROGNODE Monitor is not activated with PROGNODE Cloud. The remote seat was not released.");
 
         try
         {
@@ -449,7 +449,7 @@ public sealed class RemoteAccessService(
         if (requireCloud && !cloud.IsConfigured)
             return Failure("CLOUD_NOT_CONFIGURED", "PROGNODE Remote Access cloud endpoint is not configured yet.");
         if (requireCloud && string.IsNullOrWhiteSpace(CloudToken()))
-            return Failure("CORE_NOT_ACTIVATED", "This PROGNODE Core is not activated with PROGNODE Cloud yet.");
+            return Failure("CORE_NOT_ACTIVATED", "This PROGNODE Monitor is not activated with PROGNODE Cloud yet.");
         return null;
     }
 
