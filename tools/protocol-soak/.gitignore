@@ -1,0 +1,5 @@
+.venv/
+__pycache__/
+reports/*
+!reports/.gitkeep
+!reports/soak-sim-30min.md
