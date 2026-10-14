@@ -21,7 +21,8 @@ const devices=Array.from({length:30},(_,i)=>({
 }));
 const tags=devices.map((device,i)=>({id:`t${i+1}`,deviceId:device.id,
   name:`Tag ${String(i+1).padStart(2,'0')}`,address:String(40001+i),dataType:i%2?'Word':'Float32',unit:''}));
-const context={state:{language:'en',devices,tags,tagValues:new Map(),devicePage:1,tagPage:1,licenseUsage:{}},
+const liveValues=new Map(tags.filter((_,i)=>i%2).map(t=>[t.id,{quality:'Good'}]));
+const context={state:{language:'en',devices,tags,tagValues:liveValues,devicePage:1,tagPage:1,licenseUsage:{}},
   $,document:{querySelectorAll:()=>[],getElementById:()=>({id:'',className:'',innerHTML:'',classList:{toggle(){}},querySelector:()=>({}),querySelectorAll:()=>[]}),createElement:()=>({id:'',className:'',innerHTML:'',classList:{toggle(){}},querySelector:()=>({}),querySelectorAll:()=>[]})},escapeHtml:x=>String(x),statusClass:()=>'',t:x=>x,
   tagDeviceName:id=>devices.find(d=>d.id===id)?.name||'—',
   tagAddressText:t=>t.address,tagDatatypeText:t=>t.dataType,tagValueText:()=> '—',
