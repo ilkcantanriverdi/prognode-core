@@ -9,6 +9,16 @@ public sealed class AgentPresenceService
     private string? _machineName;
     private string? _version;
     private string? _notificationMode;
+    private long _openAlarmsRequest;
+
+    /// <summary>
+    /// A Windows notification was clicked while PROGNODE is already open in a browser:
+    /// the open page sees the new number in /api/agent/status and shows Alarms.
+    /// </summary>
+    public long RequestOpenAlarms()
+    {
+        lock (_gate) return ++_openAlarmsRequest;
+    }
 
     public void Report(
         string? machineName,
@@ -42,7 +52,8 @@ public sealed class AgentPresenceService
                 LastSeenUtc: _lastSeenUtc,
                 MachineName: _machineName,
                 Version: _version,
-                NotificationMode: _notificationMode);
+                NotificationMode: _notificationMode,
+                OpenAlarmsRequest: _openAlarmsRequest);
         }
     }
 }

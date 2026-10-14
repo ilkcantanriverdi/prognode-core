@@ -17,7 +17,7 @@ const files = [
 ];
 
 // A visible "Core": the whole word, not code such as Core.ready or a path.
-const visibleCore = /(?<![\w.$/-])Core(?![\w(:/-])(?!\.\w)/;
+const visibleCore = /(?<![\w.$/-])(Core|CORE)(?![\w(:/-])(?!\.\w)/;
 const technical = /PROGNODECore|PROGNODE\.Core\.exe|LAN Core HTTPS|Prognode\.Core|\/api\/|https?:\/\//;
 const isText = s => /\s/.test(s.trim()) && !technical.test(s) && !/\bCore\.\w|\w\.Core\b/.test(s);
 

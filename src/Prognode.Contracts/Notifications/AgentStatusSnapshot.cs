@@ -5,5 +5,6 @@ public sealed record AgentStatusSnapshot(
     DateTimeOffset? LastSeenUtc,
     string? MachineName,
     string? Version,
-    string? NotificationMode
+    string? NotificationMode,
+    long OpenAlarmsRequest = 0
 );
