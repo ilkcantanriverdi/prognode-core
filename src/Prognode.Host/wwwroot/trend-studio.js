@@ -37,7 +37,7 @@
     updateCounts();
   }
   const studioStrings={
-    en:{signalExplorer:'Signals',searchPlaceholder:'Search tags or devices...',loading:'Loading Historian Tags…',addHistorian:'＋ Add Tag to Historian',compareSignals:'Compare trends',compareHelp:'Keep individual charts and add one overlay for selected signals.',savedViews:'Saved views',saveOptional:'Optional: save this view',localData:'Data stays on this PROGNODE Monitor',clearSelection:'Clear selection',selectSignals:'Select a signal to see its trend',historianLocal:'LOCAL HISTORIAN',custom:'Custom',from:'From',to:'To',applyRange:'Apply range',alarmScale:'Y axis also includes configured alarm thresholds',compareTitle:'COMPARISON OF SELECTED SIGNALS',navigator:'TIME NAVIGATOR',navigationHelp:'Drag to zoom · Mouse wheel scrolls · Double-click to reset',statistics:'Signal statistics',selectedRange:'SELECTED RANGE',processContext:'Process events',alarmEvents:'Alarm events',alarmFlags:'Chart flags',alarmThresholds:'Alarm thresholds',batch:'Batch / Lot',systemAlarms:'System alarms',lastSample:'Latest sample',noSamples:'No samples in this range',recordedOnly:'Only Tags added to Historian are shown.',noHistorian:'No Tags added to Historian yet.',live:'LIVE · PAUSE',paused:'PAUSED · RESUME',pointCount:'rendered points',ready:'CORE CONNECTED',empty:'First add a Tag to Historian to chart it.'}
+    en:{signalExplorer:'Signals',searchPlaceholder:'Search tags or devices...',loading:'Loading Historian Tags…',addHistorian:'＋ Add Tag to Historian',compareSignals:'Compare trends',compareHelp:'Keep individual charts and add one overlay for selected signals.',savedViews:'Saved views',saveOptional:'Optional: save this view',localData:'Data stays on this PROGNODE Monitor',clearSelection:'Clear selection',selectSignals:'Select a signal to see its trend',historianLocal:'LOCAL HISTORIAN',custom:'Custom',from:'From',to:'To',applyRange:'Apply range',alarmScale:'Y axis also includes configured alarm thresholds',compareTitle:'COMPARISON OF SELECTED SIGNALS',navigator:'TIME NAVIGATOR',navigationHelp:'Drag to zoom · Mouse wheel scrolls · Double-click to reset',statistics:'Signal statistics',selectedRange:'SELECTED RANGE',processContext:'Process events',alarmEvents:'Alarm events',alarmFlags:'Chart flags',alarmThresholds:'Alarm thresholds',batch:'Batch / Lot',systemAlarms:'System alarms',lastSample:'Latest sample',noSamples:'No samples in this range',recordedOnly:'Only Tags added to Historian are shown.',noHistorian:'No Tags added to Historian yet.',live:'LIVE · PAUSE',paused:'PAUSED · RESUME',pointCount:'rendered points',ready:'MONITOR CONNECTED',empty:'First add a Tag to Historian to chart it.'}
   };
   function studioText(key){return (studioStrings[state.language]||studioStrings.en)[key]||studioStrings.en[key]||key;}
   function applyStudioLanguage(){
@@ -190,7 +190,7 @@
       else if(el('trendRange')?.value==='custom') range=currentTrendRange();
       else {const frozen=ui.range||{from:Date.now()-ui.liveWindowMinutes*60000,to:Date.now()};range={from:new Date(frozen.to-ui.liveWindowMinutes*60000),to:new Date(frozen.to)};}
     }catch(err){showToast(err.message);return;}
-    const requestId=++ui.requestId;ui.loading=true;el('studioDataStatus').textContent='READING CORE…';
+    const requestId=++ui.requestId;ui.loading=true;el('studioDataStatus').textContent='READING HISTORIAN…';
     try{
       const selected=[...ui.selected];
       const query='?from='+encodeURIComponent(range.from.toISOString())+'&to='+encodeURIComponent(range.to.toISOString())+'&maxPoints=1800';
@@ -206,7 +206,7 @@
       void loadContext(ui.range.from,ui.range.to,requestId);
     }catch(error){
       if(requestId!==ui.requestId)return;
-      ui.loading=false;el('studioDataStatus').textContent='CORE QUERY FAILED';
+      ui.loading=false;el('studioDataStatus').textContent='HISTORIAN QUERY FAILED';
       state.trendPayload=null;el('studioTimeText').textContent=error.message||'Could not query historian';
       showToast(error.message||'Trend data unavailable');
       drawStudio();
