@@ -1489,9 +1489,40 @@ function renderBulkSelection(kind, tbody, rows, idOf, deleteOne, reload, deleteM
   };
 }
 
+// Runtime state of a device, the same rules the Overview device-health card uses: Offline while a
+// communication-lost alarm is active, Degraded when a Tag reads with bad quality, Online when its
+// Tags read Good. The stored device record only says the device is configured.
+function deviceRuntimeStatus(device) {
+  const id = String(device.id);
+  if ((state.activeAlarms || []).some(a => String(a.deviceId || "") === id &&
+      String(a.text || "").toLowerCase().includes("communication lost"))) return "Offline";
+  const tags = (state.tags || []).filter(tag => String(tag.deviceId) === id);
+  if (!tags.length) return "No tags";
+  let good = 0, bad = 0;
+  for (const tag of tags) {
+    const snapshot = state.tagValues.get(tag.id) || state.tagValues.get(String(tag.id));
+    const q = String(snapshot?.quality || "").toLowerCase();
+    if (q === "good") good++;
+    else if (q && q !== "waiting") bad++;
+  }
+  if (bad) return "Degraded";
+  return good ? "Online" : "Waiting";
+}
+
+function updateDeviceStatusBadges() {
+  document.querySelectorAll("[data-device-status]").forEach(badge => {
+    const device = state.devices.find(d => String(d.id) === badge.dataset.deviceStatus);
+    if (!device) return;
+    const status = deviceRuntimeStatus(device);
+    if (badge.textContent === status) return;
+    badge.textContent = status;
+    badge.className = `status-badge ${statusClass(status)}`;
+  });
+}
+
 function renderDevices() {
   syncTableFilter($("deviceStatusFilter"),
-    [...new Set(state.devices.map(d => d.status).filter(Boolean))].sort().map(status => [status,status]),
+    [...new Set(state.devices.map(deviceRuntimeStatus))].sort().map(status => [status,status]),
     "All statuses");
   $("deviceProtocolFilter").options[0].textContent = "All protocols";
   const query =
@@ -1502,7 +1533,7 @@ function renderDevices() {
   const filtered =
     state.devices.filter(d =>
       (!protocol || d.protocol === protocol) &&
-      (!status || d.status === status) &&
+      (!status || deviceRuntimeStatus(d) === status) &&
       (d.name.toLowerCase().includes(query) ||
        d.protocol.toLowerCase().includes(query) ||
        (d.host || "").toLowerCase().includes(query)));
@@ -1534,7 +1565,7 @@ function renderDevices() {
         <td><input type="checkbox" data-bulk-check value="${device.id}" aria-label="Select ${escapeHtml(device.name)}"></td>
         <td><span class="device-name">${escapeHtml(device.name)}</span></td>
         <td><span class="protocol-badge">${escapeHtml(device.protocol)}</span></td>
-        <td><span class="status-badge ${statusClass(device.status)}">${escapeHtml(device.status)}</span></td>
+        <td><span class="status-badge ${statusClass(deviceRuntimeStatus(device))}" data-device-status="${escapeHtml(String(device.id))}">${escapeHtml(deviceRuntimeStatus(device))}</span></td>
         <td>${device.host ? `${escapeHtml(device.host)}:${device.port}` : "—"}</td>
         <td>${device.pollIntervalMs} ms</td>
         <td>${new Date(device.createdAt).toLocaleString("en-US")}</td>
@@ -6193,6 +6224,7 @@ async function refreshLiveValues() {
     await loadTagValues();
     renderTags();
     updateOverview();
+    updateDeviceStatusBadges();
   }
   catch(error) {
     console.warn(error);
