@@ -2155,6 +2155,13 @@ public static class EndpointExtensions
                     new { accepted = true });
             });
 
+        endpoints.MapPost(
+            "/api/agent/open-alarms",
+            (HttpContext context, AgentPresenceService presence) =>
+                IsLoopbackRequest(context)
+                    ? Results.Ok(new { request = presence.RequestOpenAlarms() })
+                    : Results.StatusCode(403));
+
         endpoints.MapGet(
             "/api/agent/status",
             (AgentPresenceService presence) =>

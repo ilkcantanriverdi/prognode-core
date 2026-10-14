@@ -17,7 +17,18 @@ public sealed class AgentApplicationContext : ApplicationContext
     private readonly string _coreUrl;
 
     private bool _polling;
-    private long _lastNotificationId;
+    private bool _connected;
+    private long? _lastNotificationId;
+
+    // The last notification shown survives a sign-out or restart, so events Windows already
+    // showed (and the user cleared) are not shown again when the Agent starts.
+    private static readonly string CursorPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "PROGNODE", "Agent", "notification-cursor");
+
+    // An event that waited longer than this (Agent not running, user signed out) is not
+    // shown as a pop-up any more; it is still in PROGNODE's alarm history.
+    private static readonly TimeSpan MaxNotificationAge = TimeSpan.FromMinutes(10);
     private sealed record NotificationDeliveryStatus(bool Enabled);
 
     public AgentApplicationContext()
@@ -91,13 +102,9 @@ public sealed class AgentApplicationContext : ApplicationContext
                 Interval = 1000
             };
 
+        _lastNotificationId = LoadCursor();
         _timer.Tick += async (_, _) => await PollAsync();
         _timer.Start();
-
-        ShowNotification(
-            "Information",
-            "Agent Started",
-            "PROGNODE Agent is ready.");
     }
 
     private async Task PollAsync()
@@ -130,6 +137,19 @@ public sealed class AgentApplicationContext : ApplicationContext
                             : "Tray Fallback"
                     });
 
+            if (!_connected || _lastNotificationId is null)
+            {
+                // First start, or PROGNODE Monitor came back: start after the newest event if
+                // there is no cursor yet, or if the database was replaced (reinstall, restore).
+                var recent =
+                    await _http.GetFromJsonAsync<NotificationEvent[]>("/api/notifications")
+                    ?? [];
+                var newest = recent.Length == 0 ? 0 : recent.Max(x => x.Id);
+                if (_lastNotificationId is null || _lastNotificationId > newest)
+                    SaveCursor(newest);
+                _connected = true;
+            }
+
             var events =
                 await _http.GetFromJsonAsync<NotificationEvent[]>(
                     $"/api/notifications?after={_lastNotificationId}")
@@ -140,15 +160,16 @@ public sealed class AgentApplicationContext : ApplicationContext
 
             if (events.Length > 0)
             {
-                if(delivery?.Enabled==true)await DeliverBatchAsync(events);
-                _lastNotificationId =
-                    Math.Max(
-                        _lastNotificationId,
-                        events.Max(x => x.Id));
+                var fresh = events
+                    .Where(x => DateTimeOffset.UtcNow - x.Timestamp < MaxNotificationAge)
+                    .ToArray();
+                if (delivery?.Enabled == true && fresh.Length > 0) await DeliverBatchAsync(fresh);
+                SaveCursor(Math.Max(_lastNotificationId ?? 0, events.Max(x => x.Id)));
             }
         }
         catch
         {
+            _connected = false;
             _statusItem.Text = "PROGNODE Monitor: not connected";
         }
         finally
@@ -229,6 +250,34 @@ public sealed class AgentApplicationContext : ApplicationContext
         _notifyIcon.ShowBalloonTip(5000);
     }
 
+    private static long? LoadCursor()
+    {
+        try
+        {
+            return long.TryParse(File.ReadAllText(CursorPath).Trim(), out var id) ? id : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private void SaveCursor(long id)
+    {
+        if (_lastNotificationId == id)
+            return;
+        _lastNotificationId = id;
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(CursorPath)!);
+            File.WriteAllText(CursorPath, id.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
+        catch
+        {
+            // Without the file the next start begins after the newest event, which is also safe.
+        }
+    }
+
     private static int SeverityRank(string? severity) =>
         severity?.Trim().ToLowerInvariant() switch
         {
@@ -241,6 +290,9 @@ public sealed class AgentApplicationContext : ApplicationContext
 
     private void OpenDashboard()
     {
+        if (BrowserWindows.TryActivatePrognode())
+            return;
+
         Process.Start(
             new ProcessStartInfo
             {
@@ -251,11 +303,31 @@ public sealed class AgentApplicationContext : ApplicationContext
 
     private void OpenAlarms()
     {
+        // PROGNODE already open in a browser: bring that window forward and let the page
+        // switch to Alarms instead of opening one more tab.
+        if (BrowserWindows.TryActivatePrognode())
+        {
+            _ = RequestOpenAlarmsAsync();
+            return;
+        }
+
         Process.Start(new ProcessStartInfo
         {
             FileName = _coreUrl.TrimEnd('/') + "/#alarms",
             UseShellExecute = true
         });
+    }
+
+    private async Task RequestOpenAlarmsAsync()
+    {
+        try
+        {
+            using var response = await _http.PostAsync("/api/agent/open-alarms", null);
+        }
+        catch
+        {
+            // The window is in front already; the page just stays where it is.
+        }
     }
 
     private void ExitAgent()

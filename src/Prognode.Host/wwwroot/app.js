@@ -4868,6 +4868,11 @@ function renderServerClock() {
 async function loadAgentStatus() {
   try {
     state.agentStatus = await api("/api/agent/status");
+    // A Windows notification was clicked while this page is open: the Agent brought the
+    // window forward instead of opening a new tab, so show Alarms here.
+    const openRequest = Number(state.agentStatus?.openAlarmsRequest || 0);
+    if (state.openAlarmsRequest !== undefined && openRequest > state.openAlarmsRequest) navigate("alarms");
+    state.openAlarmsRequest = openRequest;
     renderAgentStatus();
   } catch (error) {
     state.agentStatus = null;
