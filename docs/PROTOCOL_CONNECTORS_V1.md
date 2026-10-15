@@ -1,6 +1,6 @@
 # PROGNODE Monitor protocol connectors (field-test scope)
 
-Current customer-facing catalog: Modbus TCP, Modbus RTU (RS-485), Siemens S7 TCP, OPC UA and MQTT.
+Current customer-facing catalog: Modbus TCP, Modbus RTU (RS-485), Mitsubishi MC, Siemens S7 TCP, OPC UA and MQTT.
 PROFINET is not offered or planned in the active catalog. The RC2 product-decision
 document records an older, superseded catalog proposal.
 
@@ -38,6 +38,24 @@ reads up to 32 bits (64-bit types are rejected for S7 Tags).
     port in use).
   - Device CSV: `Host` = `COM3` with a `Serial` column such as `9600 8E1` (default `9600 8E1`), or
     the quoted `"COM3;9600;8E1"` a device export writes.
+
+## Mitsubishi MC
+
+- `POST /api/devices/mitsubishi-mc` accepts `{ "name", "host": "192.168.3.39", "port": 5007, "series": 0, "pollIntervalMs": 1000 }`.
+  `series` (stored in `unitId`): 0 = MELSEC iQ-R / Q / L, 1 = iQ-F (FX5). The port is the SLMP / MC
+  protocol connection opened on the PLC's Ethernet port in GX Works (TCP, binary code).
+- MC protocol 3E frame, binary code, Q-compatible batch read (command 0401, subcommands 0000 words /
+  0001 bits), which Q, L, iQ-R and FX5 accept. Read-only. One persistent connection per endpoint.
+- Addresses: word devices D, W, R, SD, SW, TN (timer current value), CN (counter current value);
+  bit devices X, Y, M, L, F, V, B, SM, SB, TS, CS; a bit of a word as D100.A (hex bit). X/Y/B/W/SB/SW
+  numbers are hexadecimal; on FX5, X/Y are octal. 32- and 64-bit values use the next words, low word
+  first. ZR is not offered yet: its numbering (decimal in GX Works, hexadecimal in MC client
+  libraries) must be confirmed on a real PLC.
+- Close Tags of one device type are read in one batch (up to 960 words / 3584 bits). A non-zero end
+  code (e.g. 0xC056 device out of range) makes only the affected Tag `Bad`; that Tag is then read
+  alone for 60 s. Device CSV: Protocol `Mitsubishi MC` with a `Series` column (`iQ-R`, `FX5`).
+- Request bytes are checked against pymcprotocol 0.3.0; the soak simulator (`simulators.py mc`) is
+  checked with pymcprotocol (`check_mc_simulator.py`).
 
 ## Siemens S7
 
@@ -77,7 +95,7 @@ reads up to 32 bits (64-bit types are rejected for S7 Tags).
 
 - `PUT /api/devices/{id}` edits host and poll settings (and the credential / RTU serial settings).
   `/api/tags` create/update validate by the device's protocol.
-- `/api/protocols` reports all five as `Available`. The local commissioning UI exposes their
+- `/api/protocols` reports all six as `Available`. The local commissioning UI exposes their
   device and Tag fields.
 - `pwsh -File scripts/Validate-Baseline.ps1` performs locked restore, Release build and the console
   contracts. The protocol contracts cover: Modbus FC01/02/03/04 and six-digit / 64-bit values in all

@@ -35,6 +35,7 @@ await IndustrialProtocolContract.RunAsync();
 await TagDispatchContract.RunAsync();
 await ProtocolGapsContract.RunAsync();
 await ModbusRtuContract.RunAsync();
+await MitsubishiMcContract.RunAsync();
 var deviceId = Guid.NewGuid();
 var tag = new TagDefinition(Guid.NewGuid(), deviceId, "Temperature", "plant/temp",
     TagDataType.Float32, null, ModbusByteOrder.ABCD, "C", 1, 0, 1,

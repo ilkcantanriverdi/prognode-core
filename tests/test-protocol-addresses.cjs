@@ -10,8 +10,17 @@ const context={TextEncoder};
 vm.createContext(context);
 vm.runInContext(section('function s7AddressValid(','async function testS7Connection('),context);
 vm.runInContext(section('function modbusAddressInfo(','function nextModbusTagAddress('),context);
+vm.runInContext(section('function mcAddressValid(','// MQTT Tag address: exact topic'),context);
 vm.runInContext(section('function mqttTagAddressValid(','function validateTagAddressClient('),context);
-const {s7AddressValid:s7,modbusAddressInfo:modbus,tagRegisterWidth:width,mqttTagAddressValid:mqtt}=context;
+const {s7AddressValid:s7,modbusAddressInfo:modbus,tagRegisterWidth:width,mqttTagAddressValid:mqtt,mcAddressValid:mc}=context;
+
+// Same cases as MitsubishiMcContract (C# McAddress.Parse): the form and the server agree.
+for(const [a,t,s] of [['D100','Word',0],['x1f','Bool',0],['X17','Bool',1],['W1A','Int16',0],['SM400','Bool',0],['D100.A','Bool',0],
+  ['D10','Float64',0],['TN5','Word',0],['R100','Float32',0],['M0','Bool',1],['Y10','Bool',0]])
+  assert.equal(mc(a,t,s),true,`MC ${a} ${t} ${s}`);
+for(const [a,t,s] of [['X18','Bool',1],['M0','Word',0],['D100','Bool',0],['M0.1','Bool',0],['DA','Word',0],['ZR100','Word',0],
+  ['Q10','Word',0],['D100.1','Word',0],['X1F','Word',0]])
+  assert.equal(mc(a,t,s),false,`MC ${a} ${t} ${s}`);
 
 for(const [a,t] of [['DB1.DBX0.0','Bool'],['I0.0','Bool'],['%I0.7','Bool'],['E1.3','Bool'],['Q0.1','Bool'],['A4.0','Bool'],['M10.0','Bool'],['MX10.1','Bool'],
   ['DB1.DBW2','Word'],['IW64','Int16'],['%QW2','UInt16'],['MW20','Word'],['EW64','Int16'],
@@ -37,6 +46,8 @@ for(const a of ['','plant/+/temp','plant#','plant#a..b','plant#a.','#temp'])asse
 for(const id of ['mqttUsername','mqttPassword','opcUaUsername','opcUaPassword'])assert(html.includes(`id="${id}"`),id);
 assert(/id="mqttPassword" type="password"/.test(html)&&/id="opcUaPassword" type="password"/.test(html),'password inputs are masked');
 for(const type of ['Int64','UInt64','Float64'])assert(html.includes(`<option value="${type}">`),type);
+for(const id of ['mcFields','mcHost','mcPort','mcSeries','mcPoll'])assert(html.includes(`id="${id}"`),id);
+assert(app.includes('"/api/devices/mitsubishi-mc"'),'Mitsubishi MC create route');
 for(const id of ['modbusRtuFields','rtuPort','rtuBaud','rtuDataBits','rtuParity','rtuStopBits','rtuUnitId','rtuPoll'])assert(html.includes(`id="${id}"`),id);
 assert(app.includes('"/api/devices/modbus-rtu"')&&app.includes('api("/api/serial-ports")'),'Modbus RTU create and serial port list');
 assert(app.includes('device.protocol === "Modbus RTU" ? "modbus-rtu"'),'RTU devices open in the RTU form');

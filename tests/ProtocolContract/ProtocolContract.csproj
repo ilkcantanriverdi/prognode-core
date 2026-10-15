@@ -6,6 +6,7 @@
     <ProjectReference Include="..\..\src\Prognode.Protocols.OpcUa\Prognode.Protocols.OpcUa.csproj" />
     <ProjectReference Include="..\..\src\Prognode.Protocols.Modbus\Prognode.Protocols.Modbus.csproj" />
     <ProjectReference Include="..\..\src\Prognode.Protocols.S7\Prognode.Protocols.S7.csproj" />
+    <ProjectReference Include="..\..\src\Prognode.Protocols.Mitsubishi\Prognode.Protocols.Mitsubishi.csproj" />
     <ProjectReference Include="..\..\src\Prognode.Core\Prognode.Core.csproj" />
   </ItemGroup>
 </Project>

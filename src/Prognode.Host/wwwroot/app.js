@@ -1388,11 +1388,12 @@ function selectProtocol(protocolId) {
 
   $("selectedProtocolName").textContent = protocol?.name || "—";
   $("selectedProtocolLogo").textContent =
-    protocolId === "modbus-tcp" ? "MB" : protocolId === "modbus-rtu" ? "RTU" : protocolId === "siemens-s7-tcp" ? "S7" :
+    protocolId === "modbus-tcp" ? "MB" : protocolId === "modbus-rtu" ? "RTU" : protocolId === "mitsubishi-mc" ? "MC" : protocolId === "siemens-s7-tcp" ? "S7" :
     protocolId === "opc-ua" ? "UA" : protocolId === "mqtt" ? "MQ" : "M";
 
   $("s7Fields").classList.toggle("hidden", protocolId !== "siemens-s7-tcp");
   $("modbusRtuFields").classList.toggle("hidden", protocolId !== "modbus-rtu");
+  $("mcFields").classList.toggle("hidden", protocolId !== "mitsubishi-mc");
   if (protocolId === "modbus-rtu") void loadSerialPorts();
   $("mqttFields").classList.toggle("hidden", protocolId !== "mqtt");
   $("opcUaFields").classList.toggle("hidden", protocolId !== "opc-ua");
@@ -1951,6 +1952,7 @@ function openEditDeviceModal(id) {
   state.editingDeviceOriginal = {...device};
   state.selectedProtocol = device.protocol === "Modbus TCP" ? "modbus-tcp" :
     device.protocol === "Modbus RTU" ? "modbus-rtu" :
+    device.protocol === "Mitsubishi MC" ? "mitsubishi-mc" :
     device.protocol === "Siemens S7 TCP" ? "siemens-s7-tcp" :
     device.protocol === "MQTT" ? "mqtt" : device.protocol === "OPC UA" ? "opc-ua" : "mock";
   state.modbusTestPassed = true;
@@ -1966,12 +1968,14 @@ function openEditDeviceModal(id) {
   $("selectedProtocolName").textContent = protocol?.name || device.protocol;
   $("selectedProtocolLogo").textContent = state.selectedProtocol === "modbus-tcp" ? "MB" :
     state.selectedProtocol === "modbus-rtu" ? "RTU" :
+    state.selectedProtocol === "mitsubishi-mc" ? "MC" :
     state.selectedProtocol === "siemens-s7-tcp" ? "S7" :
     state.selectedProtocol === "opc-ua" ? "UA" : state.selectedProtocol === "mqtt" ? "MQ" : "M";
   $("deviceNameInput").value = device.name;
 
   $("s7Fields").classList.toggle("hidden", state.selectedProtocol !== "siemens-s7-tcp");
   $("modbusRtuFields").classList.toggle("hidden", state.selectedProtocol !== "modbus-rtu");
+  $("mcFields").classList.toggle("hidden", state.selectedProtocol !== "mitsubishi-mc");
   $("mqttFields").classList.toggle("hidden", state.selectedProtocol !== "mqtt");
   $("opcUaFields").classList.toggle("hidden", state.selectedProtocol !== "opc-ua");
   $("testS7Connection").classList.toggle("hidden", state.selectedProtocol !== "siemens-s7-tcp");
@@ -2000,6 +2004,10 @@ function openEditDeviceModal(id) {
   if (state.selectedProtocol === "opc-ua") {
     $("opcUaUrl").value = device.host || "";
     $("opcUaPoll").value = device.pollIntervalMs ?? 1000;
+  }
+  if (state.selectedProtocol === "mitsubishi-mc") {
+    $("mcHost").value = device.host || ""; $("mcPort").value = device.port ?? 5007;
+    $("mcSeries").value = String(device.unitId ?? 0); $("mcPoll").value = device.pollIntervalMs ?? 1000;
   }
   if (state.selectedProtocol === "modbus-rtu") {
     const serial = /^([^;]+);(\d+);([78])([NEO])([12])$/i.exec(device.host || "");
@@ -2230,6 +2238,11 @@ async function saveDevice() {
             })
           });
       }
+      else if (state.selectedProtocol === "mitsubishi-mc") {
+        await api(`/api/devices/${state.editingDeviceId}`, {method:"PUT",body:JSON.stringify({
+          name, host:$("mcHost").value.trim(), port:readNumber("mcPort"), unitId:readNumber("mcSeries"), pollIntervalMs:readNumber("mcPoll")
+        })});
+      }
       else if (state.selectedProtocol === "modbus-rtu") {
         await api(`/api/devices/${state.editingDeviceId}`, {method:"PUT",body:JSON.stringify({
           name, host:rtuSerialSettings(), unitId:readNumber("rtuUnitId"), pollIntervalMs:readNumber("rtuPoll")
@@ -2286,6 +2299,11 @@ async function saveDevice() {
             pollIntervalMs:readNumber("modbusPoll")
           })
         });
+    }
+    else if (state.selectedProtocol === "mitsubishi-mc") {
+      await api("/api/devices/mitsubishi-mc", {method:"POST",body:JSON.stringify({
+        name, host:$("mcHost").value.trim(), port:readNumber("mcPort"), series:readNumber("mcSeries"), pollIntervalMs:readNumber("mcPoll")
+      })});
     }
     else if (state.selectedProtocol === "modbus-rtu") {
       if (!$("rtuPort").value) throw new Error("Select the serial port of the RS-485 adapter.");
@@ -2411,10 +2429,12 @@ function closeTagModal() {
 function tagIsS7() { return state.devices.some(d => d.id === $("tagDevice").value && d.protocol === "Siemens S7 TCP"); }
 function tagIsMqtt() { return state.devices.some(d => d.id === $("tagDevice").value && d.protocol === "MQTT"); }
 function tagIsOpcUa() { return state.devices.some(d => d.id === $("tagDevice").value && d.protocol === "OPC UA"); }
+function tagMcDevice() { return state.devices.find(d => d.id === $("tagDevice").value && d.protocol === "Mitsubishi MC"); }
 function tagAddressExample() {
   const type = $("tagDataType").value;
   if (tagIsS7())
     return type === "Bool" ? "DB1.DBX0.0" : ["Word","UInt16","Int16"].includes(type) ? "DB1.DBW2" : "DB1.DBD4";
+  if (tagMcDevice()) return type === "Bool" ? "M0" : "D100";
   if (tagIsMqtt()) return type === "Bool" ? "plant/running" : "plant/temperature";
   if (tagIsOpcUa()) return type === "Bool" ? "ns=2;s=Running" : "ns=2;s=Temperature";
   return nextModbusTagAddress($("tagDevice").value,type);
@@ -2478,7 +2498,7 @@ function updateTagFormVisibility() {
   const type = $("tagDataType").value;
   const area = modbusAddressInfo($("tagAddress").value);
   const s7 = tagIsS7();
-  const modbus = !s7 && !tagIsMqtt() && !tagIsOpcUa();
+  const modbus = !s7 && !tagIsMqtt() && !tagIsOpcUa() && !tagMcDevice();
   const isBool = type === "Bool";
   const isFloat = type === "Float32" || type === "Float64";
   const isWord = type === "Word";
@@ -2505,6 +2525,7 @@ function updateTagFormVisibility() {
   $("tagDecimalsHelp").textContent = isFloat ? t("displayDecimalsHelp") : t("decimalPointHelp");
   if (tagIsMqtt()) $("tagAddressHelp").textContent = "Use an exact MQTT topic, e.g. plant/temperature, when the message is a number or true/false. For a JSON message add # and the field: plant/env#temp or gw/01#sensors[0].value. No wildcards; retained values are marked uncertain.";
   else if (tagIsOpcUa()) $("tagAddressHelp").textContent = "Use ns=2;i=13 or the full Siemens http://...;i=13 NodeId. Only numeric and BOOL Values are read.";
+  else if (tagMcDevice()) $("tagAddressHelp").textContent = `Mitsubishi device and number: D100, W1A, R100, TN0, CN0, SD0 for values (32/64-bit use the next words, low word first); M0, X1F, Y10, B0, L0, SM400 or a word bit D100.A for BOOL. ${Number(tagMcDevice().unitId) === 1 ? "FX5: X/Y numbers are octal (X17)." : "X/Y/B/W numbers are hexadecimal."}`;
   else if (s7) $("tagAddressHelp").textContent = "Use an absolute S7 address. BOOL: DB1.DBX0.0, I0.0, Q0.1, M10.0. 16-bit: DB1.DBW2, IW64, QW2, MW20. 32-bit: DB1.DBD4, ID100, QD4, MD30. DBs must have optimized block access off; inputs, outputs and M need only PUT/GET.";
   else $("tagAddressHelp").textContent = t("tagAddressHelp");
 }
@@ -2622,6 +2643,21 @@ function opcUaNodeAddressValid(address) {
     /^(?:https?:\/\/|urn:).+;[isgb]=.+$/i.test(value));
 }
 
+// Mitsubishi MC address: device + number (D100, X1F, M0), word bit D100.A for BOOL. X/Y/B/W/SB/SW
+// numbers are hexadecimal; on FX5 (series 1) X/Y are octal.
+function mcAddressValid(address, type, series) {
+  const m = /^(SM|SD|SB|SW|TS|TN|CS|CN|X|Y|M|L|F|V|B|D|W|R)([0-9A-F]+)(?:\.([0-9A-F]))?$/i.exec(String(address || "").trim());
+  if (!m) return false;
+  const device = m[1].toUpperCase();
+  const bitDevice = ["SM","SB","TS","CS","X","Y","M","L","F","V","B"].includes(device);
+  const base = ["X","Y"].includes(device) && Number(series) === 1 ? 8 : ["X","Y","B","W","SB","SW"].includes(device) ? 16 : 10;
+  const digits = base === 8 ? /^[0-7]+$/ : base === 10 ? /^[0-9]+$/ : /^[0-9A-F]+$/i;
+  if (!digits.test(m[2]) || parseInt(m[2], base) > 0xFFFFFF) return false;
+  if (bitDevice) return type === "Bool" && m[3] === undefined;
+  if (type === "Bool") return m[3] !== undefined;
+  return m[3] === undefined && ["Word","UInt16","Int16","UInt32","Int32","Float32","Int64","UInt64","Float64"].includes(type);
+}
+
 // MQTT Tag address: exact topic, optionally #field for a JSON message (plant/env#temp, gw#a[0].b).
 function mqttTagAddressValid(address) {
   const [topic, ...rest] = String(address || "").split("#");
@@ -2643,6 +2679,11 @@ function validateTagAddressClient() {
     stateBox.textContent = good ? (tagIsMqtt() ? (address.includes("#") ? "MQTT topic + JSON field OK" : "MQTT topic OK") : "OPC UA NodeId OK") :
       (tagIsMqtt() ? "Use an exact topic without +, optionally #field for JSON (plant/env#temp)." : "Use ns=2;i=13 or the Siemens Node ID http://...;i=13.");
     stateBox.classList.toggle("error", !good); saveButton.disabled = !good || !canMutateConfiguration(); return good;
+  }
+  if (tagMcDevice()) {
+    const good=mcAddressValid($("tagAddress").value.trim(),$("tagDataType").value,tagMcDevice().unitId);
+    stateBox.textContent=good?"Mitsubishi address OK":"Use D100 / W1A / R100 / TN0 for values, M0 / X1F / Y10 / SM400 or D100.A for BOOL.";
+    stateBox.classList.toggle("error",!good);saveButton.disabled=!good||!canMutateConfiguration();return good;
   }
   if (tagIsS7()) {
     const good=s7AddressValid($("tagAddress").value.trim(),$("tagDataType").value);
@@ -5657,7 +5698,7 @@ function dev3Priority(value) {
 
 function dev3Protocol(value) {
   const key = String(value || "Modbus TCP").toLowerCase().replace(/[^a-z0-9]/g, "");
-  return ({modbus:"Modbus TCP",modbustcp:"Modbus TCP",modbusrtu:"Modbus RTU",rtu:"Modbus RTU",s7:"Siemens S7 TCP",s7tcp:"Siemens S7 TCP",siemenss7tcp:"Siemens S7 TCP",mqtt:"MQTT",opcua:"OPC UA"})[key] || null;
+  return ({modbus:"Modbus TCP",modbustcp:"Modbus TCP",modbusrtu:"Modbus RTU",rtu:"Modbus RTU",mitsubishimc:"Mitsubishi MC",mitsubishi:"Mitsubishi MC",mc:"Mitsubishi MC",s7:"Siemens S7 TCP",s7tcp:"Siemens S7 TCP",siemenss7tcp:"Siemens S7 TCP",mqtt:"MQTT",opcua:"OPC UA"})[key] || null;
 }
 
 function dev3ImportExistingMode(){return $("importExistingMode")?.value==='skip'?'skip':'update'}
@@ -5690,7 +5731,7 @@ function dev3PreviewRow(row, dataset) {
     const pollIntervalMs = dev3Number(dev3Cell(row, "PollIntervalMs", "Poll", "PollMs"), 1000);
     if (!name) errors.push("Name is required");
     if (state.tags.some(t => t.name.toLowerCase() === name.toLowerCase())) errors.push("Name is already used by a Tag");
-    if (!protocol) errors.push("Protocol must be Modbus TCP, Modbus RTU, Siemens S7 TCP, MQTT or OPC UA");
+    if (!protocol) errors.push("Protocol must be Modbus TCP, Modbus RTU, Mitsubishi MC, Siemens S7 TCP, MQTT or OPC UA");
     if (protocol === "Modbus RTU") {
       // Host is the port (COM3) with the Serial column ("9600 8E1", default), or the full settings
       // "COM3;9600;8E1" as a device export writes them (quoted).
@@ -5712,6 +5753,12 @@ function dev3PreviewRow(row, dataset) {
         if (!Number.isInteger(unitId) || unitId < 0 || unitId > 255) errors.push("Unit ID must be 0..255");
         payload = { kind:"modbus", body:{name,host,port,unitId,pollIntervalMs} };
         preview = `${name || "?"} • ${host || "?"}:${port} • Unit ${unitId}`;
+      } else if (protocol === "Mitsubishi MC") {
+        // Series column (Q/L/iQ-R or FX5), else UnitId 0/1 as a device export writes it.
+        const seriesText = dev3Cell(row, "Series", "PlcSeries").toUpperCase().replace(/[^A-Z0-9]/g, "");
+        const series = seriesText ? (seriesText.includes("FX5") || seriesText.includes("IQF") ? 1 : 0) : (unitId === 1 ? 1 : 0);
+        payload = { kind:"mc", body:{name,host,port,series,pollIntervalMs} };
+        preview = `${name || "?"} • ${host || "?"}:${port} • ${series === 1 ? "iQ-F (FX5)" : "iQ-R / Q / L"}`;
       } else if (protocol === "Siemens S7 TCP") {
         const rackRaw = dev3Cell(row, "Rack");
         const slotRaw = dev3Cell(row, "Slot");
@@ -5767,6 +5814,9 @@ function dev3PreviewRow(row, dataset) {
       if (addressInfo && !addressInfo.bitArea && dataType && Number(address) + tagRegisterWidth(dataType) - 1 > addressInfo.last) errors.push("Datatype width exceeds Modbus area boundary");
       effectiveBitIndex = dataType === "Bool" && addressInfo && !addressInfo.bitArea ? bitIndex : null;
       if (bitIndex !== null && effectiveBitIndex === null) errors.push("BitIndex is only valid for Holding Register BOOL");
+    } else if (device?.protocol === "Mitsubishi MC") {
+      if (!dataType || !mcAddressValid(address, dataType, device.unitId)) errors.push("Mitsubishi address must match the datatype: D100 / W1A / R100 for values, M0 / X1F / D100.A for BOOL");
+      if (bitIndex !== null) errors.push("Mitsubishi bit is part of the address (D100.A); leave BitIndex blank");
     } else if (device?.protocol === "Siemens S7 TCP") {
       if (!dataType || !s7AddressValid(address, dataType)) errors.push("S7 address must match datatype: DB1.DBX0.0 / I0.0 / M10.0, DB1.DBW2 / IW64 / MW20, DB1.DBD4 / ID100 / MD30");
       if (bitIndex !== null) errors.push("S7 bit index is part of the DBX address; leave BitIndex blank");
@@ -5841,7 +5891,7 @@ function dev3PreviewRow(row, dataset) {
   const existing=dev3ImportIdentity(dataset,payload),mode=dev3ImportExistingMode();
   const action=existing?(mode==='skip'?'skip':'update'):'create';
   if(existing&&dataset==='tags'&&existing.deviceId!==payload?.body?.deviceId)errors.push('Tag name belongs to another Device; rename it before import');
-  if(existing&&dataset==='devices'&&existing.protocol!==({'modbus':'Modbus TCP','modbusrtu':'Modbus RTU','s7':'Siemens S7 TCP','mqtt':'MQTT','opcua':'OPC UA'}[payload.kind]))errors.push('Device protocol cannot be changed in place');
+  if(existing&&dataset==='devices'&&existing.protocol!==({'modbus':'Modbus TCP','modbusrtu':'Modbus RTU','mc':'Mitsubishi MC','s7':'Siemens S7 TCP','mqtt':'MQTT','opcua':'OPC UA'}[payload.kind]))errors.push('Device protocol cannot be changed in place');
   return { row:row.__row, dataset, source:row, payload, preview, errors,
     action,existingId:existing?.id||null,
     valid:errors.length === 0 && action!=='skip' };
@@ -5912,7 +5962,7 @@ async function executeCsvImport() {
           pollIntervalMs:item.payload.body.pollIntervalMs}:item.payload.body;
         await api(`${route}/${encodeURIComponent(item.existingId)}`,{method:'PUT',body:JSON.stringify(body)});
       } else if (item.dataset === "devices") {
-        const devicePaths = {modbus:"/api/devices/modbus-tcp",modbusrtu:"/api/devices/modbus-rtu",s7:"/api/devices/siemens-s7-tcp",mqtt:"/api/devices/mqtt",opcua:"/api/devices/opc-ua"};
+        const devicePaths = {modbus:"/api/devices/modbus-tcp",modbusrtu:"/api/devices/modbus-rtu",mc:"/api/devices/mitsubishi-mc",s7:"/api/devices/siemens-s7-tcp",mqtt:"/api/devices/mqtt",opcua:"/api/devices/opc-ua"};
         await api(devicePaths[item.payload.kind], { method:"POST", body:JSON.stringify(item.payload.body) });
       } else if (item.dataset === "tags") {
         await api("/api/tags", { method:"POST", body:JSON.stringify(item.payload.body) });

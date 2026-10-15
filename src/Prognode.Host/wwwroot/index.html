@@ -1305,6 +1305,17 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
         </div>
 
 
+        <div id="mcFields" class="hidden">
+          <div class="form-grid">
+            <label class="field wide"><span>PLC IP / Host</span><input id="mcHost" placeholder="192.168.3.39" /></label>
+            <label class="field"><span>MC protocol port (TCP)</span><input id="mcPort" type="number" min="1" max="65535" value="5007" /></label>
+            <label class="field"><span>PLC series</span>
+              <select id="mcSeries"><option value="0" selected>MELSEC iQ-R / Q / L</option><option value="1">MELSEC iQ-F (FX5)</option></select></label>
+            <label class="field"><span>Poll interval (ms)</span><input id="mcPoll" type="number" min="100" value="1000" /></label>
+          </div>
+          <div class="info-box">Read-only MC protocol (SLMP), 3E frame, binary code over TCP. In GX Works open an SLMP / MC protocol connection on the PLC's Ethernet port (binary, TCP) and use its port number here. Addresses: D100, W1A, R100, TN0, CN0, SD0; bits M0, X1F, Y10, B0, L0, SM400; a bit of a word D100.A. On FX5, X/Y numbers are octal.</div>
+        </div>
+
         <div id="s7Fields" class="hidden">
           <div class="form-grid">
             <label class="field wide"><span>PLC IP / Host</span><input id="s7Host" placeholder="192.168.1.20" /></label>
