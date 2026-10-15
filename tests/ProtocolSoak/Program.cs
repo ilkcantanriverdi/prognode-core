@@ -109,8 +109,8 @@ ITagReader CreateReader(SoakTarget t) => t.Device.Protocol switch
 {
     "Modbus TCP" => new ModbusTagReader(new ModbusTcpRegisterClient()),
     "Siemens S7" => new S7TagReader(),
-    "OPC UA" => new OpcUaTagReader(opc),
-    "MQTT" => new MqttTagReader(),
+    "OPC UA" => new OpcUaTagReader(opc, SoakCredentials.Store),
+    "MQTT" => new MqttTagReader(SoakCredentials.Store),
     _ => throw new ArgumentException($"Unknown protocol {t.Device.Protocol}")
 };
 
@@ -187,6 +187,24 @@ sealed record SoakTag(TagDefinition Tag, Expectation Expect);
 
 sealed record SoakTarget(string Name, DeviceDefinition Device, List<SoakTag> Tags);
 
+/// <summary>User names and passwords of the soak targets (simulators always ask for one).</summary>
+static class SoakCredentials
+{
+    public const string SimUser = "soak", SimPassword = "soak-pass";
+    public static readonly MemoryStore Store = new();
+
+    public sealed class MemoryStore : IDeviceCredentialStore
+    {
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, DeviceCredential> _items = new();
+        public DeviceCredential? Get(Guid deviceId) => _items.TryGetValue(deviceId, out var c) ? c : null;
+        public string? GetUsername(Guid deviceId) => Get(deviceId)?.Username;
+        public void Save(Guid deviceId, DeviceCredential? credential)
+        {
+            if (credential is null) _items.TryRemove(deviceId, out _); else _items[deviceId] = credential;
+        }
+    }
+}
+
 static class SimTargets
 {
     public const int ModbusPort = 15020, S7Port = 11102, OpcPort = 14841, MqttPort = 11883;
@@ -197,6 +215,8 @@ static class SimTargets
         SoakTarget Target(string name, string protocol, string host, int port, Func<Guid, List<SoakTag>> tags)
         {
             var id = Guid.NewGuid();
+            if (protocol is "OPC UA" or "MQTT")
+                SoakCredentials.Store.Save(id, new DeviceCredential(SoakCredentials.SimUser, SoakCredentials.SimPassword));
             return new SoakTarget(name, new DeviceDefinition(id, name, protocol, "Configured", host, port, 1, 1000, now, now), tags(id));
         }
         SoakTag T(Guid device, string name, string address, TagDataType type, Expectation e,
@@ -218,6 +238,10 @@ static class SimTargets
                 T(id, "FloatCDAB", "41009", TagDataType.Float32, new(null, 12.5), ModbusByteOrder.CDAB),
                 T(id, "Coil", "00001", TagDataType.Bool, new(null, 1)),
                 T(id, "Discrete", "10001", TagDataType.Bool, new(null, 1)),
+                // Six-digit addresses above register 9999 and 64-bit values.
+                T(id, "Float64", "419000", TagDataType.Float64, new(null, 12.5)),
+                T(id, "UInt64", "419004", TagDataType.UInt64, new(null, 5000000000)),
+                T(id, "Int64CDAB", "419008", TagDataType.Int64, new(null, -123456789012), ModbusByteOrder.CDAB),
             ]),
             Target("S7 sim", "Siemens S7", "127.0.0.1", S7Port, id =>
             [
@@ -230,6 +254,13 @@ static class SimTargets
                 T(id, "Bit0", "DB1.DBX416.0", TagDataType.Bool, new(null, 1)),
                 T(id, "Bit1", "DB1.DBX416.1", TagDataType.Bool, new(null, 0)),
                 T(id, "Bit3", "DB1.DBX416.3", TagDataType.Bool, new(null, 1)),
+                // Inputs, outputs and bit memory.
+                T(id, "Input", "I0.1", TagDataType.Bool, new(null, 1)),
+                T(id, "InputWord", "%IW2", TagDataType.Int16, new(null, -1234)),
+                T(id, "Output", "Q1.7", TagDataType.Bool, new(null, 1)),
+                T(id, "OutputWord", "QW4", TagDataType.Word, new(null, 1234)),
+                T(id, "MerkerReal", "MD4", TagDataType.Float32, new(null, 12.5)),
+                T(id, "MerkerBit", "M8.0", TagDataType.Bool, new(null, 1)),
             ]),
             Target("OPC UA sim", "OPC UA", $"opc.tcp://127.0.0.1:{OpcPort}/prognode-soak/", OpcPort, id =>
             [
@@ -240,6 +271,8 @@ static class SimTargets
                 T(id, "UInt32", "ns=2;s=FixedUInt32", TagDataType.UInt32, new(null, 4000000000)),
                 T(id, "Float", "ns=2;s=FixedFloat", TagDataType.Float32, new(null, 12.5)),
                 T(id, "Bool", "ns=2;s=FixedBool", TagDataType.Bool, new(null, 1)),
+                T(id, "Double", "ns=2;s=FixedDouble", TagDataType.Float64, new(null, 12.5)),
+                T(id, "Int64", "ns=2;s=FixedInt64", TagDataType.Int64, new(null, -123456789012)),
             ]),
             Target("MQTT sim", "MQTT", "mqtt://127.0.0.1", MqttPort, id =>
             [
@@ -247,6 +280,10 @@ static class SimTargets
                 T(id, "Word", "soak/s/word", TagDataType.Word, new(null, 1234)),
                 T(id, "Float", "soak/s/float", TagDataType.Float32, new(null, 12.5)),
                 T(id, "Bool", "soak/s/bool", TagDataType.Bool, new(null, 1)),
+                // JSON message read field by field.
+                T(id, "JsonFloat", "soak/s/json#temp", TagDataType.Float32, new(null, 12.5)),
+                T(id, "JsonNested", "soak/s/json#sensors[1].value", TagDataType.Int32, new(null, -123456)),
+                T(id, "JsonBig", "soak/s/json#energy", TagDataType.UInt64, new(null, 5000000000)),
             ]),
         ];
     }
@@ -270,6 +307,10 @@ static class ConfigTargets
                 "Configured", t.GetProperty("host").GetString(), t.TryGetProperty("port", out var p) ? p.GetInt32() : null,
                 t.TryGetProperty("unitId", out var u) ? u.GetInt32() : 1,
                 t.TryGetProperty("pollMs", out var ms) ? ms.GetInt32() : 1000, now, now);
+            // Optional "username" / "password" for an MQTT broker or OPC UA server.
+            if (t.TryGetProperty("username", out var user) && user.GetString() is { Length: > 0 } name)
+                SoakCredentials.Store.Save(id, new DeviceCredential(name,
+                    t.TryGetProperty("password", out var password) ? password.GetString() ?? "" : ""));
             var tags = new List<SoakTag>();
             foreach (var g in t.GetProperty("tags").EnumerateArray())
             {
@@ -445,7 +486,8 @@ sealed class Simulators(string root, string work, SoakOptions options)
         };
         foreach (var a in new[] { Script, kind, "--port", Port(kind).ToString(), "--counters",
                      (kind == "mqtt" ? Math.Min(options.Counters, 50) : options.Counters).ToString(),
-                     "--pki", Path.Combine(work, "opcua-server-pki") })
+                     "--pki", Path.Combine(work, "opcua-server-pki"),
+                     "--user", SoakCredentials.SimUser, "--password", SoakCredentials.SimPassword })
             psi.ArgumentList.Add(a);
         var p = Process.Start(psi)!;
         var log = Path.Combine(work, $"sim-{kind}.log");
@@ -460,6 +502,14 @@ sealed class Simulators(string root, string work, SoakOptions options)
         var factory = new MqttServerFactory();
         _broker = factory.CreateMqttServer(factory.CreateServerOptionsBuilder()
             .WithDefaultEndpoint().WithDefaultEndpointPort(SimTargets.MqttPort).Build());
+        // Like most site brokers, the simulated one refuses anonymous clients.
+        _broker.ValidatingConnectionAsync += args =>
+        {
+            args.ReasonCode = args.UserName == SoakCredentials.SimUser && args.Password == SoakCredentials.SimPassword
+                ? MQTTnet.Protocol.MqttConnectReasonCode.Success
+                : MQTTnet.Protocol.MqttConnectReasonCode.BadUserNameOrPassword;
+            return Task.CompletedTask;
+        };
         await _broker.StartAsync();
     }
 

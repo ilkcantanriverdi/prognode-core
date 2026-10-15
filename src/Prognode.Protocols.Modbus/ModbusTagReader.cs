@@ -283,6 +283,16 @@ public sealed class ModbusTagReader(
                     registers[index + 1],
                     tag.ByteOrder),
 
+            TagDataType.Int64 =>
+                BinaryPrimitives.ReadInt64BigEndian(Reorder(registers.AsSpan(index, 4), tag.ByteOrder)),
+
+            TagDataType.UInt64 =>
+                BinaryPrimitives.ReadUInt64BigEndian(Reorder(registers.AsSpan(index, 4), tag.ByteOrder)),
+
+            TagDataType.Float64 =>
+                BitConverter.Int64BitsToDouble(
+                    BinaryPrimitives.ReadInt64BigEndian(Reorder(registers.AsSpan(index, 4), tag.ByteOrder))),
+
             _ => throw new NotSupportedException(
                 $"Tag datatype '{tag.DataType}' is not supported.")
         };
@@ -342,6 +352,25 @@ public sealed class ModbusTagReader(
             ModbusByteOrder.DCBA => [d, c, b, a],
             _ => [a, b, c, d]
         };
+    }
+
+    /// <summary>
+    /// Bytes of a 64-bit value in big-endian order. ABCD = registers as sent; CDAB = register order
+    /// reversed (low word first); BADC = bytes swapped inside each register; DCBA = both. Same
+    /// meaning as for 32-bit values.
+    /// </summary>
+    private static byte[] Reorder(ReadOnlySpan<ushort> words, ModbusByteOrder order)
+    {
+        var wordSwap = order is ModbusByteOrder.CDAB or ModbusByteOrder.DCBA;
+        var byteSwap = order is ModbusByteOrder.BADC or ModbusByteOrder.DCBA;
+        var bytes = new byte[words.Length * 2];
+        for (var i = 0; i < words.Length; i++)
+        {
+            var word = words[wordSwap ? words.Length - 1 - i : i];
+            bytes[i * 2] = byteSwap ? (byte)word : (byte)(word >> 8);
+            bytes[i * 2 + 1] = byteSwap ? (byte)(word >> 8) : (byte)word;
+        }
+        return bytes;
     }
 
     private sealed record PlannedTag(

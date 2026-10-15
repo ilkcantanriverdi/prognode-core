@@ -1,3 +1,4 @@
+using Prognode.Contracts.Devices;
 using System.Globalization;
 using System.IO.Compression;
 using System.Security;
@@ -34,8 +35,8 @@ public static class EndpointExtensions
 {
     public sealed record S7TestRequest(string Host,int Port,int Rack,int Slot,int TimeoutMs=2000);
     public sealed record S7DeviceRequest(string Name,string Host,int Port,int Rack,int Slot,int PollIntervalMs);
-    public sealed record MqttDeviceRequest(string? Name, string? Host, int Port, int PollIntervalMs);
-    public sealed record OpcUaDeviceRequest(string? Name, string? EndpointUrl, int PollIntervalMs);
+    public sealed record MqttDeviceRequest(string? Name, string? Host, int Port, int PollIntervalMs, string? Username = null, string? Password = null);
+    public sealed record OpcUaDeviceRequest(string? Name, string? EndpointUrl, int PollIntervalMs, string? Username = null, string? Password = null);
     public sealed record OpcUaCertificateRequest(string EndpointUrl);
     public sealed record OpcUaTrustRequest(string EndpointUrl, string Sha256);
     public sealed record DeleteAlarmHistoryRequest(Guid[]? OccurrenceIds);
@@ -57,6 +58,20 @@ public static class EndpointExtensions
             return server.GetClient(deviceId)?.Name ?? $"Device {deviceId.ToString("N")[..8]}";
         return attribution.Principal;
     }
+    private static bool SupportsCredentials(string protocol) =>
+        protocol.Equals("MQTT", StringComparison.OrdinalIgnoreCase) ||
+        protocol.Equals("OPC UA", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>A credential from a create request; no user name means none.</summary>
+    private static DeviceCredential? NewCredential(string? username, string? password)
+    {
+        if (string.IsNullOrWhiteSpace(username)) return null;
+        if (string.IsNullOrEmpty(password)) throw new ArgumentException("Enter the password for this user name.");
+        if (username.Trim().Length > 256 || password.Length > 1024)
+            throw new ArgumentException("User name or password is too long.");
+        return new DeviceCredential(username.Trim(), password);
+    }
+
     private static IResult? CheckQrAdmin(HttpContext context, LocalAccessSessionService sessions)
     {
         var ip = context.Connection.RemoteIpAddress;
@@ -703,9 +718,11 @@ public static class EndpointExtensions
             "/api/devices",
             async (
                 DeviceService devices,
+                IDeviceCredentialStore credentials,
                 CancellationToken ct) =>
                 Results.Ok(
-                    await devices.GetAllAsync(ct)));
+                    (await devices.GetAllAsync(ct))
+                        .Select(device => device with { Username = credentials.GetUsername(device.Id) })));
 
         endpoints.MapPost(
             "/api/network/ping",
@@ -891,23 +908,27 @@ public static class EndpointExtensions
             catch(ArgumentException e){return Results.BadRequest(new {message=e.Message});}
         });
 
-        endpoints.MapPost("/api/devices/mqtt", async (MqttDeviceRequest req, DeviceService devices, CancellationToken ct) =>
+        endpoints.MapPost("/api/devices/mqtt", async (MqttDeviceRequest req, DeviceService devices, IDeviceCredentialStore credentials, CancellationToken ct) =>
         {
             try
             {
+                var credential = NewCredential(req.Username, req.Password);
                 var item = await devices.CreateMqttAsync(req.Name, req.Host, req.Port, req.PollIntervalMs, ct);
-                return Results.Created($"/api/devices/{item.Id}", item);
+                credentials.Save(item.Id, credential);
+                return Results.Created($"/api/devices/{item.Id}", item with { Username = credential?.Username });
             }
             catch (DeviceCapacityExceededException) { return Results.StatusCode(403); }
             catch (ArgumentException ex) { return Results.BadRequest(new { message = ex.Message }); }
         });
 
-        endpoints.MapPost("/api/devices/opc-ua", async (OpcUaDeviceRequest req, DeviceService devices, CancellationToken ct) =>
+        endpoints.MapPost("/api/devices/opc-ua", async (OpcUaDeviceRequest req, DeviceService devices, IDeviceCredentialStore credentials, CancellationToken ct) =>
         {
             try
             {
+                var credential = NewCredential(req.Username, req.Password);
                 var item = await devices.CreateOpcUaAsync(req.Name, req.EndpointUrl, req.PollIntervalMs, ct);
-                return Results.Created($"/api/devices/{item.Id}", item);
+                credentials.Save(item.Id, credential);
+                return Results.Created($"/api/devices/{item.Id}", item with { Username = credential?.Username });
             }
             catch (DeviceCapacityExceededException) { return Results.StatusCode(403); }
             catch (ArgumentException ex) { return Results.BadRequest(new { message = ex.Message }); }
@@ -943,19 +964,35 @@ public static class EndpointExtensions
                 Guid id,
                 UpdateDeviceRequest request,
                 DeviceService devices,
+                IDeviceCredentialStore credentials,
                 CancellationToken ct) =>
             {
                 try
                 {
-                    return Results.Ok(
-                        await devices.UpdateAsync(
-                            id,
-                            request.Name,
-                            request.Host,
-                            request.Port,
-                            request.UnitId,
-                            request.PollIntervalMs,
-                            ct));
+                    var existing = await devices.GetByIdAsync(id, ct);
+                    if (existing is null) return Results.NotFound();
+                    DeviceCredential? credential = null;
+                    if (request.Username is not null)
+                    {
+                        if (request.Username.Trim().Length > 0 && !SupportsCredentials(existing.Protocol))
+                            throw new ArgumentException($"{existing.Protocol} devices do not use a user name and password.");
+                        credential = request.Username.Trim().Length == 0 ? null
+                            : string.IsNullOrEmpty(request.Password)
+                                ? credentials.Get(id) is { } stored
+                                    ? stored with { Username = request.Username.Trim() }
+                                    : throw new ArgumentException("Enter the password for this user name.")
+                                : NewCredential(request.Username, request.Password);
+                    }
+                    var updated = await devices.UpdateAsync(
+                        id,
+                        request.Name,
+                        request.Host,
+                        request.Port,
+                        request.UnitId,
+                        request.PollIntervalMs,
+                        ct);
+                    if (request.Username is not null) credentials.Save(id, credential);
+                    return Results.Ok(updated with { Username = credentials.GetUsername(id) });
                 }
                 catch (KeyNotFoundException)
                 {

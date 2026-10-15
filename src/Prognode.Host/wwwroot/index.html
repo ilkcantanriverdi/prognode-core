@@ -386,6 +386,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
                 <option value="">All datatypes</option><option value="Bool">BOOL</option><option value="Word">WORD</option>
                 <option value="UInt16">UINT16</option><option value="Int16">INT16</option><option value="UInt32">UINT32</option>
                 <option value="Int32">INT32</option><option value="Float32">FLOAT32</option>
+                <option value="Int64">INT64</option><option value="UInt64">UINT64</option><option value="Float64">FLOAT64</option>
               </select>
               <select class="table-filter" id="tagSort" aria-label="Sort Tags">
                 <option value="name-asc">Name A–Z</option><option value="name-desc">Name Z–A</option>
@@ -1322,16 +1323,20 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
             <label class="field wide"><span>MQTT Broker</span><input id="mqttHost" placeholder="mqtts://broker.example.com" /></label>
             <label class="field"><span>TCP Port</span><input id="mqttPort" type="number" min="1" max="65535" value="8883" /></label>
             <label class="field"><span>Tag sample interval (ms)</span><input id="mqttPoll" type="number" min="100" value="1000" /></label>
+            <label class="field"><span>User name (if the broker asks)</span><input id="mqttUsername" autocomplete="off" spellcheck="false" /></label>
+            <label class="field"><span>Password</span><input id="mqttPassword" type="password" autocomplete="new-password" /></label>
           </div>
-          <div class="info-box">Read-only exact-topic subscriptions. Use mqtts:// for verified TLS or mqtt:// for an explicitly trusted local broker. Credentials and publish are not supported in this pilot.</div>
+          <div class="info-box">Read-only exact-topic subscriptions; JSON messages are read field by field (topic#field). Use mqtts:// for verified TLS or mqtt:// for an explicitly trusted local broker. The password is stored encrypted on this PC and never shown again.</div>
         </div>
 
         <div id="opcUaFields" class="hidden">
           <div class="form-grid">
             <label class="field wide"><span>OPC UA Endpoint URL</span><input id="opcUaUrl" placeholder="opc.tcp://192.168.1.20:4840/" /></label>
             <label class="field"><span>Poll interval (ms)</span><input id="opcUaPoll" type="number" min="100" value="1000" /></label>
+            <label class="field"><span>User name (if anonymous login is off)</span><input id="opcUaUsername" autocomplete="off" spellcheck="false" /></label>
+            <label class="field"><span>Password</span><input id="opcUaPassword" type="password" autocomplete="new-password" /></label>
           </div>
-          <div class="info-box">Read-only NodeId polling. Only SignAndEncrypt endpoints are accepted. An administrator must trust the server certificate in the PROGNODE Monitor OPC UA PKI store; unknown certificates are never accepted automatically.</div>
+          <div class="info-box">Read-only NodeId polling. Only SignAndEncrypt endpoints are accepted. Leave the user name empty for anonymous login; the password is stored encrypted on this PC and never shown again. An administrator must trust the server certificate in the PROGNODE Monitor OPC UA PKI store; unknown certificates are never accepted automatically.</div>
           <button type="button" class="secondary" id="inspectOpcUaCertificate">Inspect server certificate</button>
           <div id="opcUaCertificateResult" class="test-result hidden"></div>
         </div>
@@ -1385,6 +1390,9 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
             <option value="UInt32">UINT32</option>
             <option value="Int32">INT32</option>
             <option value="Float32">FLOAT32 / REAL</option>
+            <option value="Int64">INT64</option>
+            <option value="UInt64">UINT64</option>
+            <option value="Float64">FLOAT64 / LREAL</option>
           </select>
         </label>
 
@@ -1459,7 +1467,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
       <label class="field">
         <span data-i18n="sourceTag">Source Tag</span>
         <select id="alarmTag"></select>
-        <small data-i18n="alarmSourceHelp">BOOL / WORD digital alarms and UInt16 / Int16 / UInt32 / Int32 / Float32 numeric alarms are supported.</small>
+        <small data-i18n="alarmSourceHelp">BOOL / WORD digital alarms and UInt16 / Int16 / UInt32 / Int32 / Int64 / UInt64 / Float32 / Float64 numeric alarms are supported.</small>
       </label>
 
       <div class="form-grid">

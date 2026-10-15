@@ -10,5 +10,8 @@ public sealed record DeviceDefinition(
     int? UnitId,
     int PollIntervalMs,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt
+    DateTimeOffset UpdatedAt,
+    // User name of the device credential (MQTT broker, OPC UA server) for display; the password
+    // never leaves the credential store.
+    string? Username = null
 );

@@ -5,7 +5,7 @@ namespace Prognode.Protocols.S7;
 /// <summary>The PLC answered ReadVar for one item with an error code (e.g. 0x05 address out of range,
 /// 0x0A object does not exist). The session itself stays valid.</summary>
 public sealed class S7ItemRejectedException(byte code)
-    : IOException($"S7 ReadVar rejected by PLC (0x{code:X2}); check DB access and optimized block setting.")
+    : IOException($"S7 ReadVar rejected by PLC (0x{code:X2}); check the address and, for a DB, that optimized block access is off.")
 {
     public byte Code { get; } = code;
 }
@@ -55,11 +55,14 @@ public sealed class S7Client : IAsyncDisposable
     public Task<byte[]> ReadAsync(S7Address address, CancellationToken ct) =>
         ReadCoreAsync(address, address.Length == 1, ct);
 
-    /// <summary>Reads a contiguous DB byte range with BYTE transport, also for a single byte.</summary>
-    public Task<byte[]> ReadBytesAsync(int db, int startByte, int length, CancellationToken ct)
+    /// <summary>Reads a contiguous byte range of a DB (or of I/Q/M) with BYTE transport, also for a single byte.</summary>
+    public Task<byte[]> ReadBytesAsync(int db, int startByte, int length, CancellationToken ct) =>
+        ReadBytesAsync(S7Area.DataBlock, db, startByte, length, ct);
+
+    public Task<byte[]> ReadBytesAsync(S7Area area, int db, int startByte, int length, CancellationToken ct)
     {
         if (length < 1) throw new ArgumentOutOfRangeException(nameof(length));
-        return ReadCoreAsync(new S7Address(db, startByte, 0, length), false, ct);
+        return ReadCoreAsync(new S7Address(area == S7Area.DataBlock ? db : 0, startByte, 0, length, area), false, ct);
     }
 
     private async Task<byte[]> ReadCoreAsync(S7Address address, bool bitAccess, CancellationToken ct)
@@ -70,7 +73,7 @@ public sealed class S7Client : IAsyncDisposable
         var count = bitAccess ? 1 : address.Length;
         var bitAddress = address.ByteOffset * 8 + (bitAccess ? address.Bit : 0);
         byte[] packet = [3,0,0,31, 2,0xf0,0x80, 0x32,1,0,0,(byte)(refId>>8),(byte)refId,0,14,0,0,
-            4,1,0x12,0x0a,0x10,(byte)(bitAccess?1:2),(byte)(count>>8),(byte)count,(byte)(address.Db>>8),(byte)address.Db,0x84,
+            4,1,0x12,0x0a,0x10,(byte)(bitAccess?1:2),(byte)(count>>8),(byte)count,(byte)(address.Db>>8),(byte)address.Db,(byte)address.Area,
             (byte)(bitAddress>>16),(byte)(bitAddress>>8),(byte)bitAddress];
         await stream.WriteAsync(packet, ct);
         var response = await ReceiveAsync(ct);

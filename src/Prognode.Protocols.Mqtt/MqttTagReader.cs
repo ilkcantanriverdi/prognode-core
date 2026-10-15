@@ -10,9 +10,11 @@ namespace Prognode.Protocols.Mqtt;
 
 // A single long-lived subscription per configured broker device. The Core poller
 // samples the most recently received message; it never publishes to the broker.
-public sealed class MqttTagReader : ITagReader, IDisposable
+public sealed class MqttTagReader(IDeviceCredentialStore? credentials = null) : ITagReader, IDisposable
 {
     private readonly ConcurrentDictionary<Guid, Subscription> _subscriptions = new();
+
+    public MqttTagReader() : this(null) { }
 
     public bool CanHandle(DeviceDefinition device) =>
         device.Protocol.Equals("MQTT", StringComparison.OrdinalIgnoreCase);
@@ -24,11 +26,19 @@ public sealed class MqttTagReader : ITagReader, IDisposable
         if (enabled.Length == 0) return [];
 
         var endpoint = MqttEndpoint.Parse(device.Host, device.Port);
-        var topics = enabled.Select(tag => tag.Address).ToHashSet(StringComparer.Ordinal);
-        if (!_subscriptions.TryGetValue(device.Id, out var subscription) ||
-            subscription.Endpoint != endpoint || !subscription.Topics.SetEquals(topics))
+        var credential = credentials?.Get(device.Id);
+        var topicOf = new Dictionary<Guid, string?>();
+        foreach (var tag in enabled)
         {
-            var replacement = new Subscription(device.Id, endpoint, topics);
+            try { topicOf[tag.Id] = MqttTopicAddress.Parse(tag.Address).Topic; }
+            catch (ArgumentException) { topicOf[tag.Id] = null; }
+        }
+        var topics = topicOf.Values.OfType<string>().ToHashSet(StringComparer.Ordinal);
+        if (!_subscriptions.TryGetValue(device.Id, out var subscription) ||
+            subscription.Endpoint != endpoint || !subscription.Topics.SetEquals(topics) ||
+            subscription.CredentialFingerprint != credential?.Fingerprint)
+        {
+            var replacement = new Subscription(device.Id, endpoint, topics, credential);
             _subscriptions.AddOrUpdate(device.Id, replacement, (_, prior) =>
             {
                 prior.Dispose();
@@ -42,7 +52,7 @@ public sealed class MqttTagReader : ITagReader, IDisposable
         var results = new List<TagValueSnapshot>(enabled.Length);
         foreach (var tag in enabled)
         {
-            if (subscription.Latest.TryGetValue(tag.Address, out var received))
+            if (topicOf[tag.Id] is { } topic && subscription.Latest.TryGetValue(topic, out var received))
                 results.Add(MqttPayloadMapper.Map(device.Id, tag, received.Payload,
                     received.Retained, received.At, now, device.PollIntervalMs));
             else
@@ -82,8 +92,12 @@ public sealed class MqttTagReader : ITagReader, IDisposable
         private readonly SemaphoreSlim _gate = new(1, 1);
         private volatile bool _subscribed;
 
-        public Subscription(Guid deviceId, MqttEndpoint endpoint, HashSet<string> topics)
+        private readonly DeviceCredential? _credential;
+
+        public Subscription(Guid deviceId, MqttEndpoint endpoint, HashSet<string> topics, DeviceCredential? credential)
         {
+            _credential = credential;
+            CredentialFingerprint = credential?.Fingerprint;
             DeviceId = deviceId;
             Endpoint = endpoint;
             Topics = topics;
@@ -91,8 +105,8 @@ public sealed class MqttTagReader : ITagReader, IDisposable
             {
                 var message = args.ApplicationMessage;
                 if (Topics.Contains(message.Topic))
-                    Latest[message.Topic] = new Received(message.Payload.Length > 256
-                            ? new byte[257] : message.Payload.ToArray(),
+                    Latest[message.Topic] = new Received(message.Payload.Length > MqttPayloadMapper.MaxPayloadBytes
+                            ? new byte[MqttPayloadMapper.MaxPayloadBytes + 1] : message.Payload.ToArray(),
                         message.Retain, DateTimeOffset.UtcNow);
                 return Task.CompletedTask;
             };
@@ -105,6 +119,7 @@ public sealed class MqttTagReader : ITagReader, IDisposable
         }
 
         public Guid DeviceId { get; }
+        public string? CredentialFingerprint { get; }
         public MqttEndpoint Endpoint { get; }
         public HashSet<string> Topics { get; }
         public ConcurrentDictionary<string, Received> Latest { get; } = new(StringComparer.Ordinal);
@@ -125,9 +140,12 @@ public sealed class MqttTagReader : ITagReader, IDisposable
                         .WithCleanSession(true)
                         .WithTimeout(TimeSpan.FromSeconds(5));
                     if (Endpoint.UseTls) builder.WithTlsOptions(options => options.UseTls(true));
+                    if (_credential is not null) builder.WithCredentials(_credential.Username, _credential.Password);
                     var connected = await _client.ConnectAsync(builder.Build(), timeout.Token);
                     if (connected.ResultCode != MqttClientConnectResultCode.Success)
-                        throw new IOException($"MQTT broker rejected connection: {connected.ResultCode}.");
+                        throw new IOException(connected.ResultCode is MqttClientConnectResultCode.BadUserNameOrPassword or MqttClientConnectResultCode.NotAuthorized
+                            ? $"MQTT broker rejected the user name or password ({connected.ResultCode})."
+                            : $"MQTT broker rejected connection: {connected.ResultCode}.");
                     _subscribed = false;
                 }
 

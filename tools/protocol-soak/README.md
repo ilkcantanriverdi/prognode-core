@@ -43,7 +43,9 @@ Copy `real-plcs.example.json`, fill in your PLCs and Tags, and run:
 dotnet run --project tests/ProtocolSoak -c Release -- --config my-plcs.json --minutes 480
 ```
 
-No outages are injected. Pull a cable, restart a PLC or stop a broker while it runs; the report
+A target can carry `"username"` and `"password"` for an MQTT broker or an OPC UA server that does
+not allow anonymous login (the passwords stay in your file; keep it out of git). No outages are
+injected. Pull a cable, restart a PLC or stop a broker while it runs; the report
 shows how fast each outage was noticed and how fast readings were correct again. A Tag can carry
 `"expect"`: a number (the value it must read) or `"counter:k"`; without it any Good reading counts.
 For OPC UA the soak approves the server certificate it is shown, as an administrator would in Core.
@@ -56,9 +58,15 @@ Reports go to `tools/protocol-soak/reports/` unless `--report` says otherwise.
 
 ## Notes from the simulated runs
 
-* S7: Core reads absolute addresses in non-optimized DBs only (`DB1.DBX0.0`, `DB1.DBW2`, `DB1.DBD4`).
-  Merker, input and output areas and optimized (symbolic) blocks are not supported; on S7-1200/1500
-  enable PUT/GET and turn off "optimized block access" for the DBs Core reads.
+* S7: absolute addresses only. DBs: `DB1.DBX0.0`, `DB1.DBW2`, `DB1.DBD4` (non-optimized DBs; turn
+  off "optimized block access" for the DBs PROGNODE reads). Inputs, outputs and bit memory: `I0.0` /
+  `IW64` / `ID100`, `Q0.1` / `QW2`, `M10.0` / `MW20` / `MD30` (also `%I0.0` and the German `E`/`A`);
+  these need only PUT/GET on S7-1200/1500. Optimized (symbolic) DB access is not supported.
+* Modbus: six-digit addresses reach registers above 9999 (`419000` = holding register 19000);
+  Int64 / UInt64 / Float64 read four registers, with the same byte orders as 32-bit values.
+* MQTT: a Tag reads a plain message (`21.5`, `true`) or one field of a JSON message
+  (`plant/env#temp`, `gw/01#sensors[0].value`). The simulated broker and OPC UA server require a
+  user name and password, as most site servers do.
 * OPC UA: Core only connects with SignAndEncrypt (Basic256Sha256 or the AES policies) and checks
   that the server certificate names the host in the endpoint URL. For `localhost`/`127.0.0.1` the
   OPC UA .NET stack looks for the PC's name in the certificate.

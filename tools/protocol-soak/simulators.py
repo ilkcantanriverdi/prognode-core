@@ -10,6 +10,7 @@ Usage (the harness starts and stops these itself; each runs until killed):
   python simulators.py s7      --port 11102 --counters 200
   python simulators.py opcua   --port 14841 --counters 200 --pki <folder>
   python simulators.py mqtt    --port 11883 --counters 50      (publisher; the broker runs in the harness)
+  --user / --password: OPC UA login and MQTT broker credentials (the soak always passes them)
 """
 import argparse
 import asyncio
@@ -36,6 +37,10 @@ def words_u32(value: int) -> list[int]:
     return [(value >> 16) & 0xFFFF, value & 0xFFFF]
 
 
+def words64(big_endian: bytes) -> list[int]:
+    return [(big_endian[i] << 8) | big_endian[i + 1] for i in range(0, 8, 2)]
+
+
 # ----------------------------------------------------------------------------- Modbus TCP
 def run_modbus(port: int, counters: int) -> None:
     from pymodbus.datastore import ModbusDeviceContext, ModbusSequentialDataBlock, ModbusServerContext
@@ -43,7 +48,8 @@ def run_modbus(port: int, counters: int) -> None:
 
     size = 1100
     # pymodbus data blocks are 1-based internally: protocol address a is stored at block index a+1.
-    hr = ModbusSequentialDataBlock(0, [0] * (size + 1))
+    # Holding registers reach 19011 for the six-digit / 64-bit Tags (419000..).
+    hr = ModbusSequentialDataBlock(0, [0] * (19100 + 1))
     ir = ModbusSequentialDataBlock(0, [0] * (size + 1))
     co = ModbusSequentialDataBlock(0, [False] * (size + 1))
     di = ModbusSequentialDataBlock(0, [False] * (size + 1))
@@ -58,6 +64,10 @@ def run_modbus(port: int, counters: int) -> None:
 
     for address, values in fixed.items():
         write(hr, address, values)
+    # 64-bit values at six-digit addresses 419000 (Float64), 419004 (UInt64), 419008 (Int64, CDAB).
+    write(hr, 18999, words64(struct.pack(">d", 12.5)))
+    write(hr, 19003, words64(struct.pack(">Q", 5000000000)))
+    write(hr, 19007, list(reversed(words64(struct.pack(">q", -123456789012)))))
     write(co, 0, [True])
     write(di, 0, [True])
 
@@ -93,8 +103,16 @@ def run_s7(port: int, counters: int) -> None:
     put(412, struct.pack(">f", 12.5))
     db1[416] = 0b0000_1001  # DBX416.0 and DBX416.3 true
 
+    # Inputs, outputs and bit memory: I0.1, IW2 = -1234, Q1.7, QW4 = 1234, MD4 = 12.5, M8.0.
+    inputs = (ctypes.c_uint8 * 16)(*([0b10, 0] + list(struct.pack(">h", -1234)) + [0] * 12))
+    outputs = (ctypes.c_uint8 * 16)(*([0, 0b1000_0000, 0, 0] + list(struct.pack(">H", 1234)) + [0] * 10))
+    merkers = (ctypes.c_uint8 * 16)(*([0] * 4 + list(struct.pack(">f", 12.5)) + [1] + [0] * 7))
+
     server = snap7.server.Server()
     server.register_area(SrvArea.DB, 1, db1)
+    server.register_area(SrvArea.PE, 0, inputs)
+    server.register_area(SrvArea.PA, 0, outputs)
+    server.register_area(SrvArea.MK, 0, merkers)
     server.start(tcp_port=port)
     try:
         while True:
@@ -107,7 +125,7 @@ def run_s7(port: int, counters: int) -> None:
 
 
 # ----------------------------------------------------------------------------- OPC UA
-def run_opcua(port: int, counters: int, pki: str) -> None:
+def run_opcua(port: int, counters: int, pki: str, user: str | None = None, password: str | None = None) -> None:
     from pathlib import Path
     from asyncua import Server, ua
     from asyncua.crypto.cert_gen import generate_private_key, generate_self_signed_app_certificate, dump_private_key_as_pem
@@ -131,9 +149,23 @@ def run_opcua(port: int, counters: int, pki: str) -> None:
         cert_path.write_bytes(cert.public_bytes(Encoding.DER))
         key_path.write_bytes(dump_private_key_as_pem(key))
 
+    from asyncua.server.user_managers import UserManager
+    from asyncua.server.user_managers import User, UserRole
+
+    class OneUser(UserManager):
+        """Like a site server with anonymous login turned off."""
+        def get_user(self, iserver, username=None, password=None, certificate=None):
+            if user is None:
+                return User(role=UserRole.User)
+            return User(role=UserRole.User) if username == user and password == password_ else None
+
+    password_ = password
+
     async def main():
-        server = Server()
+        server = Server(user_manager=OneUser())
         await server.init()
+        if user is not None:
+            server.set_security_IDs(["Username"])
         server.set_endpoint(f"opc.tcp://127.0.0.1:{port}/prognode-soak/")
         server.set_server_name("PROGNODE soak OPC UA")
         await server.set_application_uri(uri)
@@ -148,7 +180,8 @@ def run_opcua(port: int, counters: int, pki: str) -> None:
                                                     ua.Variant(0, ua.VariantType.UInt16)))
         fixed = [("Word", 1234, ua.VariantType.UInt16), ("Int16", -1234, ua.VariantType.Int16),
                  ("Int32", -123456, ua.VariantType.Int32), ("UInt32", 4000000000, ua.VariantType.UInt32),
-                 ("Float", 12.5, ua.VariantType.Float), ("Bool", True, ua.VariantType.Boolean)]
+                 ("Float", 12.5, ua.VariantType.Float), ("Bool", True, ua.VariantType.Boolean),
+                 ("Double", 12.5, ua.VariantType.Double), ("Int64", -123456789012, ua.VariantType.Int64)]
         for name, value, vtype in fixed:
             await objects.add_variable(ua.NodeId(f"Fixed{name}", idx), f"Fixed{name}", ua.Variant(value, vtype))
         async with server:
@@ -161,10 +194,13 @@ def run_opcua(port: int, counters: int, pki: str) -> None:
 
 
 # ----------------------------------------------------------------------------- MQTT publisher
-def run_mqtt(port: int, counters: int) -> None:
+def run_mqtt(port: int, counters: int, user: str | None = None, password: str | None = None) -> None:
+    import json
     import paho.mqtt.client as mqtt
 
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="prognode-soak-publisher")
+    if user is not None:
+        client.username_pw_set(user, password)
     client.reconnect_delay_set(min_delay=1, max_delay=2)
     connected = threading.Event()
     client.on_connect = lambda c, u, f, rc, p=None: connected.set()
@@ -183,6 +219,8 @@ def run_mqtt(port: int, counters: int) -> None:
             client.publish("soak/s/word", "1234", qos=1, retain=True)
             client.publish("soak/s/float", "12.5", qos=1, retain=True)
             client.publish("soak/s/bool", "true", qos=1, retain=True)
+            client.publish("soak/s/json", json.dumps({"temp": 12.5, "energy": 5000000000,
+                                                       "sensors": [{"value": 1}, {"value": -123456}]}), qos=0)
         time.sleep(0.5)
 
 
@@ -192,8 +230,11 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, required=True)
     parser.add_argument("--counters", type=int, default=100)
     parser.add_argument("--pki", default="soak-pki")
+    parser.add_argument("--user", help="OPC UA login / MQTT broker user (anonymous when omitted)")
+    parser.add_argument("--password")
     a = parser.parse_args()
     print(f"simulator {a.kind} on {a.port} with {a.counters} counters", flush=True)
     {"modbus": lambda: run_modbus(a.port, a.counters), "s7": lambda: run_s7(a.port, a.counters),
-     "opcua": lambda: run_opcua(a.port, a.counters, a.pki), "mqtt": lambda: run_mqtt(a.port, a.counters)}[a.kind]()
+     "opcua": lambda: run_opcua(a.port, a.counters, a.pki, a.user, a.password),
+     "mqtt": lambda: run_mqtt(a.port, a.counters, a.user, a.password)}[a.kind]()
     sys.exit(0)

@@ -93,6 +93,7 @@ try
         "Tag rename to a Device name was accepted.");
     Console.WriteLine("PASS Device/Tag names are globally unique on create and update");
     await ProcessDataContract.RunAsync(root);
+    await DeviceCredentialContract.RunAsync(root);
 }
 finally
 {

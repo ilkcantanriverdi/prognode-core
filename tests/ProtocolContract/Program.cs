@@ -33,6 +33,7 @@ static void Check(bool condition, string message)
 var now = DateTimeOffset.UtcNow;
 await IndustrialProtocolContract.RunAsync();
 await TagDispatchContract.RunAsync();
+await ProtocolGapsContract.RunAsync();
 var deviceId = Guid.NewGuid();
 var tag = new TagDefinition(Guid.NewGuid(), deviceId, "Temperature", "plant/temp",
     TagDataType.Float32, null, ModbusByteOrder.ABCD, "C", 1, 0, 1,
@@ -65,7 +66,7 @@ foreach (var type in Enum.GetValues<TagDataType>())
     var expected = type switch
     {
         TagDataType.Bool or TagDataType.Word => 150d,
-        TagDataType.Float32 => 150d * 2 + 1,
+        TagDataType.Float32 or TagDataType.Float64 => 150d * 2 + 1,
         _ => 1.5 * 2 + 1,
     };
     Check(Math.Abs(EngineeringValue.From(150, probe) - expected) < 0.0001,

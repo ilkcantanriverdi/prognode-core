@@ -5,5 +5,8 @@ public sealed record UpdateDeviceRequest(
     string? Host,
     int? Port,
     int? UnitId,
-    int? PollIntervalMs
+    int? PollIntervalMs,
+    // null: keep the credential; "": remove it; a name: save it (an empty Password keeps the stored one).
+    string? Username = null,
+    string? Password = null
 );
