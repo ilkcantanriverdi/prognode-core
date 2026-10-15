@@ -17,6 +17,7 @@ using Prognode.Contracts.Devices;
 using Prognode.Contracts.Tags;
 using Prognode.Protocols.Abstractions;
 using Prognode.Protocols.Mitsubishi;
+using Prognode.Protocols.EtherNetIp;
 using Prognode.Protocols.Modbus;
 using Prognode.Protocols.Omron;
 using Prognode.Protocols.Mqtt;
@@ -116,6 +117,7 @@ ITagReader CreateReader(SoakTarget t) => t.Device.Protocol switch
     "Siemens S7" => new S7TagReader(),
     "Mitsubishi MC" => new McTagReader(),
     "Omron FINS" => new FinsTagReader(),
+    "EtherNet/IP" => new LogixTagReader(),
     "OPC UA" => new OpcUaTagReader(opc, SoakCredentials.Store),
     "MQTT" => new MqttTagReader(SoakCredentials.Store),
     _ => throw new ArgumentException($"Unknown protocol {t.Device.Protocol}")
@@ -168,7 +170,7 @@ sealed record SoakOptions(double Minutes, int Counters, double FaultEveryMinutes
         double D(string name, double fallback) => double.TryParse(Get(name), NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : fallback;
         return new SoakOptions(D("--minutes", 10), (int)D("--tags", 200), D("--fault-every", 3), (int)D("--fault-down", 20),
             Get("--config"), Get("--report"), Get("--python"),
-            (Get("--faults") ?? "modbus,mc,fins,s7,opcua,mqtt-broker,mqtt").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+            (Get("--faults") ?? "modbus,mc,fins,enip,s7,opcua,mqtt-broker,mqtt").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
     }
 }
 
@@ -214,7 +216,7 @@ static class SoakCredentials
 
 static class SimTargets
 {
-    public const int ModbusPort = 15020, S7Port = 11102, OpcPort = 14841, MqttPort = 11883, McPort = 15007, FinsPort = 19600;
+    public const int ModbusPort = 15020, S7Port = 11102, OpcPort = 14841, MqttPort = 11883, McPort = 15007, FinsPort = 19600, EnipPort = 14818;
 
     public static List<SoakTarget> Build(SoakOptions o)
     {
@@ -312,6 +314,22 @@ static class SimTargets
                 T(id, "T0Done", "T0", TagDataType.Bool, new(null, 1)),
                 T(id, "C0PV", "C0", TagDataType.Word, new(null, 7)),
                 T(id, "C0Done", "C0", TagDataType.Bool, new(null, 0)),
+            ], unitId: 0),
+            // EtherNet/IP: Logix tags by name (cpppo emulation), routed to CPU slot 0, Multiple Service Packets.
+            Target("EtherNet/IP sim", "EtherNet/IP", "127.0.0.1", EnipPort, id =>
+            [
+                .. Enumerable.Range(0, Math.Min(c, 200)).Select(k => T(id, $"Counters{k}", $"Counters[{k}]", TagDataType.Word, new(k, null))),
+                T(id, "Word", "Fixed_Word", TagDataType.UInt16, new(null, 1234)),
+                T(id, "Int16", "Fixed_Int16", TagDataType.Int16, new(null, -1234)),
+                T(id, "Int32", "Fixed_Int32", TagDataType.Int32, new(null, -123456)),
+                T(id, "UInt32", "Fixed_UInt32", TagDataType.UInt32, new(null, 4000000000)),
+                T(id, "Float", "Fixed_Float", TagDataType.Float32, new(null, 12.5)),
+                T(id, "Double", "Fixed_Double", TagDataType.Float64, new(null, 12.5)),
+                T(id, "Int64", "Fixed_Int64", TagDataType.Int64, new(null, -123456789012)),
+                T(id, "StatusBit1", "Status.1", TagDataType.Bool, new(null, 1)),
+                T(id, "StatusBit2", "Status.2", TagDataType.Bool, new(null, 0)),
+                T(id, "Running", "Running", TagDataType.Bool, new(null, 1)),
+                T(id, "Stopped", "Stopped", TagDataType.Bool, new(null, 0)),
             ], unitId: 0),
             Target("OPC UA sim", "OPC UA", $"opc.tcp://127.0.0.1:{OpcPort}/prognode-soak/", OpcPort, id =>
             [
@@ -520,13 +538,13 @@ sealed class Simulators(string root, string work, SoakOptions options)
         if (!File.Exists(Python))
             throw new InvalidOperationException($"Python venv not found at {Python}. See tools/protocol-soak/README.md.");
         await StartBrokerAsync();
-        foreach (var kind in new[] { "modbus", "mc", "fins", "s7", "opcua", "mqtt" }) Start(kind);
+        foreach (var kind in new[] { "modbus", "mc", "fins", "enip", "s7", "opcua", "mqtt" }) Start(kind);
         await Task.Delay(TimeSpan.FromSeconds(12)); // OPC UA creates its certificate on first start
     }
 
     private int Port(string kind) => kind switch
     {
-        "modbus" => SimTargets.ModbusPort, "mc" => SimTargets.McPort, "fins" => SimTargets.FinsPort, "s7" => SimTargets.S7Port, "opcua" => SimTargets.OpcPort, _ => SimTargets.MqttPort
+        "modbus" => SimTargets.ModbusPort, "mc" => SimTargets.McPort, "fins" => SimTargets.FinsPort, "enip" => SimTargets.EnipPort, "s7" => SimTargets.S7Port, "opcua" => SimTargets.OpcPort, _ => SimTargets.MqttPort
     };
 
     private void Start(string kind)
@@ -580,7 +598,7 @@ sealed class Simulators(string root, string work, SoakOptions options)
     {
         var all = new Dictionary<string, string>
         {
-            ["modbus"] = "Modbus sim", ["mc"] = "MC sim", ["fins"] = "FINS sim", ["s7"] = "S7 sim", ["opcua"] = "OPC UA sim", ["mqtt-broker"] = "MQTT sim", ["mqtt"] = "MQTT sim",
+            ["modbus"] = "Modbus sim", ["mc"] = "MC sim", ["fins"] = "FINS sim", ["enip"] = "EtherNet/IP sim", ["s7"] = "S7 sim", ["opcua"] = "OPC UA sim", ["mqtt-broker"] = "MQTT sim", ["mqtt"] = "MQTT sim",
         };
         var plan = options.Faults.Where(all.ContainsKey).Select(f => (f, all[f])).ToArray();
         if (plan.Length == 0) return;

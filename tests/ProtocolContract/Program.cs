@@ -37,6 +37,7 @@ await ProtocolGapsContract.RunAsync();
 await ModbusRtuContract.RunAsync();
 await MitsubishiMcContract.RunAsync();
 await OmronFinsContract.RunAsync();
+await EtherNetIpContract.RunAsync();
 var deviceId = Guid.NewGuid();
 var tag = new TagDefinition(Guid.NewGuid(), deviceId, "Temperature", "plant/temp",
     TagDataType.Float32, null, ModbusByteOrder.ABCD, "C", 1, 0, 1,

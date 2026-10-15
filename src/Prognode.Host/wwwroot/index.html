@@ -1325,6 +1325,17 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
           <div class="info-box">Read-only FINS/TCP for Omron CS, CJ, CP, NJ and NX PLCs. The PLC's built-in EtherNet/IP port or Ethernet unit accepts FINS/TCP on port 9600; on NJ/NX allow FINS in the built-in port settings and map the variables you need to CIO, W, H, D or EM. Addresses: D100, W10, H5, A20, CIO100, E0_100, T0, C0; a bit of a word D100.05.</div>
         </div>
 
+        <div id="enipFields" class="hidden">
+          <div class="form-grid">
+            <label class="field wide"><span>Controller IP / Host</span><input id="enipHost" placeholder="192.168.1.20" /></label>
+            <label class="field"><span>EtherNet/IP port</span><input id="enipPort" type="number" min="1" max="65535" value="44818" /></label>
+            <label class="field"><span>CPU slot</span>
+              <select id="enipSlot"><option value="255">Direct (Micro800, built-in port)</option><option value="0" selected>Slot 0</option><option value="1">Slot 1</option><option value="2">Slot 2</option><option value="3">Slot 3</option><option value="4">Slot 4</option><option value="5">Slot 5</option><option value="6">Slot 6</option><option value="7">Slot 7</option><option value="8">Slot 8</option><option value="9">Slot 9</option><option value="10">Slot 10</option><option value="11">Slot 11</option><option value="12">Slot 12</option><option value="13">Slot 13</option><option value="14">Slot 14</option><option value="15">Slot 15</option><option value="16">Slot 16</option><option value="17">Slot 17</option></select></label>
+            <label class="field"><span>Poll interval (ms)</span><input id="enipPoll" type="number" min="100" value="1000" /></label>
+          </div>
+          <div class="info-box">Read-only tag reads by name from Allen-Bradley ControlLogix, CompactLogix, GuardLogix and Micro800 controllers. Use the IP of the controller's Ethernet port or of the Ethernet module in its chassis; CPU slot is the controller's slot on the backplane (CompactLogix: 0). Tags need External Access Read Only or Read/Write. Names as in Studio 5000: Tank_Level, Motor.Speed, Counters[3], Program:MainProgram.Pump.Amps; Status.5 for a bit.</div>
+        </div>
+
         <div id="s7Fields" class="hidden">
           <div class="form-grid">
             <label class="field wide"><span>PLC IP / Host</span><input id="s7Host" placeholder="192.168.1.20" /></label>
