@@ -74,7 +74,7 @@ const translations = {
     settingsPlaceholder:"Users, backup/restore, network, update, security and data-flow settings will live here.",
     commissioning:"COMMISSIONING", configure:"Configuration", chooseProtocolText:"Choose how PROGNODE will communicate with the industrial device.", backProtocols:"← Back to protocols", selectedProtocol:"Selected protocol", deviceName:"PLC / Asset name", deviceNameHelp:"Use a globally clear equipment name, e.g. Boiler PLC, Main Pump PLC or Packaging Line PLC.", mockInfo:"Protocol-specific settings are stored in the local configuration database.",
     hostIp:"Host / IP", port:"Port", unitId:"Unit ID", pollInterval:"Poll interval (ms)", timeout:"Timeout (ms)", modbusTestInfo:"Ping and Modbus tests are optional. The device can be saved while offline.", cancel:"Cancel", ping:"Ping", pingOk:"Ping OK", pingFail:"Ping Failed", testConnection:"Test Modbus", saveDevice:"Save Device",
-    addTag:"Add Tag", editTag:"Edit Tag", modbusDeviceOnly:"Configured Modbus TCP, Siemens S7 TCP, MQTT and OPC UA devices are available.", tagName:"Tag / Signal name", unit:"Unit", offset:"Offset",
+    addTag:"Add Tag", editTag:"Edit Tag", modbusDeviceOnly:"Devices of every connected protocol are listed.", tagName:"Tag / Signal name", unit:"Unit", offset:"Offset",
     decimalPoint:"Decimal point", decimalPointHelp:"Integer example: raw 236 + 1 decimal = 23.6", displayDecimals:"Display decimals", displayDecimalsHelp:"FLOAT32 / REAL keeps its numeric value; this only controls how many decimal digits are shown.",
     tagAddressHelp:"Modbus read areas: 00001 Coil (FC01), 10001 Discrete Input (FC02), 30001 Input Register (FC04), 40001 Holding Register (FC03). Coil/Discrete use BOOL directly; Holding Register BOOL uses bit 0..15. Input Register uses WORD/numeric types. 32-bit values use two registers.",
     saveTag:"Save Tag", noDevicesConfigured:"No devices configured", configuredDevice:"configured device", configuredDevices:"configured devices", delete:"Delete",
@@ -1908,16 +1908,14 @@ function renderTags() {
 function populateTagDeviceSelect() {
   const select = $("tagDevice");
 
-  const devices =
-    state.devices.filter(
-      x => ["Modbus TCP", "Siemens S7 TCP", "MQTT", "OPC UA"].includes(x.protocol));
+  const devices = state.devices.filter(x => TAG_PROTOCOLS.includes(x.protocol));
 
   select.innerHTML =
     devices.length
       ? devices
           .map(x =>
             `<option value="${x.id}">
-              ${escapeHtml(x.name)} — ${escapeHtml(x.host)}:${x.port}
+              ${escapeHtml(x.name)} — ${escapeHtml(tagDeviceEndpoint(x))}
             </option>`)
           .join("")
       : `<option value="">
@@ -2377,11 +2375,18 @@ function resetTagForm() {
   updateTagBulkPreview();
 }
 
+// Every protocol whose Tags the Monitor reads; the Tag form lists only these devices.
+const TAG_PROTOCOLS = ["Modbus TCP", "Modbus RTU", "Mitsubishi MC", "Omron FINS", "Siemens S7 TCP", "MQTT", "OPC UA"];
+
+function tagDeviceEndpoint(device) {
+  // RTU keeps its serial settings in host (no port); OPC UA host is already the endpoint URL.
+  return device.port && !String(device.host || "").includes("://")
+    ? `${device.host}:${device.port}` : String(device.host || "").replace(/;/g, " · ");
+}
+
 function openAddTagModal() {
   if (!requireConfigurationAccess()) return;
-  const supportedDevices =
-    state.devices.filter(
-      x => ["Modbus TCP", "Siemens S7 TCP", "MQTT", "OPC UA"].includes(x.protocol));
+  const supportedDevices = state.devices.filter(x => TAG_PROTOCOLS.includes(x.protocol));
 
   if (!supportedDevices.length) {
     showToast(
@@ -2779,8 +2784,9 @@ function bulkTagName(base, n) {
 
 // The n-th address after the first, sized by the data type; null when it cannot continue.
 // Modbus: next register(s) or coil, register bits 0..15 then the next register.
-// S7: DBX bits 0..7 then the next byte, DBB +1, DBW +2, DBD +4. Others: the trailing number.
-function bulkTagAddress(address, dataType, bitIndex, protocol, n) {
+// S7: bits 0..7 then the next byte, B +1, W +2, D +4 (DB and I/Q/M). Mitsubishi: words by width in
+// the device's number base, bits of a word 0..F; Omron: words by width, bits 00..15. Others: the trailing number.
+function bulkTagAddress(address, dataType, bitIndex, protocol, n, series) {
   const text = String(address || "").trim();
   if (/^Modbus (TCP|RTU)$/.test(protocol || "")) {
     const info = modbusAddressInfo(text);
@@ -2795,13 +2801,48 @@ function bulkTagAddress(address, dataType, bitIndex, protocol, n) {
   }
   if (protocol === "Siemens S7 TCP") {
     const m = /^DB(\d+)\.DB([XBWD])(\d+)(?:\.([0-7]))?$/i.exec(text);
-    if (!m) return null;
-    const area = m[2].toUpperCase(), offset = Number(m[3]);
-    if (area === "X") {
-      const bit = Number(m[4] || 0) + n;
-      return { address: `DB${m[1]}.DBX${offset + Math.floor(bit / 8)}.${bit % 8}`, bitIndex };
+    if (m) {
+      const area = m[2].toUpperCase(), offset = Number(m[3]);
+      if (area === "X") {
+        const bit = Number(m[4] || 0) + n;
+        return { address: `DB${m[1]}.DBX${offset + Math.floor(bit / 8)}.${bit % 8}`, bitIndex };
+      }
+      return { address: `DB${m[1]}.DB${area}${offset + n * { B: 1, W: 2, D: 4 }[area]}`, bitIndex };
     }
-    return { address: `DB${m[1]}.DB${area}${offset + n * { B: 1, W: 2, D: 4 }[area]}`, bitIndex };
+    const io = /^(%?[IQMEA])(X?|[BWD])(\d+)(?:\.([0-7]))?$/i.exec(text);
+    if (!io) return null;
+    const size = io[2].toUpperCase(), offset = Number(io[3]);
+    if (io[4] !== undefined) {
+      const bit = Number(io[4]) + n;
+      return { address: `${io[1]}${io[2]}${offset + Math.floor(bit / 8)}.${bit % 8}`, bitIndex };
+    }
+    return size ? { address: `${io[1]}${io[2]}${offset + n * { B: 1, W: 2, D: 4 }[size]}`, bitIndex } : null;
+  }
+  if (protocol === "Mitsubishi MC") {
+    const m = /^(SM|SD|SB|SW|TS|TN|CS|CN|X|Y|M|L|F|V|B|D|W|R)([0-9A-F]+)(?:\.([0-9A-F]))?$/i.exec(text);
+    if (!m) return null;
+    const device = m[1].toUpperCase();
+    const base = ["X","Y"].includes(device) && Number(series) === 1 ? 8 : ["X","Y","B","W","SB","SW"].includes(device) ? 16 : 10;
+    const number = parseInt(m[2], base);
+    if (Number.isNaN(number)) return null;
+    const format = value => `${m[1]}${value.toString(base).toUpperCase()}`;
+    if (m[3] !== undefined) {
+      const bit = parseInt(m[3], 16) + n;
+      return { address: `${format(number + Math.floor(bit / 16))}.${(bit % 16).toString(16).toUpperCase()}`, bitIndex };
+    }
+    const bitDevice = ["SM","SB","TS","CS","X","Y","M","L","F","V","B"].includes(device);
+    return { address: format(number + n * (bitDevice ? 1 : tagRegisterWidth(dataType))), bitIndex };
+  }
+  if (protocol === "Omron FINS") {
+    const m = /^((?:CIO|DM|D|W|H|A|T|C|E[0-9A-F]_)?)(\d+)(?:\.(\d{1,2}))?$/i.exec(text);
+    if (!m) return null;
+    const word = Number(m[2]);
+    if (m[3] !== undefined) {
+      const bit = Number(m[3]) + n;
+      return { address: `${m[1]}${word + Math.floor(bit / 16)}.${String(bit % 16).padStart(2, "0")}`, bitIndex };
+    }
+    const timerCounter = /^[TC]$/i.test(m[1]);
+    return { address: `${m[1]}${word + n * (timerCounter ? 1 : tagRegisterWidth(dataType))}`, bitIndex };
   }
   const m = /^(.*?)(\d+)$/.exec(text);
   return m ? { address: m[1] + String(Number(m[2]) + n).padStart(m[2].length, "0"), bitIndex } : null;
@@ -2813,7 +2854,7 @@ function tagFormBody() {
     name:$("tagName").value.trim(),
     address:$("tagAddress").value.trim(),
     dataType:$("tagDataType").value,
-    bitIndex:!tagIsS7() && !tagIsMqtt() && !tagIsOpcUa() && $("tagDataType").value === "Bool" &&
+    bitIndex:isModbusProtocol(state.devices.find(d => d.id === $("tagDevice").value)?.protocol) && $("tagDataType").value === "Bool" &&
       modbusAddressInfo($("tagAddress").value)?.area === "Holding Register"
         ? Number($("tagBitIndex").value)
         : null,
@@ -2829,10 +2870,10 @@ function tagBulkPlan() {
   const count = Number($("tagCount").value || 1);
   if (!Number.isInteger(count) || count < 1 || count > 200) return { error: t("tagCountRange") };
   const body = tagFormBody();
-  const protocol = state.devices.find(d => d.id === body.deviceId)?.protocol;
+  const device = state.devices.find(d => d.id === body.deviceId);
   const items = [];
   for (let n = 0; n < count; n++) {
-    const next = bulkTagAddress(body.address, body.dataType, body.bitIndex, protocol, n);
+    const next = bulkTagAddress(body.address, body.dataType, body.bitIndex, device?.protocol, n, device?.unitId);
     if (!next) return { error: t("tagBulkAddressError") };
     items.push({ ...body, name: bulkTagName(body.name, n), address: next.address, bitIndex: next.bitIndex });
   }
