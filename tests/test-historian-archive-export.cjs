@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
-const web=fs.readFileSync(path.join(__dirname,'../src/Prognode.Web/EndpointExtensions.cs'),'utf8');
+const web=require('./lib/web-endpoints.cjs');
 const repo=fs.readFileSync(path.join(__dirname,'../src/Prognode.Data/Sqlite/SqliteHistorianRepository.cs'),'utf8');
 const ui=fs.readFileSync(path.join(__dirname,'../src/Prognode.Host/wwwroot/app.js'),'utf8');
 assert(web.includes('"/api/historian/export.zip"'));

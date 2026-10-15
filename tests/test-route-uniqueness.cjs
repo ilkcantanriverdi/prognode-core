@@ -6,7 +6,7 @@ const path = require('node:path');
 
 const src = path.join(__dirname, '../src');
 const files = [
-  'Prognode.Web/EndpointExtensions.cs',
+  ...fs.readdirSync(path.join(src, 'Prognode.Web')).filter(f => /^EndpointExtensions.*\.cs$/.test(f)).map(f => `Prognode.Web/${f}`),
   'Prognode.Host/Program.cs',
 ].map(f => path.join(src, f));
 

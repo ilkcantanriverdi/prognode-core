@@ -2,8 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
 
-const source = fs.readFileSync(path.join(__dirname,
-  '../src/Prognode.Web/EndpointExtensions.cs'), 'utf8');
+const source = require('./lib/web-endpoints.cjs');
 for (const [route, module] of [
   ['/api/alarms/definitions/{id:guid}', 'ALARM'],
   ['/api/historian/configurations/{id:guid}', 'HISTORIAN']

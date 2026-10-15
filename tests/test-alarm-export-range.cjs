@@ -5,7 +5,7 @@ const root=path.join(__dirname,'../src/Prognode.Host/wwwroot');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const app=fs.readFileSync(path.join(root,'app.js'),'utf8');
 const css=fs.readFileSync(path.join(root,'customer-v2.css'),'utf8');
-const endpoints=fs.readFileSync(path.join(__dirname,'../src/Prognode.Web/EndpointExtensions.cs'),'utf8');
+const endpoints=require('./lib/web-endpoints.cjs');
 assert(html.includes('id="alarmExportFrom" type="date"'));
 assert(html.includes('id="alarmExportTo" type="date"'));
 assert(app.includes('query.set("fromUtc", from)'));
