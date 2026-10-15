@@ -30,6 +30,14 @@ public sealed class ProtocolCatalog
             true,
             "Field Test"
         ),
+        new(
+            "omron-fins",
+            "Omron FINS",
+            "Read-only FINS/TCP for CS, CJ, CP, NJ and NX PLCs: D, CIO, W, H, A, EM banks, timers and counters.",
+            "Available",
+            true,
+            "Field Test"
+        ),
         new("siemens-s7-tcp", "Siemens S7 TCP", "Read-only ISO-on-TCP S7comm reader: inputs, outputs, bit memory and non-optimized DBs (absolute addresses); S7-1200/1500 need PUT/GET.", "Available", true, "Field Test"),
         new(
             "opc-ua",

@@ -7,6 +7,7 @@ Each simulator serves the same value model so the soak harness can check every v
 
 Usage (the harness starts and stops these itself; each runs until killed):
   python simulators.py modbus  --port 15020 --counters 200
+  python simulators.py fins    --port 19600 --counters 200
   python simulators.py s7      --port 11102 --counters 200
   python simulators.py opcua   --port 14841 --counters 200 --pki <folder>
   python simulators.py mqtt    --port 11883 --counters 50      (publisher; the broker runs in the harness)
@@ -206,6 +207,96 @@ def run_mc(port: int, counters: int) -> None:
     asyncio.run(main())
 
 
+# ----------------------------------------------------------------------------- Omron FINS/TCP
+FINS_WORD_AREAS = {0x82: "D", 0xB0: "CIO", 0xB1: "W", 0xB2: "H", 0xB3: "A", 0x89: "T/C PV", 0xA0: "E0"}
+FINS_SERVER_NODE, FINS_CLIENT_NODE = 1, 0xEF
+
+
+def fins_memory() -> dict:
+    """Word memory of the FINS simulator. 32/64-bit values are low word first, each word big-endian (Omron)."""
+    mem = {code: {} for code in FINS_WORD_AREAS}
+
+    def put_words(code, start, words):
+        for i, w in enumerate(words):
+            mem[code][start + i] = w & 0xFFFF
+
+    def low_first(fmt, value):
+        raw = struct.pack("<" + fmt, value)
+        return [raw[i] | raw[i + 1] << 8 for i in range(0, len(raw), 2)]
+
+    put_words(0x82, 1000, [1234])
+    put_words(0x82, 1001, low_first("h", -1234))
+    put_words(0x82, 1002, low_first("i", -123456))
+    put_words(0x82, 1004, low_first("I", 4000000000))
+    put_words(0x82, 1006, low_first("f", 12.5))
+    put_words(0x82, 1010, low_first("d", 12.5))
+    put_words(0x82, 1014, low_first("q", -123456789012))
+    put_words(0x82, 1020, [0b1010])                       # D1020.01 and D1020.03 on
+    put_words(0xB1, 10, [1234])                           # W10
+    put_words(0xB2, 5, [4321])                            # H5
+    put_words(0xB0, 100, [0x0080])                        # CIO100.07 on
+    put_words(0xB3, 20, [42])                             # A20
+    put_words(0xA0, 100, [777])                           # E0_100
+    put_words(0x89, 0, [50])                              # T0 present value
+    put_words(0x89, 0x8000, [7])                          # C0 present value
+    mem["flags"] = {0: 1, 0x8000: 0}                      # T0 done, C0 not
+    return mem
+
+
+def fins_answer(frame: bytes, mem: dict, counters: int) -> bytes:
+    """Answers one FINS memory area read (0101): D0.. are counters; D/E at or above 20000 -> 1103."""
+    sid = frame[9]
+    mrc, src = frame[10], frame[11]
+    head = bytes([0xC0, 0x00, 0x02, 0x00, FINS_CLIENT_NODE, 0x00, 0x00, FINS_SERVER_NODE, 0x00, sid, mrc, src])
+    if (mrc, src) != (1, 1):
+        return head + b"\x04\x01"
+    code = frame[12]
+    start = frame[13] << 8 | frame[14]
+    count = frame[16] << 8 | frame[17]
+    if code == 0x09:
+        return head + b"\0\0" + bytes(mem["flags"].get(start + i, 0) for i in range(count))
+    if code not in FINS_WORD_AREAS:
+        return head + b"\x11\x01"
+    if code in (0x82, 0xA0) and start + count > 20000:
+        return head + b"\x11\x03"
+    words = [counter(start + i) if code == 0x82 and start + i < counters else mem[code].get(start + i, 0) for i in range(count)]
+    return head + b"\0\0" + b"".join(struct.pack(">H", w) for w in words)
+
+
+def run_fins(port: int, counters: int) -> None:
+    """Omron FINS/TCP server (node address handshake + memory area read), like a CS/CJ/NJ port 9600."""
+    mem = fins_memory()
+
+    def tcp(command: int, data: bytes) -> bytes:
+        return b"FINS" + struct.pack(">III", 8 + len(data), command, 0) + data
+
+    async def handle(reader, writer):
+        try:
+            while True:
+                header = await reader.readexactly(16)
+                body = await reader.readexactly(struct.unpack(">I", header[4:8])[0] - 8)
+                command = struct.unpack(">I", header[8:12])[0]
+                if header[:4] != b"FINS":
+                    break
+                if command == 0:
+                    writer.write(tcp(1, struct.pack(">II", FINS_CLIENT_NODE, FINS_SERVER_NODE)))
+                elif command == 2:
+                    writer.write(tcp(2, fins_answer(body, mem, counters)))
+                else:
+                    writer.write(b"FINS" + struct.pack(">III", 8, command, 3))
+                await writer.drain()
+        except (asyncio.IncompleteReadError, ConnectionError):
+            pass
+        writer.close()
+
+    async def main():
+        server = await asyncio.start_server(handle, "127.0.0.1", port)
+        async with server:
+            await server.serve_forever()
+
+    asyncio.run(main())
+
+
 # ----------------------------------------------------------------------------- Siemens S7
 def run_s7(port: int, counters: int) -> None:
     import snap7
@@ -348,7 +439,7 @@ def run_mqtt(port: int, counters: int, user: str | None = None, password: str | 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("kind", choices=["modbus", "modbus-rtu", "mc", "s7", "opcua", "mqtt"])
+    parser.add_argument("kind", choices=["modbus", "modbus-rtu", "mc", "fins", "s7", "opcua", "mqtt"])
     parser.add_argument("--port", type=int, default=0)
     parser.add_argument("--serial", default=r"\\.\CNCB0", help="modbus-rtu: serial port of the slave end")
     parser.add_argument("--counters", type=int, default=100)
@@ -359,6 +450,7 @@ if __name__ == "__main__":
     print(f"simulator {a.kind} on {a.port} with {a.counters} counters", flush=True)
     {"modbus": lambda: run_modbus(a.port, a.counters), "modbus-rtu": lambda: run_modbus_rtu(a.serial, a.counters),
      "mc": lambda: run_mc(a.port, a.counters),
+     "fins": lambda: run_fins(a.port, a.counters),
      "s7": lambda: run_s7(a.port, a.counters),
      "opcua": lambda: run_opcua(a.port, a.counters, a.pki, a.user, a.password),
      "mqtt": lambda: run_mqtt(a.port, a.counters, a.user, a.password)}[a.kind]()

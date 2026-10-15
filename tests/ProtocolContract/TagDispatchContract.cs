@@ -19,21 +19,22 @@ internal static class TagDispatchContract
     public static async Task RunAsync()
     {
         var protocols = new ProtocolCatalog().GetAll();
-        Check(protocols.Count == 6 && protocols.All(x => x.Enabled) &&
+        Check(protocols.Count == 7 && protocols.All(x => x.Enabled) &&
               protocols.Select(x => x.Id).ToHashSet().SetEquals(
-                  ["modbus-tcp", "modbus-rtu", "mitsubishi-mc", "siemens-s7-tcp", "mqtt", "opc-ua"]),
-            "Customer catalog must contain exactly the six active protocols.");
+                  ["modbus-tcp", "modbus-rtu", "mitsubishi-mc", "omron-fins", "siemens-s7-tcp", "mqtt", "opc-ua"]),
+            "Customer catalog must contain exactly the seven active protocols.");
 
         var now = DateTimeOffset.UtcNow;
         var devices = new MemoryDevices();
-        foreach (var protocol in new[] { "Modbus TCP", "Modbus RTU", "Mitsubishi MC", "Siemens S7 TCP", "MQTT", "OPC UA" })
+        foreach (var protocol in new[] { "Modbus TCP", "Modbus RTU", "Mitsubishi MC", "Omron FINS", "Siemens S7 TCP", "MQTT", "OPC UA" })
             await devices.AddAsync(new DeviceDefinition(Guid.NewGuid(), protocol, protocol,
                 "Configured", "127.0.0.1", 502, 1, 1000, now, now));
 
         var tags = new MemoryTags();
         var service = new TagService(tags, devices, new CurrentTagValueStore(),
             [new ModbusTagDefinitionValidator(), new S7TagValidator(),
-                new MqttTagValidator(), new OpcUaTagValidator(), new Prognode.Protocols.Mitsubishi.McTagValidator()], new UnlimitedTags());
+                new MqttTagValidator(), new OpcUaTagValidator(), new Prognode.Protocols.Mitsubishi.McTagValidator(),
+                new Prognode.Protocols.Omron.FinsTagValidator()], new UnlimitedTags());
         var byProtocol = (await devices.GetAllAsync()).ToDictionary(d => d.Protocol);
         var modbus = await Create("Modbus TCP", "40001", TagDataType.Word);
         var s7 = await Create("Siemens S7 TCP", "DB1.DBW2", TagDataType.Word);
@@ -41,8 +42,11 @@ internal static class TagDispatchContract
         var opc = await Create("OPC UA", "ns=2;s=Temperature", TagDataType.Float32);
         var rtu = await Create("Modbus RTU", "419000", TagDataType.Float64);
         var mc = await Create("Mitsubishi MC", "D100", TagDataType.Float32);
-        Check((await service.GetAllAsync()).Count == 6, "Six protocol-specific Tags were not created.");
+        var fins = await Create("Omron FINS", "D100.05", TagDataType.Bool);
+        Check((await service.GetAllAsync()).Count == 7, "Seven protocol-specific Tags were not created.");
         try { await Create("Mitsubishi MC", "40001", TagDataType.Word); throw new Exception("A Modbus address was accepted for a Mitsubishi device."); }
+        catch (ArgumentException) { }
+        try { await Create("Omron FINS", "DB1.DBW2", TagDataType.Word); throw new Exception("An S7 address was accepted for an Omron device."); }
         catch (ArgumentException) { }
         Check(rtu.Address == "419000", "Modbus RTU Tag was not validated by the Modbus rules.");
         await Update(s7, "DB1.DBW4");

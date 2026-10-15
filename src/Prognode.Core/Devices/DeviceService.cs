@@ -99,6 +99,16 @@ public sealed class DeviceService(IDeviceRepository repository, IDeviceCapacityP
         return item;
     }
 
+    /// <summary>Omron PLC over FINS/TCP (port 9600); node addresses come from the FINS/TCP handshake.</summary>
+    public async Task<DeviceDefinition> CreateOmronFinsAsync(string? name, string? host, int port,
+        int pollIntervalMs, CancellationToken cancellationToken = default)
+    {
+        var item = BuildModbusDevice(Guid.NewGuid(), DateTimeOffset.UtcNow, name, host, port, 0, pollIntervalMs)
+            with { Protocol = "Omron FINS" };
+        await AddWithinCapacityAsync(item, cancellationToken);
+        return item;
+    }
+
     // UnitId encodes rack * 32 + slot; rack=0 slot=1 -> 1. No schema migration.
     public async Task<DeviceDefinition> CreateS7TcpAsync(string? name,string? host,int port,int rack,int slot,int pollIntervalMs,CancellationToken ct=default)
     {
@@ -151,7 +161,8 @@ public sealed class DeviceService(IDeviceRepository repository, IDeviceCapacityP
 
         if (string.Equals(existing.Protocol, "Modbus TCP", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(existing.Protocol, "Siemens S7 TCP", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(existing.Protocol, "Mitsubishi MC", StringComparison.OrdinalIgnoreCase))
+            string.Equals(existing.Protocol, "Mitsubishi MC", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(existing.Protocol, "Omron FINS", StringComparison.OrdinalIgnoreCase))
         {
             updated = BuildModbusDevice(
                 existing.Id,

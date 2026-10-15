@@ -12,7 +12,15 @@ vm.runInContext(section('function s7AddressValid(','async function testS7Connect
 vm.runInContext(section('function modbusAddressInfo(','function nextModbusTagAddress('),context);
 vm.runInContext(section('function mcAddressValid(','// MQTT Tag address: exact topic'),context);
 vm.runInContext(section('function mqttTagAddressValid(','function validateTagAddressClient('),context);
-const {s7AddressValid:s7,modbusAddressInfo:modbus,tagRegisterWidth:width,mqttTagAddressValid:mqtt,mcAddressValid:mc}=context;
+const {s7AddressValid:s7,modbusAddressInfo:modbus,tagRegisterWidth:width,mqttTagAddressValid:mqtt,mcAddressValid:mc,finsAddressValid:fins}=context;
+
+// Same cases as OmronFinsContract (C# FinsAddress.Parse).
+for(const [a,t] of [['D100','Word'],['dm100.05','Bool'],['100.07','Bool'],['CIO100','Word'],['W10','Int16'],['H5','Word'],['A20','Word'],
+  ['E2_100','Float32'],['T5','Word'],['C5','Bool'],['D10','Float64'],['D32766','Int16']])
+  assert.equal(fins(a,t),true,`FINS ${a} ${t}`);
+for(const [a,t] of [['D100','Bool'],['D100.16','Bool'],['D100.1','Word'],['D32767','Int32'],['T0','Int32'],['T0.1','Bool'],['X10','Word'],
+  ['DB1.DBW2','Word'],['W512','Word'],['40001','Word']])
+  assert.equal(fins(a,t),false,`FINS ${a} ${t}`);
 
 // Same cases as MitsubishiMcContract (C# McAddress.Parse): the form and the server agree.
 for(const [a,t,s] of [['D100','Word',0],['x1f','Bool',0],['X17','Bool',1],['W1A','Int16',0],['SM400','Bool',0],['D100.A','Bool',0],
