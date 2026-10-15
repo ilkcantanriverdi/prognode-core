@@ -799,35 +799,6 @@ public static class EndpointExtensions
             });
 
         endpoints.MapPost(
-            "/api/devices/mock",
-            async (
-                CreateMockDeviceRequest request,
-                DeviceService devices,
-                CancellationToken ct) =>
-            {
-                try
-                {
-                    var created =
-                        await devices.CreateMockAsync(
-                            request.Name,
-                            ct);
-
-                    return Results.Created(
-                        $"/api/devices/{created.Id}",
-                        created);
-                }
-                catch (DeviceCapacityExceededException)
-                {
-                    return Results.StatusCode(StatusCodes.Status403Forbidden);
-                }
-                catch (ArgumentException ex)
-                {
-                    return Results.BadRequest(
-                        new { message = ex.Message });
-                }
-            });
-
-        endpoints.MapPost(
             "/api/devices/modbus-tcp/test",
             async (
                 TestModbusTcpRequest request,

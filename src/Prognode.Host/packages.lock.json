@@ -346,13 +346,6 @@
           "Prognode.Protocols.Abstractions": "[1.0.0-dev, )"
         }
       },
-      "prognode.protocols.mock": {
-        "type": "Project",
-        "dependencies": {
-          "Prognode.Contracts": "[1.0.0-dev, )",
-          "Prognode.Protocols.Abstractions": "[1.0.0-dev, )"
-        }
-      },
       "prognode.protocols.modbus": {
         "type": "Project",
         "dependencies": {

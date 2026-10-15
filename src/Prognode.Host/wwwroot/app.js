@@ -72,7 +72,7 @@ const translations = {
     agentHelp:"The Windows Client runs in the system tray and shows alarm notifications even when the browser is closed. Download it from PROGNODE Account.", coreNotificationApi:"PROGNODE Monitor Notification API", trayAgent:"Windows Client on this PC", runSeparately:"Run separately", recentEvents:"RECENT EVENTS",
     entitlements:"ENTITLEMENTS", licenseText:"Your signed offline license controls enabled PROGNODE modules while runtime data remains local.", currentLicense:"CURRENT LICENSE", plan:"Plan", alarmDefinitions:"Alarm Definitions", recordedTags:"Recorded Tags", features:"FEATURES", licensedProtocols:"Licensed Protocols",
     settingsPlaceholder:"Users, backup/restore, network, update, security and data-flow settings will live here.",
-    commissioning:"COMMISSIONING", configure:"Configuration", chooseProtocolText:"Choose how PROGNODE will communicate with the industrial device.", backProtocols:"← Back to protocols", selectedProtocol:"Selected protocol", deviceName:"PLC / Asset name", deviceNameHelp:"Use a globally clear equipment name, e.g. Boiler PLC, Main Pump PLC or Packaging Line PLC.", mockInfo:"Protocol-specific settings are stored in the local configuration database.",
+    commissioning:"COMMISSIONING", configure:"Configuration", chooseProtocolText:"Choose how PROGNODE will communicate with the industrial device.", backProtocols:"← Back to protocols", selectedProtocol:"Selected protocol", deviceName:"PLC / Asset name", deviceNameHelp:"Use a globally clear equipment name, e.g. Boiler PLC, Main Pump PLC or Packaging Line PLC.",
     hostIp:"Host / IP", port:"Port", unitId:"Unit ID", pollInterval:"Poll interval (ms)", timeout:"Timeout (ms)", modbusTestInfo:"Ping and Modbus tests are optional. The device can be saved while offline.", cancel:"Cancel", ping:"Ping", pingOk:"Ping OK", pingFail:"Ping Failed", testConnection:"Test Modbus", saveDevice:"Save Device",
     addTag:"Add Tag", editTag:"Edit Tag", modbusDeviceOnly:"Devices of every connected protocol are listed.", tagName:"Tag / Signal name", unit:"Unit", offset:"Offset",
     decimalPoint:"Decimal point", decimalPointHelp:"Integer example: raw 236 + 1 decimal = 23.6", displayDecimals:"Display decimals", displayDecimalsHelp:"FLOAT32 / REAL keeps its numeric value; this only controls how many decimal digits are shown.",
@@ -1401,10 +1401,6 @@ function selectProtocol(protocolId) {
   $("mqttFields").classList.toggle("hidden", protocolId !== "mqtt");
   $("opcUaFields").classList.toggle("hidden", protocolId !== "opc-ua");
   $("testS7Connection").classList.toggle("hidden", protocolId !== "siemens-s7-tcp");
-  $("mockFields").classList.toggle(
-    "hidden",
-    protocolId !== "mock");
-
   $("modbusFields").classList.toggle(
     "hidden",
     protocolId !== "modbus-tcp");
@@ -1958,7 +1954,7 @@ function openEditDeviceModal(id) {
     device.protocol === "EtherNet/IP" ? "ethernet-ip" :
     device.protocol === "BACnet/IP" ? "bacnet-ip" :
     device.protocol === "Siemens S7 TCP" ? "siemens-s7-tcp" :
-    device.protocol === "MQTT" ? "mqtt" : device.protocol === "OPC UA" ? "opc-ua" : "mock";
+    device.protocol === "MQTT" ? "mqtt" : device.protocol === "OPC UA" ? "opc-ua" : "";
   state.modbusTestPassed = true;
   state.opcUaCertificate = null;
   state.opcUaCertificateInput = "";
@@ -1989,7 +1985,6 @@ function openEditDeviceModal(id) {
   $("mqttFields").classList.toggle("hidden", state.selectedProtocol !== "mqtt");
   $("opcUaFields").classList.toggle("hidden", state.selectedProtocol !== "opc-ua");
   $("testS7Connection").classList.toggle("hidden", state.selectedProtocol !== "siemens-s7-tcp");
-  $("mockFields").classList.toggle("hidden", state.selectedProtocol !== "mock");
   $("modbusFields").classList.toggle("hidden", state.selectedProtocol !== "modbus-tcp");
   $("pingModbusHost").classList.toggle("hidden", state.selectedProtocol !== "modbus-tcp");
   $("testModbusConnection").classList.toggle("hidden", state.selectedProtocol !== "modbus-tcp");
@@ -2310,15 +2305,7 @@ async function saveDevice() {
       return;
     }
 
-    if (state.selectedProtocol === "mock") {
-      await api(
-        "/api/devices/mock",
-        {
-          method:"POST",
-          body:JSON.stringify({name})
-        });
-    }
-    else if (state.selectedProtocol === "siemens-s7-tcp") {
+    if (state.selectedProtocol === "siemens-s7-tcp") {
       await api("/api/devices/siemens-s7-tcp",{method:"POST",body:JSON.stringify({name,host:$("s7Host").value.trim(),port:readNumber("s7Port"),rack:readNumber("s7Rack"),slot:readNumber("s7Slot"),pollIntervalMs:readNumber("s7Poll")})});
     }
     else if (state.selectedProtocol === "modbus-tcp") {

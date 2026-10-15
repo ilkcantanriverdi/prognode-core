@@ -26,30 +26,6 @@ public sealed class DeviceService(IDeviceRepository repository, IDeviceCapacityP
         CancellationToken cancellationToken = default) =>
         repository.CountAsync(cancellationToken);
 
-    public async Task<DeviceDefinition> CreateMockAsync(
-        string? name,
-        CancellationToken cancellationToken = default)
-    {
-        var cleanName = ValidateName(name);
-        var now = DateTimeOffset.UtcNow;
-
-        var device = new DeviceDefinition(
-            Id: Guid.NewGuid(),
-            Name: cleanName,
-            Protocol: "Mock",
-            Status: "Simulator",
-            Host: null,
-            Port: null,
-            UnitId: null,
-            PollIntervalMs: 1000,
-            CreatedAt: now,
-            UpdatedAt: now
-        );
-
-        await AddWithinCapacityAsync(device, cancellationToken);
-        return device;
-    }
-
     public async Task<DeviceDefinition> CreateModbusTcpAsync(
         string? name,
         string? host,
