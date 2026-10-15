@@ -1,7 +1,8 @@
 # Protocol soak
 
-Long-running test of the four protocols Core reads: Modbus TCP, Siemens S7, OPC UA and MQTT. The
-soak (`tests/ProtocolSoak`) polls every second with the same readers Core uses, checks every value
+Long-running test of the protocols PROGNODE Monitor reads: Modbus TCP and RTU, Mitsubishi MC, Omron
+FINS, Siemens S7, OPC UA and MQTT. The soak (`tests/ProtocolSoak`) polls every second with the same
+readers the Monitor uses, checks every value
 it reads, injects outages and writes a report. The quick contract tests in `tests/ProtocolContract`
 stay the CI gate; this is the long run you start by hand.
 
@@ -21,7 +22,8 @@ Run (from the repository root):
 dotnet run --project tests/ProtocolSoak -c Release -- --minutes 30 --tags 200 --fault-every 2 --fault-down 20
 ```
 
-The soak starts the simulators in `simulators.py` (pymodbus, python-snap7, asyncua, paho-mqtt) and an
+The soak starts the simulators in `simulators.py` (pymodbus, an MC 3E server, a FINS/TCP server,
+python-snap7, asyncua, paho-mqtt) and an
 MQTT broker in-process, approves the OPC UA server certificate the way an administrator does in Core,
 and takes one of them down every `--fault-every` minutes for `--fault-down` seconds, in turn.
 
@@ -32,7 +34,7 @@ Every simulator serves the same values, so every reading is checked:
   (Modbus also in CDAB word order), Bool true (S7 also a false bit).
 
 Options: `--minutes`, `--tags`, `--fault-every` (minutes), `--fault-down` (seconds),
-`--faults modbus,s7,opcua,mqtt-broker,mqtt` (which outages to inject; `mqtt` is the publisher),
+`--faults modbus,mc,fins,s7,opcua,mqtt-broker,mqtt` (which outages to inject; `mqtt` is the publisher),
 `--report <file.md>` (a `.json` with the raw numbers is written next to it).
 
 ## Modbus RTU over a real COM port
@@ -74,6 +76,12 @@ Reports go to `tools/protocol-soak/reports/` unless `--report` says otherwise.
   these need only PUT/GET on S7-1200/1500. Optimized (symbolic) DB access is not supported.
 * Modbus RTU: `"protocol": "Modbus RTU"` with `"host": "COM3;9600;8E1"` (port, baud rate, data
   bits, parity N/E/O, stop bits) and the device's `"unitId"`; several targets may share a COM port.
+* Mitsubishi MC: `"protocol": "Mitsubishi MC"`, the SLMP / MC port (binary, TCP) and `"unitId"` 0 for
+  iQ-R / Q / L (hex X/Y) or 1 for FX5 (octal X/Y). `check_mc_simulator.py <port>` checks the MC
+  simulator with pymcprotocol.
+* Omron FINS: `"protocol": "Omron FINS"`, port 9600. Addresses `D100`, `CIO100`, `W10`, `H5`, `A20`,
+  `E0_100`, `T0` / `C0`, bits `D100.05`; 32/64-bit values low word first. `check_fins_simulator.py
+  <port>` checks the FINS simulator with the independent `fins` client (GPL, used only as a test tool).
 * Modbus: six-digit addresses reach registers above 9999 (`419000` = holding register 19000);
   Int64 / UInt64 / Float64 read four registers, with the same byte orders as 32-bit values.
 * MQTT: a Tag reads a plain message (`21.5`, `true`) or one field of a JSON message

@@ -1316,6 +1316,15 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
           <div class="info-box">Read-only MC protocol (SLMP), 3E frame, binary code over TCP. In GX Works open an SLMP / MC protocol connection on the PLC's Ethernet port (binary, TCP) and use its port number here. Addresses: D100, W1A, R100, TN0, CN0, SD0; bits M0, X1F, Y10, B0, L0, SM400; a bit of a word D100.A. On FX5, X/Y numbers are octal.</div>
         </div>
 
+        <div id="finsFields" class="hidden">
+          <div class="form-grid">
+            <label class="field wide"><span>PLC IP / Host</span><input id="finsHost" placeholder="192.168.250.1" /></label>
+            <label class="field"><span>FINS/TCP port</span><input id="finsPort" type="number" min="1" max="65535" value="9600" /></label>
+            <label class="field"><span>Poll interval (ms)</span><input id="finsPoll" type="number" min="100" value="1000" /></label>
+          </div>
+          <div class="info-box">Read-only FINS/TCP for Omron CS, CJ, CP, NJ and NX PLCs. The PLC's built-in EtherNet/IP port or Ethernet unit accepts FINS/TCP on port 9600; on NJ/NX allow FINS in the built-in port settings and map the variables you need to CIO, W, H, D or EM. Addresses: D100, W10, H5, A20, CIO100, E0_100, T0, C0; a bit of a word D100.05.</div>
+        </div>
+
         <div id="s7Fields" class="hidden">
           <div class="form-grid">
             <label class="field wide"><span>PLC IP / Host</span><input id="s7Host" placeholder="192.168.1.20" /></label>
@@ -1396,7 +1405,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
       <label class="field">
         <span data-i18n="device">Device</span>
         <select id="tagDevice"></select>
-        <small data-i18n="modbusDeviceOnly">Configured Modbus TCP, Siemens S7 TCP, MQTT and OPC UA devices are available.</small>
+        <small data-i18n="modbusDeviceOnly">Devices of every connected protocol are listed.</small>
       </label>
 
       

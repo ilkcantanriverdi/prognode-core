@@ -18,7 +18,8 @@ const devices = [
   {id:'opc',name:'OPC Server',protocol:'OPC UA'},
   {id:'rtu',name:'Meter RTU',protocol:'Modbus RTU'},
   {id:'mc',name:'Press iQ-R',protocol:'Mitsubishi MC',unitId:0},
-  {id:'fx',name:'Feeder FX5',protocol:'Mitsubishi MC',unitId:1}
+  {id:'fx',name:'Feeder FX5',protocol:'Mitsubishi MC',unitId:1},
+  {id:'fins',name:'Mixer CJ2',protocol:'Omron FINS',unitId:0}
 ];
 const calls = [];
 const context = {
@@ -85,6 +86,13 @@ const mcRows = preview([
 ].join('\r\n'),'devices').map(valid);
 assert.equal(mcRows.map(x=>`${x.payload.kind}:${x.payload.body.series}`).join(','),'mc:0,mc:1,mc:1');
 
+const finsRows = preview([
+  'Name;Protocol;Host;Port;UnitId;PollIntervalMs',
+  'Mixer;Omron FINS;192.168.250.1;;;1000',
+  'Oven;FINS;192.168.250.2;9601;;500'
+].join('\r\n'),'devices').map(valid);
+assert.equal(finsRows.map(x=>`${x.payload.kind}:${x.payload.body.port}`).join(','),'fins:9600,fins:9601');
+
 const tagCsv = [
   'Device;Name;Address;DataType;BitIndex;ByteOrder;Unit;Offset;DecimalPlaces;Enabled',
   'Boiler PLC;Temperature;40001;Float32;;ABCD;C;0;1;true',
@@ -98,7 +106,10 @@ const tagCsv = [
   'Meter RTU;RTU Energy;419000;Float64;;CDAB;kWh;0;2;true',
   'Press iQ-R;MC Pressure;D100;Float32;;ABCD;bar;0;1;true',
   'Press iQ-R;MC Running;M0;Bool;;ABCD;;0;0;true',
-  'Feeder FX5;FX Input;X17;Bool;;ABCD;;0;0;true'
+  'Feeder FX5;FX Input;X17;Bool;;ABCD;;0;0;true',
+  'Mixer CJ2;FINS Speed;D100;Float32;;ABCD;rpm;0;1;true',
+  'Mixer CJ2;FINS Output;CIO100.07;Bool;;ABCD;;0;0;true',
+  'Mixer CJ2;FINS Timer Done;T0;Bool;;ABCD;;0;0;true'
 ].join('\r\n');
 const tagRows = preview(tagCsv,'tags').map(valid);
 assert.equal(tagRows[1].payload.body.address,'DB1.DBW2');
@@ -112,6 +123,8 @@ invalid(preview('Device;Name;Address;DataType\nPlant Broker;Bad;plant/+;Float32'
 invalid(preview('Device;Name;Address;DataType\nOPC Server;Bad;40001;Float32','tags')[0],'OPC UA address');
 invalid(preview('Device;Name;Address;DataType\nFeeder FX5;Bad;X18;Bool','tags')[0],'Mitsubishi address');
 invalid(preview('Device;Name;Address;DataType\nPress iQ-R;Bad;M0;Word','tags')[0],'Mitsubishi address');
+invalid(preview('Device;Name;Address;DataType\nMixer CJ2;Bad;D100;Bool','tags')[0],'Omron address');
+invalid(preview('Device;Name;Address;DataType\nMixer CJ2;Bad;T0;Float32','tags')[0],'Omron address');
 
 (async()=>{
   context.state.importPreview = deviceRows;

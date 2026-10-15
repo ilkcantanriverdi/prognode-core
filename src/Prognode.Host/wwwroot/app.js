@@ -74,7 +74,7 @@ const translations = {
     settingsPlaceholder:"Users, backup/restore, network, update, security and data-flow settings will live here.",
     commissioning:"COMMISSIONING", configure:"Configuration", chooseProtocolText:"Choose how PROGNODE will communicate with the industrial device.", backProtocols:"← Back to protocols", selectedProtocol:"Selected protocol", deviceName:"PLC / Asset name", deviceNameHelp:"Use a globally clear equipment name, e.g. Boiler PLC, Main Pump PLC or Packaging Line PLC.", mockInfo:"Protocol-specific settings are stored in the local configuration database.",
     hostIp:"Host / IP", port:"Port", unitId:"Unit ID", pollInterval:"Poll interval (ms)", timeout:"Timeout (ms)", modbusTestInfo:"Ping and Modbus tests are optional. The device can be saved while offline.", cancel:"Cancel", ping:"Ping", pingOk:"Ping OK", pingFail:"Ping Failed", testConnection:"Test Modbus", saveDevice:"Save Device",
-    addTag:"Add Tag", editTag:"Edit Tag", modbusDeviceOnly:"Configured Modbus TCP, Siemens S7 TCP, MQTT and OPC UA devices are available.", tagName:"Tag / Signal name", unit:"Unit", offset:"Offset",
+    addTag:"Add Tag", editTag:"Edit Tag", modbusDeviceOnly:"Devices of every connected protocol are listed.", tagName:"Tag / Signal name", unit:"Unit", offset:"Offset",
     decimalPoint:"Decimal point", decimalPointHelp:"Integer example: raw 236 + 1 decimal = 23.6", displayDecimals:"Display decimals", displayDecimalsHelp:"FLOAT32 / REAL keeps its numeric value; this only controls how many decimal digits are shown.",
     tagAddressHelp:"Modbus read areas: 00001 Coil (FC01), 10001 Discrete Input (FC02), 30001 Input Register (FC04), 40001 Holding Register (FC03). Coil/Discrete use BOOL directly; Holding Register BOOL uses bit 0..15. Input Register uses WORD/numeric types. 32-bit values use two registers.",
     saveTag:"Save Tag", noDevicesConfigured:"No devices configured", configuredDevice:"configured device", configuredDevices:"configured devices", delete:"Delete",
@@ -1388,12 +1388,13 @@ function selectProtocol(protocolId) {
 
   $("selectedProtocolName").textContent = protocol?.name || "—";
   $("selectedProtocolLogo").textContent =
-    protocolId === "modbus-tcp" ? "MB" : protocolId === "modbus-rtu" ? "RTU" : protocolId === "mitsubishi-mc" ? "MC" : protocolId === "siemens-s7-tcp" ? "S7" :
+    protocolId === "modbus-tcp" ? "MB" : protocolId === "modbus-rtu" ? "RTU" : protocolId === "mitsubishi-mc" ? "MC" : protocolId === "omron-fins" ? "FINS" : protocolId === "siemens-s7-tcp" ? "S7" :
     protocolId === "opc-ua" ? "UA" : protocolId === "mqtt" ? "MQ" : "M";
 
   $("s7Fields").classList.toggle("hidden", protocolId !== "siemens-s7-tcp");
   $("modbusRtuFields").classList.toggle("hidden", protocolId !== "modbus-rtu");
   $("mcFields").classList.toggle("hidden", protocolId !== "mitsubishi-mc");
+  $("finsFields").classList.toggle("hidden", protocolId !== "omron-fins");
   if (protocolId === "modbus-rtu") void loadSerialPorts();
   $("mqttFields").classList.toggle("hidden", protocolId !== "mqtt");
   $("opcUaFields").classList.toggle("hidden", protocolId !== "opc-ua");
@@ -1907,16 +1908,14 @@ function renderTags() {
 function populateTagDeviceSelect() {
   const select = $("tagDevice");
 
-  const devices =
-    state.devices.filter(
-      x => ["Modbus TCP", "Siemens S7 TCP", "MQTT", "OPC UA"].includes(x.protocol));
+  const devices = state.devices.filter(x => TAG_PROTOCOLS.includes(x.protocol));
 
   select.innerHTML =
     devices.length
       ? devices
           .map(x =>
             `<option value="${x.id}">
-              ${escapeHtml(x.name)} — ${escapeHtml(x.host)}:${x.port}
+              ${escapeHtml(x.name)} — ${escapeHtml(tagDeviceEndpoint(x))}
             </option>`)
           .join("")
       : `<option value="">
@@ -1953,6 +1952,7 @@ function openEditDeviceModal(id) {
   state.selectedProtocol = device.protocol === "Modbus TCP" ? "modbus-tcp" :
     device.protocol === "Modbus RTU" ? "modbus-rtu" :
     device.protocol === "Mitsubishi MC" ? "mitsubishi-mc" :
+    device.protocol === "Omron FINS" ? "omron-fins" :
     device.protocol === "Siemens S7 TCP" ? "siemens-s7-tcp" :
     device.protocol === "MQTT" ? "mqtt" : device.protocol === "OPC UA" ? "opc-ua" : "mock";
   state.modbusTestPassed = true;
@@ -1969,6 +1969,7 @@ function openEditDeviceModal(id) {
   $("selectedProtocolLogo").textContent = state.selectedProtocol === "modbus-tcp" ? "MB" :
     state.selectedProtocol === "modbus-rtu" ? "RTU" :
     state.selectedProtocol === "mitsubishi-mc" ? "MC" :
+    state.selectedProtocol === "omron-fins" ? "FINS" :
     state.selectedProtocol === "siemens-s7-tcp" ? "S7" :
     state.selectedProtocol === "opc-ua" ? "UA" : state.selectedProtocol === "mqtt" ? "MQ" : "M";
   $("deviceNameInput").value = device.name;
@@ -1976,6 +1977,7 @@ function openEditDeviceModal(id) {
   $("s7Fields").classList.toggle("hidden", state.selectedProtocol !== "siemens-s7-tcp");
   $("modbusRtuFields").classList.toggle("hidden", state.selectedProtocol !== "modbus-rtu");
   $("mcFields").classList.toggle("hidden", state.selectedProtocol !== "mitsubishi-mc");
+  $("finsFields").classList.toggle("hidden", state.selectedProtocol !== "omron-fins");
   $("mqttFields").classList.toggle("hidden", state.selectedProtocol !== "mqtt");
   $("opcUaFields").classList.toggle("hidden", state.selectedProtocol !== "opc-ua");
   $("testS7Connection").classList.toggle("hidden", state.selectedProtocol !== "siemens-s7-tcp");
@@ -2008,6 +2010,9 @@ function openEditDeviceModal(id) {
   if (state.selectedProtocol === "mitsubishi-mc") {
     $("mcHost").value = device.host || ""; $("mcPort").value = device.port ?? 5007;
     $("mcSeries").value = String(device.unitId ?? 0); $("mcPoll").value = device.pollIntervalMs ?? 1000;
+  }
+  if (state.selectedProtocol === "omron-fins") {
+    $("finsHost").value = device.host || ""; $("finsPort").value = device.port ?? 9600; $("finsPoll").value = device.pollIntervalMs ?? 1000;
   }
   if (state.selectedProtocol === "modbus-rtu") {
     const serial = /^([^;]+);(\d+);([78])([NEO])([12])$/i.exec(device.host || "");
@@ -2243,6 +2248,11 @@ async function saveDevice() {
           name, host:$("mcHost").value.trim(), port:readNumber("mcPort"), unitId:readNumber("mcSeries"), pollIntervalMs:readNumber("mcPoll")
         })});
       }
+      else if (state.selectedProtocol === "omron-fins") {
+        await api(`/api/devices/${state.editingDeviceId}`, {method:"PUT",body:JSON.stringify({
+          name, host:$("finsHost").value.trim(), port:readNumber("finsPort"), unitId:0, pollIntervalMs:readNumber("finsPoll")
+        })});
+      }
       else if (state.selectedProtocol === "modbus-rtu") {
         await api(`/api/devices/${state.editingDeviceId}`, {method:"PUT",body:JSON.stringify({
           name, host:rtuSerialSettings(), unitId:readNumber("rtuUnitId"), pollIntervalMs:readNumber("rtuPoll")
@@ -2305,6 +2315,11 @@ async function saveDevice() {
         name, host:$("mcHost").value.trim(), port:readNumber("mcPort"), series:readNumber("mcSeries"), pollIntervalMs:readNumber("mcPoll")
       })});
     }
+    else if (state.selectedProtocol === "omron-fins") {
+      await api("/api/devices/omron-fins", {method:"POST",body:JSON.stringify({
+        name, host:$("finsHost").value.trim(), port:readNumber("finsPort"), pollIntervalMs:readNumber("finsPoll")
+      })});
+    }
     else if (state.selectedProtocol === "modbus-rtu") {
       if (!$("rtuPort").value) throw new Error("Select the serial port of the RS-485 adapter.");
       await api("/api/devices/modbus-rtu", {method:"POST",body:JSON.stringify({
@@ -2360,11 +2375,18 @@ function resetTagForm() {
   updateTagBulkPreview();
 }
 
+// Every protocol whose Tags the Monitor reads; the Tag form lists only these devices.
+const TAG_PROTOCOLS = ["Modbus TCP", "Modbus RTU", "Mitsubishi MC", "Omron FINS", "Siemens S7 TCP", "MQTT", "OPC UA"];
+
+function tagDeviceEndpoint(device) {
+  // RTU keeps its serial settings in host (no port); OPC UA host is already the endpoint URL.
+  return device.port && !String(device.host || "").includes("://")
+    ? `${device.host}:${device.port}` : String(device.host || "").replace(/;/g, " · ");
+}
+
 function openAddTagModal() {
   if (!requireConfigurationAccess()) return;
-  const supportedDevices =
-    state.devices.filter(
-      x => ["Modbus TCP", "Siemens S7 TCP", "MQTT", "OPC UA"].includes(x.protocol));
+  const supportedDevices = state.devices.filter(x => TAG_PROTOCOLS.includes(x.protocol));
 
   if (!supportedDevices.length) {
     showToast(
@@ -2430,11 +2452,13 @@ function tagIsS7() { return state.devices.some(d => d.id === $("tagDevice").valu
 function tagIsMqtt() { return state.devices.some(d => d.id === $("tagDevice").value && d.protocol === "MQTT"); }
 function tagIsOpcUa() { return state.devices.some(d => d.id === $("tagDevice").value && d.protocol === "OPC UA"); }
 function tagMcDevice() { return state.devices.find(d => d.id === $("tagDevice").value && d.protocol === "Mitsubishi MC"); }
+function tagIsFins() { return state.devices.some(d => d.id === $("tagDevice").value && d.protocol === "Omron FINS"); }
 function tagAddressExample() {
   const type = $("tagDataType").value;
   if (tagIsS7())
     return type === "Bool" ? "DB1.DBX0.0" : ["Word","UInt16","Int16"].includes(type) ? "DB1.DBW2" : "DB1.DBD4";
   if (tagMcDevice()) return type === "Bool" ? "M0" : "D100";
+  if (tagIsFins()) return type === "Bool" ? "CIO0.00" : "D100";
   if (tagIsMqtt()) return type === "Bool" ? "plant/running" : "plant/temperature";
   if (tagIsOpcUa()) return type === "Bool" ? "ns=2;s=Running" : "ns=2;s=Temperature";
   return nextModbusTagAddress($("tagDevice").value,type);
@@ -2498,7 +2522,7 @@ function updateTagFormVisibility() {
   const type = $("tagDataType").value;
   const area = modbusAddressInfo($("tagAddress").value);
   const s7 = tagIsS7();
-  const modbus = !s7 && !tagIsMqtt() && !tagIsOpcUa() && !tagMcDevice();
+  const modbus = !s7 && !tagIsMqtt() && !tagIsOpcUa() && !tagMcDevice() && !tagIsFins();
   const isBool = type === "Bool";
   const isFloat = type === "Float32" || type === "Float64";
   const isWord = type === "Word";
@@ -2526,6 +2550,7 @@ function updateTagFormVisibility() {
   if (tagIsMqtt()) $("tagAddressHelp").textContent = "Use an exact MQTT topic, e.g. plant/temperature, when the message is a number or true/false. For a JSON message add # and the field: plant/env#temp or gw/01#sensors[0].value. No wildcards; retained values are marked uncertain.";
   else if (tagIsOpcUa()) $("tagAddressHelp").textContent = "Use ns=2;i=13 or the full Siemens http://...;i=13 NodeId. Only numeric and BOOL Values are read.";
   else if (tagMcDevice()) $("tagAddressHelp").textContent = `Mitsubishi device and number: D100, W1A, R100, TN0, CN0, SD0 for values (32/64-bit use the next words, low word first); M0, X1F, Y10, B0, L0, SM400 or a word bit D100.A for BOOL. ${Number(tagMcDevice().unitId) === 1 ? "FX5: X/Y numbers are octal (X17)." : "X/Y/B/W numbers are hexadecimal."}`;
+  else if (tagIsFins()) $("tagAddressHelp").textContent = "Omron area and word: D100, W10, H5, A20, CIO100 (or 100), E0_100 for an EM bank, T0 / C0 for a timer or counter present value. 32/64-bit use the next words, low word first. BOOL: a bit of a word with a decimal bit 00-15 (CIO0.05, D100.15, W10.03) or T0 / C0 for the completion flag.";
   else if (s7) $("tagAddressHelp").textContent = "Use an absolute S7 address. BOOL: DB1.DBX0.0, I0.0, Q0.1, M10.0. 16-bit: DB1.DBW2, IW64, QW2, MW20. 32-bit: DB1.DBD4, ID100, QD4, MD30. DBs must have optimized block access off; inputs, outputs and M need only PUT/GET.";
   else $("tagAddressHelp").textContent = t("tagAddressHelp");
 }
@@ -2658,6 +2683,22 @@ function mcAddressValid(address, type, series) {
   return m[3] === undefined && ["Word","UInt16","Int16","UInt32","Int32","Float32","Int64","UInt64","Float64"].includes(type);
 }
 
+// Omron FINS address: area + word (D100, W10, H5, A20, CIO100 or 100, E0_100, T0, C0), decimal bit
+// 00-15 for BOOL (CIO0.05, D100.15). T/C: BOOL = completion flag, 16-bit = present value.
+function finsAddressValid(address, type) {
+  const m = /^(?:(CIO|DM|D|W|H|A|T|C)|E([0-9A-F])_)?(\d{1,5})(?:\.(\d{1,2}))?$/i.exec(String(address || "").trim());
+  if (!m) return false;
+  const area = m[2] !== undefined ? "E" : (m[1] || "CIO").toUpperCase().replace(/^DM$/, "D");
+  const max = {CIO:6143, D:32767, W:511, H:1535, A:11535, T:4095, C:4095, E:32767}[area];
+  const word = Number(m[3]);
+  const bit = m[4] === undefined ? null : Number(m[4]);
+  if (word > max || bit !== null && bit > 15) return false;
+  if (area === "T" || area === "C") return bit === null && ["Bool","Word","UInt16","Int16"].includes(type);
+  if (type === "Bool") return bit !== null;
+  const width = ["Word","UInt16","Int16"].includes(type) ? 1 : ["UInt32","Int32","Float32"].includes(type) ? 2 : ["Int64","UInt64","Float64"].includes(type) ? 4 : 0;
+  return bit === null && width > 0 && word + width - 1 <= max;
+}
+
 // MQTT Tag address: exact topic, optionally #field for a JSON message (plant/env#temp, gw#a[0].b).
 function mqttTagAddressValid(address) {
   const [topic, ...rest] = String(address || "").split("#");
@@ -2683,6 +2724,11 @@ function validateTagAddressClient() {
   if (tagMcDevice()) {
     const good=mcAddressValid($("tagAddress").value.trim(),$("tagDataType").value,tagMcDevice().unitId);
     stateBox.textContent=good?"Mitsubishi address OK":"Use D100 / W1A / R100 / TN0 for values, M0 / X1F / Y10 / SM400 or D100.A for BOOL.";
+    stateBox.classList.toggle("error",!good);saveButton.disabled=!good||!canMutateConfiguration();return good;
+  }
+  if (tagIsFins()) {
+    const good=finsAddressValid($("tagAddress").value.trim(),$("tagDataType").value);
+    stateBox.textContent=good?"Omron address OK":"Use D100 / W10 / H5 / CIO100 / E0_100 / T0 for values, CIO0.05 / D100.15 or T0 / C0 (completion flag) for BOOL.";
     stateBox.classList.toggle("error",!good);saveButton.disabled=!good||!canMutateConfiguration();return good;
   }
   if (tagIsS7()) {
@@ -2738,8 +2784,9 @@ function bulkTagName(base, n) {
 
 // The n-th address after the first, sized by the data type; null when it cannot continue.
 // Modbus: next register(s) or coil, register bits 0..15 then the next register.
-// S7: DBX bits 0..7 then the next byte, DBB +1, DBW +2, DBD +4. Others: the trailing number.
-function bulkTagAddress(address, dataType, bitIndex, protocol, n) {
+// S7: bits 0..7 then the next byte, B +1, W +2, D +4 (DB and I/Q/M). Mitsubishi: words by width in
+// the device's number base, bits of a word 0..F; Omron: words by width, bits 00..15. Others: the trailing number.
+function bulkTagAddress(address, dataType, bitIndex, protocol, n, series) {
   const text = String(address || "").trim();
   if (/^Modbus (TCP|RTU)$/.test(protocol || "")) {
     const info = modbusAddressInfo(text);
@@ -2754,13 +2801,48 @@ function bulkTagAddress(address, dataType, bitIndex, protocol, n) {
   }
   if (protocol === "Siemens S7 TCP") {
     const m = /^DB(\d+)\.DB([XBWD])(\d+)(?:\.([0-7]))?$/i.exec(text);
-    if (!m) return null;
-    const area = m[2].toUpperCase(), offset = Number(m[3]);
-    if (area === "X") {
-      const bit = Number(m[4] || 0) + n;
-      return { address: `DB${m[1]}.DBX${offset + Math.floor(bit / 8)}.${bit % 8}`, bitIndex };
+    if (m) {
+      const area = m[2].toUpperCase(), offset = Number(m[3]);
+      if (area === "X") {
+        const bit = Number(m[4] || 0) + n;
+        return { address: `DB${m[1]}.DBX${offset + Math.floor(bit / 8)}.${bit % 8}`, bitIndex };
+      }
+      return { address: `DB${m[1]}.DB${area}${offset + n * { B: 1, W: 2, D: 4 }[area]}`, bitIndex };
     }
-    return { address: `DB${m[1]}.DB${area}${offset + n * { B: 1, W: 2, D: 4 }[area]}`, bitIndex };
+    const io = /^(%?[IQMEA])(X?|[BWD])(\d+)(?:\.([0-7]))?$/i.exec(text);
+    if (!io) return null;
+    const size = io[2].toUpperCase(), offset = Number(io[3]);
+    if (io[4] !== undefined) {
+      const bit = Number(io[4]) + n;
+      return { address: `${io[1]}${io[2]}${offset + Math.floor(bit / 8)}.${bit % 8}`, bitIndex };
+    }
+    return size ? { address: `${io[1]}${io[2]}${offset + n * { B: 1, W: 2, D: 4 }[size]}`, bitIndex } : null;
+  }
+  if (protocol === "Mitsubishi MC") {
+    const m = /^(SM|SD|SB|SW|TS|TN|CS|CN|X|Y|M|L|F|V|B|D|W|R)([0-9A-F]+)(?:\.([0-9A-F]))?$/i.exec(text);
+    if (!m) return null;
+    const device = m[1].toUpperCase();
+    const base = ["X","Y"].includes(device) && Number(series) === 1 ? 8 : ["X","Y","B","W","SB","SW"].includes(device) ? 16 : 10;
+    const number = parseInt(m[2], base);
+    if (Number.isNaN(number)) return null;
+    const format = value => `${m[1]}${value.toString(base).toUpperCase()}`;
+    if (m[3] !== undefined) {
+      const bit = parseInt(m[3], 16) + n;
+      return { address: `${format(number + Math.floor(bit / 16))}.${(bit % 16).toString(16).toUpperCase()}`, bitIndex };
+    }
+    const bitDevice = ["SM","SB","TS","CS","X","Y","M","L","F","V","B"].includes(device);
+    return { address: format(number + n * (bitDevice ? 1 : tagRegisterWidth(dataType))), bitIndex };
+  }
+  if (protocol === "Omron FINS") {
+    const m = /^((?:CIO|DM|D|W|H|A|T|C|E[0-9A-F]_)?)(\d+)(?:\.(\d{1,2}))?$/i.exec(text);
+    if (!m) return null;
+    const word = Number(m[2]);
+    if (m[3] !== undefined) {
+      const bit = Number(m[3]) + n;
+      return { address: `${m[1]}${word + Math.floor(bit / 16)}.${String(bit % 16).padStart(2, "0")}`, bitIndex };
+    }
+    const timerCounter = /^[TC]$/i.test(m[1]);
+    return { address: `${m[1]}${word + n * (timerCounter ? 1 : tagRegisterWidth(dataType))}`, bitIndex };
   }
   const m = /^(.*?)(\d+)$/.exec(text);
   return m ? { address: m[1] + String(Number(m[2]) + n).padStart(m[2].length, "0"), bitIndex } : null;
@@ -2772,7 +2854,7 @@ function tagFormBody() {
     name:$("tagName").value.trim(),
     address:$("tagAddress").value.trim(),
     dataType:$("tagDataType").value,
-    bitIndex:!tagIsS7() && !tagIsMqtt() && !tagIsOpcUa() && $("tagDataType").value === "Bool" &&
+    bitIndex:isModbusProtocol(state.devices.find(d => d.id === $("tagDevice").value)?.protocol) && $("tagDataType").value === "Bool" &&
       modbusAddressInfo($("tagAddress").value)?.area === "Holding Register"
         ? Number($("tagBitIndex").value)
         : null,
@@ -2788,10 +2870,10 @@ function tagBulkPlan() {
   const count = Number($("tagCount").value || 1);
   if (!Number.isInteger(count) || count < 1 || count > 200) return { error: t("tagCountRange") };
   const body = tagFormBody();
-  const protocol = state.devices.find(d => d.id === body.deviceId)?.protocol;
+  const device = state.devices.find(d => d.id === body.deviceId);
   const items = [];
   for (let n = 0; n < count; n++) {
-    const next = bulkTagAddress(body.address, body.dataType, body.bitIndex, protocol, n);
+    const next = bulkTagAddress(body.address, body.dataType, body.bitIndex, device?.protocol, n, device?.unitId);
     if (!next) return { error: t("tagBulkAddressError") };
     items.push({ ...body, name: bulkTagName(body.name, n), address: next.address, bitIndex: next.bitIndex });
   }
@@ -5698,7 +5780,7 @@ function dev3Priority(value) {
 
 function dev3Protocol(value) {
   const key = String(value || "Modbus TCP").toLowerCase().replace(/[^a-z0-9]/g, "");
-  return ({modbus:"Modbus TCP",modbustcp:"Modbus TCP",modbusrtu:"Modbus RTU",rtu:"Modbus RTU",mitsubishimc:"Mitsubishi MC",mitsubishi:"Mitsubishi MC",mc:"Mitsubishi MC",s7:"Siemens S7 TCP",s7tcp:"Siemens S7 TCP",siemenss7tcp:"Siemens S7 TCP",mqtt:"MQTT",opcua:"OPC UA"})[key] || null;
+  return ({modbus:"Modbus TCP",modbustcp:"Modbus TCP",modbusrtu:"Modbus RTU",rtu:"Modbus RTU",mitsubishimc:"Mitsubishi MC",mitsubishi:"Mitsubishi MC",mc:"Mitsubishi MC",omronfins:"Omron FINS",omron:"Omron FINS",fins:"Omron FINS",s7:"Siemens S7 TCP",s7tcp:"Siemens S7 TCP",siemenss7tcp:"Siemens S7 TCP",mqtt:"MQTT",opcua:"OPC UA"})[key] || null;
 }
 
 function dev3ImportExistingMode(){return $("importExistingMode")?.value==='skip'?'skip':'update'}
@@ -5725,13 +5807,13 @@ function dev3PreviewRow(row, dataset) {
     const name = dev3Cell(row, "Name", "Device");
     const protocol = dev3Protocol(dev3Cell(row, "Protocol"));
     const host = dev3Cell(row, "Host", "IP", "HostIP", "EndpointUrl");
-    const defaultPort = protocol === "Siemens S7 TCP" ? 102 : protocol === "MQTT" ? 8883 : protocol === "OPC UA" ? 4840 : 502;
+    const defaultPort = protocol === "Omron FINS" ? 9600 : protocol === "Mitsubishi MC" ? 5007 : protocol === "Siemens S7 TCP" ? 102 : protocol === "MQTT" ? 8883 : protocol === "OPC UA" ? 4840 : 502;
     const port = dev3Number(dev3Cell(row, "Port"), defaultPort);
     const unitId = dev3Number(dev3Cell(row, "UnitId", "Unit ID", "SlaveId"), /^Modbus (TCP|RTU)$/.test(protocol || "") ? 1 : 0);
     const pollIntervalMs = dev3Number(dev3Cell(row, "PollIntervalMs", "Poll", "PollMs"), 1000);
     if (!name) errors.push("Name is required");
     if (state.tags.some(t => t.name.toLowerCase() === name.toLowerCase())) errors.push("Name is already used by a Tag");
-    if (!protocol) errors.push("Protocol must be Modbus TCP, Modbus RTU, Mitsubishi MC, Siemens S7 TCP, MQTT or OPC UA");
+    if (!protocol) errors.push("Protocol must be Modbus TCP, Modbus RTU, Mitsubishi MC, Omron FINS, Siemens S7 TCP, MQTT or OPC UA");
     if (protocol === "Modbus RTU") {
       // Host is the port (COM3) with the Serial column ("9600 8E1", default), or the full settings
       // "COM3;9600;8E1" as a device export writes them (quoted).
@@ -5759,6 +5841,9 @@ function dev3PreviewRow(row, dataset) {
         const series = seriesText ? (seriesText.includes("FX5") || seriesText.includes("IQF") ? 1 : 0) : (unitId === 1 ? 1 : 0);
         payload = { kind:"mc", body:{name,host,port,series,pollIntervalMs} };
         preview = `${name || "?"} • ${host || "?"}:${port} • ${series === 1 ? "iQ-F (FX5)" : "iQ-R / Q / L"}`;
+      } else if (protocol === "Omron FINS") {
+        payload = { kind:"fins", body:{name,host,port,pollIntervalMs} };
+        preview = `${name || "?"} • ${host || "?"}:${port} • FINS/TCP`;
       } else if (protocol === "Siemens S7 TCP") {
         const rackRaw = dev3Cell(row, "Rack");
         const slotRaw = dev3Cell(row, "Slot");
@@ -5817,6 +5902,9 @@ function dev3PreviewRow(row, dataset) {
     } else if (device?.protocol === "Mitsubishi MC") {
       if (!dataType || !mcAddressValid(address, dataType, device.unitId)) errors.push("Mitsubishi address must match the datatype: D100 / W1A / R100 for values, M0 / X1F / D100.A for BOOL");
       if (bitIndex !== null) errors.push("Mitsubishi bit is part of the address (D100.A); leave BitIndex blank");
+    } else if (device?.protocol === "Omron FINS") {
+      if (!dataType || !finsAddressValid(address, dataType)) errors.push("Omron address must match the datatype: D100 / W10 / CIO100 / E0_100 / T0 for values, CIO0.05 / D100.15 / T0 for BOOL");
+      if (bitIndex !== null) errors.push("Omron bit is part of the address (D100.05); leave BitIndex blank");
     } else if (device?.protocol === "Siemens S7 TCP") {
       if (!dataType || !s7AddressValid(address, dataType)) errors.push("S7 address must match datatype: DB1.DBX0.0 / I0.0 / M10.0, DB1.DBW2 / IW64 / MW20, DB1.DBD4 / ID100 / MD30");
       if (bitIndex !== null) errors.push("S7 bit index is part of the DBX address; leave BitIndex blank");
@@ -5891,7 +5979,7 @@ function dev3PreviewRow(row, dataset) {
   const existing=dev3ImportIdentity(dataset,payload),mode=dev3ImportExistingMode();
   const action=existing?(mode==='skip'?'skip':'update'):'create';
   if(existing&&dataset==='tags'&&existing.deviceId!==payload?.body?.deviceId)errors.push('Tag name belongs to another Device; rename it before import');
-  if(existing&&dataset==='devices'&&existing.protocol!==({'modbus':'Modbus TCP','modbusrtu':'Modbus RTU','mc':'Mitsubishi MC','s7':'Siemens S7 TCP','mqtt':'MQTT','opcua':'OPC UA'}[payload.kind]))errors.push('Device protocol cannot be changed in place');
+  if(existing&&dataset==='devices'&&existing.protocol!==({'modbus':'Modbus TCP','modbusrtu':'Modbus RTU','mc':'Mitsubishi MC','fins':'Omron FINS','s7':'Siemens S7 TCP','mqtt':'MQTT','opcua':'OPC UA'}[payload.kind]))errors.push('Device protocol cannot be changed in place');
   return { row:row.__row, dataset, source:row, payload, preview, errors,
     action,existingId:existing?.id||null,
     valid:errors.length === 0 && action!=='skip' };
@@ -5962,7 +6050,7 @@ async function executeCsvImport() {
           pollIntervalMs:item.payload.body.pollIntervalMs}:item.payload.body;
         await api(`${route}/${encodeURIComponent(item.existingId)}`,{method:'PUT',body:JSON.stringify(body)});
       } else if (item.dataset === "devices") {
-        const devicePaths = {modbus:"/api/devices/modbus-tcp",modbusrtu:"/api/devices/modbus-rtu",mc:"/api/devices/mitsubishi-mc",s7:"/api/devices/siemens-s7-tcp",mqtt:"/api/devices/mqtt",opcua:"/api/devices/opc-ua"};
+        const devicePaths = {modbus:"/api/devices/modbus-tcp",modbusrtu:"/api/devices/modbus-rtu",mc:"/api/devices/mitsubishi-mc",fins:"/api/devices/omron-fins",s7:"/api/devices/siemens-s7-tcp",mqtt:"/api/devices/mqtt",opcua:"/api/devices/opc-ua"};
         await api(devicePaths[item.payload.kind], { method:"POST", body:JSON.stringify(item.payload.body) });
       } else if (item.dataset === "tags") {
         await api("/api/tags", { method:"POST", body:JSON.stringify(item.payload.body) });

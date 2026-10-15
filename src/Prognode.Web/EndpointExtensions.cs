@@ -42,6 +42,7 @@ public static class EndpointExtensions
             $"{(SerialPort ?? "").Trim()};{BaudRate};{DataBits}{(Parity ?? "N").Trim().ToUpperInvariant().FirstOrDefault('N')}{StopBits}").ToString();
     }
     public sealed record MitsubishiMcDeviceRequest(string? Name, string? Host, int Port, int Series, int PollIntervalMs);
+    public sealed record OmronFinsDeviceRequest(string? Name, string? Host, int Port, int PollIntervalMs);
     public sealed record MqttDeviceRequest(string? Name, string? Host, int Port, int PollIntervalMs, string? Username = null, string? Password = null);
     public sealed record OpcUaDeviceRequest(string? Name, string? EndpointUrl, int PollIntervalMs, string? Username = null, string? Password = null);
     public sealed record OpcUaCertificateRequest(string EndpointUrl);
@@ -931,6 +932,17 @@ public static class EndpointExtensions
             try
             {
                 var item = await devices.CreateMitsubishiMcAsync(req.Name, req.Host, req.Port, req.Series, req.PollIntervalMs, ct);
+                return Results.Created($"/api/devices/{item.Id}", item);
+            }
+            catch (DeviceCapacityExceededException) { return Results.StatusCode(403); }
+            catch (ArgumentException ex) { return Results.BadRequest(new { message = ex.Message }); }
+        });
+
+        endpoints.MapPost("/api/devices/omron-fins", async (OmronFinsDeviceRequest req, DeviceService devices, CancellationToken ct) =>
+        {
+            try
+            {
+                var item = await devices.CreateOmronFinsAsync(req.Name, req.Host, req.Port, req.PollIntervalMs, ct);
                 return Results.Created($"/api/devices/{item.Id}", item);
             }
             catch (DeviceCapacityExceededException) { return Results.StatusCode(403); }

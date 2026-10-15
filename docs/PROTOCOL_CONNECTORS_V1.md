@@ -1,6 +1,6 @@
 # PROGNODE Monitor protocol connectors (field-test scope)
 
-Current customer-facing catalog: Modbus TCP, Modbus RTU (RS-485), Mitsubishi MC, Siemens S7 TCP, OPC UA and MQTT.
+Current customer-facing catalog: Modbus TCP, Modbus RTU (RS-485), Mitsubishi MC, Omron FINS, Siemens S7 TCP, OPC UA and MQTT.
 PROFINET is not offered or planned in the active catalog. The RC2 product-decision
 document records an older, superseded catalog proposal.
 
@@ -57,6 +57,27 @@ reads up to 32 bits (64-bit types are rejected for S7 Tags).
 - Request bytes are checked against pymcprotocol 0.3.0; the soak simulator (`simulators.py mc`) is
   checked with pymcprotocol (`check_mc_simulator.py`).
 
+## Omron FINS
+
+- `POST /api/devices/omron-fins` accepts `{ "name", "host": "192.168.250.1", "port": 9600, "pollIntervalMs": 1000 }`.
+  FINS/TCP on the CPU's built-in EtherNet/IP port or an Ethernet unit (CS, CJ, CP, NJ, NX). The FINS
+  node addresses come from the FINS/TCP handshake, so no node numbers are entered. On NJ/NX, FINS must
+  be allowed in the built-in port settings and the variables mapped to CIO, W, H, D or EM.
+- FINS memory area read (command 0101), read-only. One persistent connection per endpoint; gateway
+  count 02, destination unit 00 (CPU).
+- Addresses as in CX-Programmer / Sysmac Studio: `D100` (also `DM100`), `CIO100` (or `100`), `W10`,
+  `H5`, `A20`, `E0_100` (EM bank 0..F), `T0` / `C0`. BOOL is a bit of a word with a decimal bit
+  `00..15` (`CIO0.05`, `D100.15`), or `T0` / `C0` for the completion flag; a 16-bit type on `T` / `C`
+  reads the present value. 32- and 64-bit values use the next words, low word first (each word
+  big-endian). BCD timers are read as raw words.
+- Close Tags of one area are read in one batch (up to 500 words). A non-zero end code (e.g. 0x1103
+  address out of range) makes only the affected Tag `Bad`; that Tag is then read alone for 60 s.
+  FINS/TCP errors such as "all connections in use" are reported with the reason. Device CSV:
+  Protocol `Omron FINS` (or `FINS`), default port 9600.
+- Request bytes are checked against the `fins` package 1.0.5 (only the gateway count differs: the
+  library sends 07); the soak simulator (`simulators.py fins`) is checked with that client
+  (`check_fins_simulator.py`).
+
 ## Siemens S7
 
 - Absolute addresses only. DBs: `DB1.DBX0.0`, `DB1.DBW2`, `DB1.DBD4` (non-optimized DBs: turn
@@ -95,14 +116,15 @@ reads up to 32 bits (64-bit types are rejected for S7 Tags).
 
 - `PUT /api/devices/{id}` edits host and poll settings (and the credential / RTU serial settings).
   `/api/tags` create/update validate by the device's protocol.
-- `/api/protocols` reports all six as `Available`. The local commissioning UI exposes their
+- `/api/protocols` reports all seven as `Available`. The local commissioning UI exposes their
   device and Tag fields.
 - `pwsh -File scripts/Validate-Baseline.ps1` performs locked restore, Release build and the console
   contracts. The protocol contracts cover: Modbus FC01/02/03/04 and six-digit / 64-bit values in all
   byte orders against isolated TCP responders; Modbus RTU over an in-memory RS-485 line (CRC, two
   units, exception, timeout, corrupted and late answers, echo, unplugged adapter); S7 DB / I / Q / M
-  ReadVar; MQTT login and JSON fields against an in-process broker; OPC UA URL/NodeId validation and
-  application-certificate generation; the five-protocol catalog and Tag dispatch.
+  ReadVar; Mitsubishi MC and Omron FINS frames, values and refused addresses against TCP responders;
+  MQTT login and JSON fields against an in-process broker; OPC UA URL/NodeId validation and
+  application-certificate generation; the seven-protocol catalog and Tag dispatch.
 - `tests/ProtocolSoak` runs long tests against simulators (`tools/protocol-soak`, all requiring
   logins) or real devices (`--config`). Modbus RTU was soaked over a real Windows COM port (com0com
   pair, pymodbus RTU slaves, two units, outages) with 0 wrong values.

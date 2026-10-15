@@ -264,6 +264,13 @@
           "System.IO.Ports": "[10.0.0, )"
         }
       },
+      "prognode.protocols.omron": {
+        "type": "Project",
+        "dependencies": {
+          "Prognode.Contracts": "[1.0.0-dev, )",
+          "Prognode.Protocols.Abstractions": "[1.0.0-dev, )"
+        }
+      },
       "prognode.protocols.s7": {
         "type": "Project",
         "dependencies": {
@@ -299,6 +306,7 @@
           "Prognode.Notifications": "[1.0.0-dev, )",
           "Prognode.Protocols.Mitsubishi": "[1.0.0-dev, )",
           "Prognode.Protocols.Modbus": "[1.0.0-dev, )",
+          "Prognode.Protocols.Omron": "[1.0.0-dev, )",
           "Prognode.Protocols.S7": "[1.0.0-dev, )",
           "Prognode.RemoteAccess": "[1.0.0-dev, )",
           "Prognode.Trends": "[1.0.0-dev, )"

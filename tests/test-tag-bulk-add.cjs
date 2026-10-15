@@ -8,7 +8,7 @@ const context={Number,String,Math};
 vm.createContext(context);
 vm.runInContext(slice('function modbusAddressInfo(','function nextModbusTagAddress('),context);
 vm.runInContext(slice('function bulkTagName(','function tagFormBody('),context);
-const at=(a,type,bit,protocol,n)=>context.bulkTagAddress(a,type,bit,protocol,n);
+const at=(a,type,bit,protocol,n,series)=>context.bulkTagAddress(a,type,bit,protocol,n,series);
 assert.equal(context.bulkTagName('Temp',0),'Temp1');
 assert.equal(context.bulkTagName('Temp',19),'Temp20');
 assert.equal(context.bulkTagName('Pump07',2),'Pump09','trailing number continues, width kept');
@@ -24,4 +24,19 @@ assert.deepEqual({...at('DB1.DBX0.6','Bool',null,'Siemens S7 TCP',3)},{address:'
 assert.deepEqual({...at('ns=2;i=5','Float32',null,'OPC UA',2)},{address:'ns=2;i=7',bitIndex:null});
 assert.deepEqual({...at('line/sensor01','Float32',null,'MQTT',9)},{address:'line/sensor10',bitIndex:null});
 assert.equal(at('ns=2;s=Temperature','Float32',null,'OPC UA',1),null,'no trailing number: cannot continue');
-console.log('PASS: bulk tag add numbers names and continues Modbus, S7 and numbered addresses');
+// S7 inputs, outputs and bit memory.
+assert.deepEqual({...at('MD4','Float32',null,'Siemens S7 TCP',2)},{address:'MD12',bitIndex:null},'MD steps by four bytes');
+assert.deepEqual({...at('%IW64','Int16',null,'Siemens S7 TCP',1)},{address:'%IW66',bitIndex:null});
+assert.deepEqual({...at('I0.6','Bool',null,'Siemens S7 TCP',3)},{address:'I1.1',bitIndex:null},'input bits roll over to the next byte');
+// Mitsubishi: words by width, hex X/Y on Q/L/iQ-R, octal on FX5, hex bits of a word.
+assert.deepEqual({...at('D100','Float32',null,'Mitsubishi MC',2,0)},{address:'D104',bitIndex:null},'Float32 takes two words');
+assert.deepEqual({...at('X1F','Bool',null,'Mitsubishi MC',1,0)},{address:'X20',bitIndex:null},'hex X');
+assert.deepEqual({...at('X17','Bool',null,'Mitsubishi MC',1,1)},{address:'X20',bitIndex:null},'octal X on FX5');
+assert.deepEqual({...at('D100.E','Bool',null,'Mitsubishi MC',3,0)},{address:'D101.1',bitIndex:null},'word bits roll over after F');
+assert.deepEqual({...at('SD10','Word',null,'Mitsubishi MC',1,0)},{address:'SD11',bitIndex:null});
+// Omron: words by width, decimal bits 00..15, timers/counters by one.
+assert.deepEqual({...at('D100','Float32',null,'Omron FINS',2)},{address:'D104',bitIndex:null},'Float32 takes two words');
+assert.deepEqual({...at('CIO0.14','Bool',null,'Omron FINS',3)},{address:'CIO1.01',bitIndex:null},'bits roll over after 15');
+assert.deepEqual({...at('E0_100','Int64',null,'Omron FINS',1)},{address:'E0_104',bitIndex:null});
+assert.deepEqual({...at('T5','Bool',null,'Omron FINS',2)},{address:'T7',bitIndex:null});
+console.log('PASS: bulk tag add numbers names and continues Modbus, S7, Mitsubishi, Omron and numbered addresses');
