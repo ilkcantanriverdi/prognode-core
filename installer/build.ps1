@@ -7,6 +7,7 @@ param(
 #   PROGNODE-Client-Setup-<version>.exe alarm client for other Windows PCs on the plant network (per-user)
 # Everything is published self-contained for win-x64, then compiled with Inno Setup 6.
 # Code signing: set PROGNODE_SIGN_CMD (e.g. a signtool command with {file}) to sign the binaries and the setup.
+# Release signing: set PROGNODE_RELEASE_KEY to the offline Ed25519 private key file to write <setup>.sig (upload it with the .sha256).
 $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot -Parent
 $publish = Join-Path $root "artifacts\publish"
@@ -70,6 +71,13 @@ foreach ($product in "Monitor", "Client") {
   Invoke-Sign $setup
   $hash = (Get-FileHash $setup -Algorithm SHA256).Hash.ToLowerInvariant()
   "$hash  PROGNODE-$product-Setup-$Version.exe" | Set-Content -Encoding ascii "$setup.sha256"
+  # In-app updates install only releases signed with the offline release key (installer/sign-release.cjs).
+  if ($env:PROGNODE_RELEASE_KEY) {
+    node (Join-Path $PSScriptRoot "sign-release.cjs") sign $setup $product $Version $env:PROGNODE_RELEASE_KEY
+    if ($LASTEXITCODE -ne 0) { throw "Release signing failed: $setup" }
+  } else {
+    Write-Warning "PROGNODE_RELEASE_KEY is not set: $product $Version is unsigned and installed systems will not install it as an update."
+  }
   Write-Host "Built $setup" -ForegroundColor Green
   Write-Host "SHA-256 $hash"
 }

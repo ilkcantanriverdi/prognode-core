@@ -26,6 +26,22 @@ static void Check(bool condition, string message)
     Console.WriteLine("PASS update check: semantic version order, dev builds skipped, PROGNODE-only download link");
 }
 
+// --- Signed installer releases ----------------------------------------------------------------
+{
+    // Throwaway test key: signed with installer/sign-release.cjs (Node), verified here with NSec.
+    const string key = "exq5zsWliJfWWlzKaaEUEgT7mfzkFDVUbZyfa16yIis=";
+    const string sha = "6b9fdebf5b00e422a7d3cc227559c4682b8ef3a23ec2b1a65d0dc90860131f87";
+    const string sig = "A8xIMsFyiTuBLvSbIEAbh3ezRmQFUMweMS8/tfCg4LMzBpKiSWEXapo9zD1pl4YYgkKujyPS2k/+2X0KP19pBw==";
+    Check(ReleaseSignature.Verify(key, "Monitor", "1.0.0-beta.18", sha, sig), "A release signed by sign-release.cjs verifies.");
+    Check(!ReleaseSignature.Verify(key, "Monitor", "1.0.0-beta.19", sha, sig), "The signature binds the version.");
+    Check(!ReleaseSignature.Verify(key, "Client", "1.0.0-beta.18", sha, sig), "The signature binds the product.");
+    Check(!ReleaseSignature.Verify(key, "Monitor", "1.0.0-beta.18", sha.Replace('6', '7'), sig), "The signature binds the file hash.");
+    Check(!ReleaseSignature.Verify(key, "Monitor", "1.0.0-beta.18", sha, null) && !ReleaseSignature.Verify(key, "Monitor", "1.0.0-beta.18", sha, "not base64!"),
+        "A missing or malformed signature never verifies.");
+    Check(!ReleaseSignature.Verify(ReleaseSignature.PublicKey, "Monitor", "1.0.0-beta.18", sha, sig), "The test key is not the release key.");
+    Console.WriteLine("PASS signed releases: Node signature verifies, bound to product, version and hash");
+}
+
 // --- Cloud license host selection (Release build) -------------------------------------------
 {
     var options = new CoreCloudLicenseOptions
