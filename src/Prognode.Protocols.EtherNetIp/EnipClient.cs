@@ -145,7 +145,7 @@ public sealed class EnipClient : IAsyncDisposable
     }
 
     internal static CipException Refused(byte status, ushort? extended) =>
-        new(status, extended, $"Controller refused the request (CIP status 0x{status:X2}{(extended is { } e ? $"/0x{e:X4}" : "")}{Hint(status, extended)}).");
+        new(status, extended, $"Controller refused the request (CIP status 0x{status:X2}{(extended is { } e and not 0 ? $"/0x{e:X4}" : "")}{Hint(status, extended)}).");
 
     public static string Hint(byte status, ushort? extended) => (status, extended) switch
     {
