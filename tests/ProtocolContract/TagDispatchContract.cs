@@ -19,14 +19,14 @@ internal static class TagDispatchContract
     public static async Task RunAsync()
     {
         var protocols = new ProtocolCatalog().GetAll();
-        Check(protocols.Count == 4 && protocols.All(x => x.Enabled) &&
+        Check(protocols.Count == 5 && protocols.All(x => x.Enabled) &&
               protocols.Select(x => x.Id).ToHashSet().SetEquals(
-                  ["modbus-tcp", "siemens-s7-tcp", "mqtt", "opc-ua"]),
-            "Customer catalog must contain exactly the four active protocols.");
+                  ["modbus-tcp", "modbus-rtu", "siemens-s7-tcp", "mqtt", "opc-ua"]),
+            "Customer catalog must contain exactly the five active protocols.");
 
         var now = DateTimeOffset.UtcNow;
         var devices = new MemoryDevices();
-        foreach (var protocol in new[] { "Modbus TCP", "Siemens S7 TCP", "MQTT", "OPC UA" })
+        foreach (var protocol in new[] { "Modbus TCP", "Modbus RTU", "Siemens S7 TCP", "MQTT", "OPC UA" })
             await devices.AddAsync(new DeviceDefinition(Guid.NewGuid(), protocol, protocol,
                 "Configured", "127.0.0.1", 502, 1, 1000, now, now));
 
@@ -39,7 +39,9 @@ internal static class TagDispatchContract
         var s7 = await Create("Siemens S7 TCP", "DB1.DBW2", TagDataType.Word);
         var mqtt = await Create("MQTT", "plant/temperature", TagDataType.Float32);
         var opc = await Create("OPC UA", "ns=2;s=Temperature", TagDataType.Float32);
-        Check((await service.GetAllAsync()).Count == 4, "Four protocol-specific Tags were not created.");
+        var rtu = await Create("Modbus RTU", "419000", TagDataType.Float64);
+        Check((await service.GetAllAsync()).Count == 5, "Five protocol-specific Tags were not created.");
+        Check(rtu.Address == "419000", "Modbus RTU Tag was not validated by the Modbus rules.");
         await Update(s7, "DB1.DBW4");
         await Update(mqtt, "plant/temperature2");
         await Update(opc, "ns=2;s=Temperature2");

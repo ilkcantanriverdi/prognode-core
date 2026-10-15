@@ -7,7 +7,8 @@ namespace Prognode.Protocols.Modbus;
 public sealed class ModbusTagDefinitionValidator : ITagDefinitionValidator
 {
     public bool CanHandle(DeviceDefinition device) =>
-        string.Equals(device.Protocol, "Modbus TCP", StringComparison.OrdinalIgnoreCase);
+        string.Equals(device.Protocol, ModbusTagReader.TcpProtocol, StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(device.Protocol, ModbusTagReader.RtuProtocol, StringComparison.OrdinalIgnoreCase);
 
     public void Validate(TagDefinition candidate, IReadOnlyList<TagDefinition> existingTags)
     {

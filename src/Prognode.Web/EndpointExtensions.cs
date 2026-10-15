@@ -35,6 +35,12 @@ public static class EndpointExtensions
 {
     public sealed record S7TestRequest(string Host,int Port,int Rack,int Slot,int TimeoutMs=2000);
     public sealed record S7DeviceRequest(string Name,string Host,int Port,int Rack,int Slot,int PollIntervalMs);
+    public sealed record ModbusRtuDeviceRequest(string? Name, string? SerialPort, int BaudRate, int DataBits, string? Parity, int StopBits, int UnitId, int PollIntervalMs)
+    {
+        /// <summary>Canonical serial settings string stored in the device Host: COM3;9600;8E1.</summary>
+        public string SerialSettings() => ModbusSerialSettings.Parse(
+            $"{(SerialPort ?? "").Trim()};{BaudRate};{DataBits}{(Parity ?? "N").Trim().ToUpperInvariant().FirstOrDefault('N')}{StopBits}").ToString();
+    }
     public sealed record MqttDeviceRequest(string? Name, string? Host, int Port, int PollIntervalMs, string? Username = null, string? Password = null);
     public sealed record OpcUaDeviceRequest(string? Name, string? EndpointUrl, int PollIntervalMs, string? Username = null, string? Password = null);
     public sealed record OpcUaCertificateRequest(string EndpointUrl);
@@ -908,6 +914,23 @@ public static class EndpointExtensions
             catch(ArgumentException e){return Results.BadRequest(new {message=e.Message});}
         });
 
+        endpoints.MapPost("/api/devices/modbus-rtu", async (ModbusRtuDeviceRequest req, DeviceService devices, CancellationToken ct) =>
+        {
+            try
+            {
+                var item = await devices.CreateModbusRtuAsync(req.Name, req.SerialSettings(), req.UnitId, req.PollIntervalMs, ct);
+                return Results.Created($"/api/devices/{item.Id}", item);
+            }
+            catch (DeviceCapacityExceededException) { return Results.StatusCode(403); }
+            catch (ArgumentException ex) { return Results.BadRequest(new { message = ex.Message }); }
+        });
+
+        // Serial ports on this PC (USB RS-485 adapters show up as COM ports) for the Modbus RTU form.
+        endpoints.MapGet("/api/serial-ports", () =>
+            Results.Ok(System.IO.Ports.SerialPort.GetPortNames()
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(name => name.Length).ThenBy(name => name, StringComparer.OrdinalIgnoreCase)));
+
         endpoints.MapPost("/api/devices/mqtt", async (MqttDeviceRequest req, DeviceService devices, IDeviceCredentialStore credentials, CancellationToken ct) =>
         {
             try
@@ -983,10 +1006,13 @@ public static class EndpointExtensions
                                     : throw new ArgumentException("Enter the password for this user name.")
                                 : NewCredential(request.Username, request.Password);
                     }
+                    var host = request.Host;
+                    if (host is not null && existing.Protocol.Equals("Modbus RTU", StringComparison.OrdinalIgnoreCase))
+                        host = ModbusSerialSettings.Parse(host).ToString();
                     var updated = await devices.UpdateAsync(
                         id,
                         request.Name,
-                        request.Host,
+                        host,
                         request.Port,
                         request.UnitId,
                         request.PollIntervalMs,

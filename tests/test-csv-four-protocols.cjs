@@ -15,7 +15,8 @@ const devices = [
   {id:'modbus',name:'Boiler PLC',protocol:'Modbus TCP'},
   {id:'s7',name:'Packing PLC',protocol:'Siemens S7 TCP'},
   {id:'mqtt',name:'Plant Broker',protocol:'MQTT'},
-  {id:'opc',name:'OPC Server',protocol:'OPC UA'}
+  {id:'opc',name:'OPC Server',protocol:'OPC UA'},
+  {id:'rtu',name:'Meter RTU',protocol:'Modbus RTU'}
 ];
 const calls = [];
 const context = {
@@ -58,13 +59,33 @@ assert.equal(deviceRows[1].payload.body.rack,1,'S7 exported UnitId decodes rack'
 assert.equal(deviceRows[1].payload.body.slot,1,'S7 exported UnitId decodes slot');
 assert.equal(deviceRows.map(x=>x.payload.kind).join(','),'modbus,s7,mqtt,opcua');
 
+// Modbus RTU: Host = COM port with the Serial column (hand-written), or the quoted full settings
+// a device export writes. A bare COM3;9600;8E1 would be split into columns, so it is not the format.
+const rtuRows = preview([
+  'Name;Protocol;Host;Port;UnitId;PollIntervalMs;Rack;Slot;Serial',
+  'Meter A;Modbus RTU;COM3;;2;1000;;;19200 8N1',
+  'Meter B;Modbus RTU;COM4;;7;500;;;',
+  'Meter C;Modbus RTU;"COM5;9600;8E1";;3;1000;;;'
+].join('\r\n'),'devices').map(valid);
+assert.equal(rtuRows.map(x=>x.payload.kind).join(','),'modbusrtu,modbusrtu,modbusrtu');
+assert.deepEqual(JSON.parse(JSON.stringify(rtuRows[0].payload.body)),{name:'Meter A',serialPort:'COM3',baudRate:19200,dataBits:8,parity:'N',stopBits:1,unitId:2,pollIntervalMs:1000});
+assert.equal(rtuRows[1].payload.body.baudRate,9600,'blank Serial means the Modbus default 9600 8E1');
+assert.equal(rtuRows[1].payload.body.parity,'E');
+assert.equal(rtuRows[2].payload.body.serialPort,'COM5');
+invalid(preview('Name;Protocol;Host;UnitId;Serial\nBad;Modbus RTU;COM3;0;9600 8E1','devices')[0],'unit ID');
+invalid(preview('Name;Protocol;Host;UnitId;Serial\nBad;Modbus RTU;COM3;1;9601 8E1','devices')[0],'Serial');
+
 const tagCsv = [
   'Device;Name;Address;DataType;BitIndex;ByteOrder;Unit;Offset;DecimalPlaces;Enabled',
   'Boiler PLC;Temperature;40001;Float32;;ABCD;C;0;1;true',
   'Packing PLC;S7 Word;DB1.DBW2;Word;;ABCD;;0;0;true',
   'Packing PLC;S7 Float;DB1.DBD4;Float32;;ABCD;rpm;0;1;true',
   'Plant Broker;MQTT Temperature;plant/temperature;Float32;;ABCD;C;0;1;true',
-  'OPC Server;OPC Pressure;"ns=2;s=Pressure";Float32;;ABCD;bar;0;1;true'
+  'OPC Server;OPC Pressure;"ns=2;s=Pressure";Float32;;ABCD;bar;0;1;true',
+  'Plant Broker;MQTT Json;plant/env#sensors[0].temp;Float32;;ABCD;C;0;1;true',
+  'Packing PLC;S7 Input;%I0.1;Bool;;ABCD;;0;0;true',
+  'Packing PLC;S7 Merker;MD20;Float32;;ABCD;;0;1;true',
+  'Meter RTU;RTU Energy;419000;Float64;;CDAB;kWh;0;2;true'
 ].join('\r\n');
 const tagRows = preview(tagCsv,'tags').map(valid);
 assert.equal(tagRows[1].payload.body.address,'DB1.DBW2');

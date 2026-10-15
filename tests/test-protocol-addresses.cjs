@@ -37,4 +37,7 @@ for(const a of ['','plant/+/temp','plant#','plant#a..b','plant#a.','#temp'])asse
 for(const id of ['mqttUsername','mqttPassword','opcUaUsername','opcUaPassword'])assert(html.includes(`id="${id}"`),id);
 assert(/id="mqttPassword" type="password"/.test(html)&&/id="opcUaPassword" type="password"/.test(html),'password inputs are masked');
 for(const type of ['Int64','UInt64','Float64'])assert(html.includes(`<option value="${type}">`),type);
+for(const id of ['modbusRtuFields','rtuPort','rtuBaud','rtuDataBits','rtuParity','rtuStopBits','rtuUnitId','rtuPoll'])assert(html.includes(`id="${id}"`),id);
+assert(app.includes('"/api/devices/modbus-rtu"')&&app.includes('api("/api/serial-ports")'),'Modbus RTU create and serial port list');
+assert(app.includes('device.protocol === "Modbus RTU" ? "modbus-rtu"'),'RTU devices open in the RTU form');
 console.log('PASS: S7 I/Q/M, Modbus six-digit and 64-bit, MQTT topic#field and device credential fields');

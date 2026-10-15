@@ -79,6 +79,25 @@
       ]
     },
     {
+      "name": "Energy meter RS-485",
+      "protocol": "Modbus RTU",
+      "host": "COM3;9600;8E1",
+      "unitId": 1,
+      "pollMs": 1000,
+      "tags": [
+        {
+          "name": "Voltage L1",
+          "address": "30001",
+          "type": "Float32"
+        },
+        {
+          "name": "Total energy",
+          "address": "419000",
+          "type": "Float64"
+        }
+      ]
+    },
+    {
       "name": "S7-1500 OPC UA",
       "protocol": "OPC UA",
       "host": "opc.tcp://192.168.0.10:4840/",
