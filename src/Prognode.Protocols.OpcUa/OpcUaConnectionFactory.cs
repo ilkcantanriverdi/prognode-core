@@ -1,5 +1,6 @@
 using Opc.Ua;
 using Opc.Ua.Client;
+using Prognode.Contracts.Devices;
 using Opc.Ua.Configuration;
 using Prognode.Protocols.Abstractions;
 using System.Security.Cryptography;
@@ -65,17 +66,37 @@ public sealed class OpcUaConnectionFactory(string dataRoot) : IOpcUaCertificateA
         catch (CryptographicException) { return false; }
     }
 
-    public async Task<ISession> OpenAsync(string? endpointUrl, CancellationToken cancellationToken)
+    public Task<ISession> OpenAsync(string? endpointUrl, CancellationToken cancellationToken) =>
+        OpenAsync(endpointUrl, null, cancellationToken);
+
+    /// <summary>Opens a SignAndEncrypt session, as the given user when the server asks for one.</summary>
+    public async Task<ISession> OpenAsync(string? endpointUrl, DeviceCredential? credential, CancellationToken cancellationToken)
     {
         var url = OpcUaEndpoint.Parse(endpointUrl);
         var configuration = await GetConfigurationAsync(cancellationToken);
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(75));
         var description = await SelectSupportedEndpointAsync(url, timeout.Token);
+        var identity = new UserIdentity();
+        if (credential is not null)
+        {
+            if (description.UserIdentityTokens?.Any(token => token.TokenType == UserTokenType.UserName) != true)
+                throw new InvalidOperationException("OPC UA server does not accept a user name and password on this endpoint. Remove the credentials or enable user name login on the server.");
+            identity = new UserIdentity(credential.Username, System.Text.Encoding.UTF8.GetBytes(credential.Password));
+        }
         var endpoint = new ConfiguredEndpoint(null, description, EndpointConfiguration.Create(configuration));
         var factory = new DefaultSessionFactory(_telemetry);
-        return await factory.CreateAsync(configuration, endpoint, false, true,
-            "ProgNode Core", 60_000, new UserIdentity(), default, timeout.Token);
+        try
+        {
+            return await factory.CreateAsync(configuration, endpoint, false, true,
+                "ProgNode Core", 60_000, identity, default, timeout.Token);
+        }
+        catch (ServiceResultException ex) when (ex.StatusCode is StatusCodes.BadUserAccessDenied or StatusCodes.BadIdentityTokenRejected or StatusCodes.BadIdentityTokenInvalid)
+        {
+            throw new InvalidOperationException(credential is null
+                ? "OPC UA server requires a user name and password. Add them to the device."
+                : "OPC UA server rejected the user name or password.", ex);
+        }
     }
 
     private async Task<EndpointDescription> SelectSupportedEndpointAsync(string endpointUrl,

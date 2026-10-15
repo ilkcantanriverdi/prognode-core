@@ -7,6 +7,7 @@
     <ProjectReference Include="..\Prognode.Historian\Prognode.Historian.csproj" />
 
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.13" />
   </ItemGroup>
 </Project>

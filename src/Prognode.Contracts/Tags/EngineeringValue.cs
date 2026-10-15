@@ -28,5 +28,6 @@ public static class EngineeringValue
     }
 
     public static bool UsesImpliedDecimals(TagDataType dataType) =>
-        dataType is TagDataType.UInt16 or TagDataType.Int16 or TagDataType.UInt32 or TagDataType.Int32;
+        dataType is TagDataType.UInt16 or TagDataType.Int16 or TagDataType.UInt32 or TagDataType.Int32 or
+        TagDataType.Int64 or TagDataType.UInt64;
 }

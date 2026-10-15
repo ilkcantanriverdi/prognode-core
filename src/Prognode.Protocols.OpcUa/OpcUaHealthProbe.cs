@@ -5,7 +5,7 @@ using Prognode.Protocols.Abstractions;
 
 namespace Prognode.Protocols.OpcUa;
 
-public sealed class OpcUaHealthProbe(OpcUaConnectionFactory connections, OpcUaTagReader reader)
+public sealed class OpcUaHealthProbe(OpcUaConnectionFactory connections, OpcUaTagReader reader, IDeviceCredentialStore? credentials = null)
     : IDeviceHealthProbe
 {
     private readonly ConcurrentDictionary<Guid, (DateTimeOffset At, DeviceHealthResult Result)> _last = new();
@@ -25,7 +25,7 @@ public sealed class OpcUaHealthProbe(OpcUaConnectionFactory connections, OpcUaTa
         DeviceHealthResult result;
         try
         {
-            using var session = await connections.OpenAsync(device.Host, cancellationToken);
+            using var session = await connections.OpenAsync(device.Host, credentials?.Get(device.Id), cancellationToken);
             result = new(session.Connected, "OPC UA SignAndEncrypt session opened.",
                 Math.Round(timer.Elapsed.TotalMilliseconds, 1));
         }

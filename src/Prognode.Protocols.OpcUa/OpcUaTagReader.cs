@@ -9,7 +9,7 @@ using Prognode.Protocols.Abstractions;
 namespace Prognode.Protocols.OpcUa;
 
 // OPC UA is read-only in the first Core connector: no Write, Call or Browse API.
-public sealed class OpcUaTagReader(OpcUaConnectionFactory connections) : ITagReader, IDisposable
+public sealed class OpcUaTagReader(OpcUaConnectionFactory connections, IDeviceCredentialStore? credentials = null) : ITagReader, IDisposable
 {
     private readonly ConcurrentDictionary<Guid, DeviceSession> _sessions = new();
 
@@ -22,9 +22,11 @@ public sealed class OpcUaTagReader(OpcUaConnectionFactory connections) : ITagRea
         var enabled = tags.Where(tag => tag.Enabled).ToArray();
         if (enabled.Length == 0) return [];
         var endpoint = OpcUaEndpoint.Parse(device.Host);
-        if (!_sessions.TryGetValue(device.Id, out var holder) || holder.Endpoint != endpoint)
+        var credential = credentials?.Get(device.Id);
+        if (!_sessions.TryGetValue(device.Id, out var holder) || holder.Endpoint != endpoint ||
+            holder.CredentialFingerprint != credential?.Fingerprint)
         {
-            var replacement = new DeviceSession(endpoint);
+            var replacement = new DeviceSession(endpoint, credential?.Fingerprint);
             _sessions.AddOrUpdate(device.Id, replacement, (_, previous) =>
             {
                 previous.Dispose();
@@ -39,7 +41,7 @@ public sealed class OpcUaTagReader(OpcUaConnectionFactory connections) : ITagRea
             if (holder.Session is null || !holder.Session.Connected)
             {
                 holder.Session?.Dispose();
-                holder.Session = await connections.OpenAsync(endpoint, cancellationToken);
+                holder.Session = await connections.OpenAsync(endpoint, credential, cancellationToken);
             }
 
             var nodes = new ReadValueIdCollection();
@@ -110,7 +112,7 @@ public sealed class OpcUaTagReader(OpcUaConnectionFactory connections) : ITagRea
             return new(tag.Id, deviceId, null, null, TagQuality.ConfigError, timestamp,
                 "OPC UA", "Node value type does not match the Tag data type.");
 
-        if (!double.IsFinite(raw) || !InRange(raw, tag.DataType))
+        if (!double.IsFinite(raw) || !TagDataRange.Fits(raw, tag.DataType))
             return new(tag.Id, deviceId, null, null, TagQuality.ConfigError, timestamp,
                 "OPC UA", "Node value is outside the Tag data type range.");
         var value = EngineeringValue.From(raw, tag);
@@ -119,20 +121,10 @@ public sealed class OpcUaTagReader(OpcUaConnectionFactory connections) : ITagRea
             timestamp, "OPC UA");
     }
 
-    private static bool InRange(double value, TagDataType type) => type switch
-    {
-        TagDataType.Bool => value is 0 or 1,
-        TagDataType.Word or TagDataType.UInt16 => Math.Truncate(value) == value && value is >= 0 and <= ushort.MaxValue,
-        TagDataType.Int16 => Math.Truncate(value) == value && value is >= short.MinValue and <= short.MaxValue,
-        TagDataType.UInt32 => Math.Truncate(value) == value && value is >= 0 and <= uint.MaxValue,
-        TagDataType.Int32 => Math.Truncate(value) == value && value is >= int.MinValue and <= int.MaxValue,
-        TagDataType.Float32 => Math.Abs(value) <= float.MaxValue,
-        _ => false
-    };
-
-    private sealed class DeviceSession(string endpoint) : IDisposable
+    private sealed class DeviceSession(string endpoint, string? credentialFingerprint) : IDisposable
     {
         public string Endpoint { get; } = endpoint;
+        public string? CredentialFingerprint { get; } = credentialFingerprint;
         public SemaphoreSlim Gate { get; } = new(1, 1);
         public ISession? Session { get; set; }
         public void Dispose() { Session?.Dispose(); Gate.Dispose(); }

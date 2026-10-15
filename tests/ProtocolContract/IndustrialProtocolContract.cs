@@ -159,12 +159,37 @@ internal static class IndustrialProtocolContract
             Tag(id, "Word", "DB1.DBW2", TagDataType.Word, now),
             Tag(id, "Word6", "DB1.DBW6", TagDataType.Word, now),
             Tag(id, "Outside", "DB1.DBW9", TagDataType.Word, now),
-            Tag(id, "OtherDb", "DB2.DBW0", TagDataType.Word, now)
+            Tag(id, "OtherDb", "DB2.DBW0", TagDataType.Word, now),
+            // Process image and bit memory: no DB, no optimized-block setting involved.
+            Tag(id, "Input", "%I0.1", TagDataType.Bool, now),
+            Tag(id, "InputWord", "IW2", TagDataType.Int16, now),
+            Tag(id, "Output", "Q1.7", TagDataType.Bool, now),
+            Tag(id, "MerkerReal", "MD4", TagDataType.Float32, now),
+            Tag(id, "MerkerBit", "M8.0", TagDataType.Bool, now)
         };
         var validator = new S7TagValidator();
         foreach (var tag in tags) validator.Validate(tag, tags.Where(x => x.Id != tag.Id).ToArray());
         Check(S7Address.Parse("DB1.DBD4", TagDataType.Float32).Length == 4,
             "S7 double-word address parsing failed.");
+        Check(S7Address.Parse("%IW64", TagDataType.Int16) == new S7Address(0, 64, 0, 2, S7Area.Inputs) &&
+              S7Address.Parse("E1.3", TagDataType.Bool) == new S7Address(0, 1, 3, 1, S7Area.Inputs) &&
+              S7Address.Parse("A0.1", TagDataType.Bool).Area == S7Area.Outputs &&
+              S7Address.Parse("QD4", TagDataType.UInt32).Area == S7Area.Outputs &&
+              S7Address.Parse("MX10.1", TagDataType.Bool) == new S7Address(0, 10, 1, 1, S7Area.Merkers) &&
+              S7Address.Parse("DB3.DBW2", TagDataType.Word).Area == S7Area.DataBlock,
+            "S7 I/Q/M address parsing failed.");
+        foreach (var (address, type) in new[] { ("IW64", TagDataType.Bool), ("I0.0", TagDataType.Word),
+                     ("MD4", TagDataType.Int16), ("I0.8", TagDataType.Bool), ("T1", TagDataType.Word), ("MD4", TagDataType.Int64) })
+        {
+            try { S7Address.Parse(address, type); throw new Exception($"Invalid S7 address {address} accepted for {type}."); }
+            catch (ArgumentException) { }
+        }
+        try
+        {
+            validator.Validate(Tag(id, "Clash", "MW4", TagDataType.Word, now), tags);
+            throw new Exception("Overlapping S7 M address accepted.");
+        }
+        catch (ArgumentException) { }
         try
         {
             validator.Validate(Tag(id, "Invalid", "DB1.DBD4", TagDataType.Bool, now), []);
@@ -177,9 +202,16 @@ internal static class IndustrialProtocolContract
         var port = ((IPEndPoint)listener.LocalEndpoint).Port;
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(8));
         var stats = new S7ServerStats();
-        // DB1 is 10 bytes; DB2 does not exist.
+        // DB1 is 10 bytes; DB2 does not exist. Inputs, outputs and bit memory have their own areas.
         byte[] db1 = [0b0000_1001, 0, 0, 42, 0, 0, 0, 7, 0, 0];
-        var server = ServeS7Async(listener, db1, stats, timeout.Token);
+        var memory = new Dictionary<(byte Area, int Db), byte[]>
+        {
+            [(0x84, 1)] = db1,
+            [(0x81, 0)] = [0b0000_0010, 0, 0xff, 0xd6, 0, 0],
+            [(0x82, 0)] = [0, 0b1000_0000],
+            [(0x83, 0)] = [0, 0, 0, 0, .. BitConverter.GetBytes(12.5f).Reverse(), 1, 0],
+        };
+        var server = ServeS7Async(listener, memory, stats, timeout.Token);
         var pool = new S7SessionPool();
         var reader = new S7TagReader(pool);
         var device = Device(id, "Siemens S7 TCP", port, now);
@@ -198,12 +230,16 @@ internal static class IndustrialProtocolContract
             await server;
         }
         var byName = values.ToDictionary(v => tags.Single(t => t.Id == v.TagId).Name);
-        Check(byName.Count == 6 && byName["Bit"].Value == 1 && byName["Bit3"].Value == 1 &&
+        Check(byName.Count == 11 && byName["Bit"].Value == 1 && byName["Bit3"].Value == 1 &&
               byName["Word"].Value == 42 && byName["Word6"].Value == 7 &&
               new[] { "Bit", "Bit3", "Word", "Word6" }.All(n => byName[n].Quality == TagQuality.Good),
             "S7 range read, fallback or Tag mapping failed.");
         Check(byName["Outside"].Quality == TagQuality.Bad && byName["OtherDb"].Quality == TagQuality.Bad,
             "Rejected S7 addresses were not isolated to their own Tags.");
+        Check(byName["Input"].Value == 1 && byName["InputWord"].Value == -42 && byName["Output"].Value == 1 &&
+              byName["MerkerReal"].Value == 12.5 && byName["MerkerBit"].Value == 1 &&
+              new[] { "Input", "InputWord", "Output", "MerkerReal", "MerkerBit" }.All(n => byName[n].Quality == TagQuality.Good),
+            "S7 inputs, outputs or bit memory were not read from their own areas.");
         Check(stats.Connections == 1, $"S7 polls opened {stats.Connections} sessions instead of reusing one.");
         Check(stats.Reads < 2 * tags.Length, $"S7 issued {stats.Reads} ReadVar requests; ranges were not merged.");
         Check(healthy, "S7 health probe cannot see the healthy polling session.");
@@ -211,7 +247,7 @@ internal static class IndustrialProtocolContract
 
     private sealed class S7ServerStats { public int Connections; public int Reads; }
 
-    private static async Task ServeS7Async(TcpListener listener, byte[] db1, S7ServerStats stats, CancellationToken ct)
+    private static async Task ServeS7Async(TcpListener listener, Dictionary<(byte Area, int Db), byte[]> memory, S7ServerStats stats, CancellationToken ct)
     {
         try
         {
@@ -231,7 +267,8 @@ internal static class IndustrialProtocolContract
             {
                 var read = await ReadFrameAsync(stream, ct);
                 Interlocked.Increment(ref stats.Reads);
-                Check(read.Length == 31 && read[17] == 4 && read[27] == 0x84, "Unexpected S7 ReadVar request.");
+                Check(read.Length == 31 && read[17] == 4 && read[27] is 0x81 or 0x82 or 0x83 or 0x84, "Unexpected S7 ReadVar request.");
+                var area = read[27];
                 var reference = (ushort)((read[11] << 8) | read[12]);
                 var transport = read[22];
                 var count = (read[23] << 8) | read[24];
@@ -240,12 +277,13 @@ internal static class IndustrialProtocolContract
                 var start = bitAddress / 8;
                 var length = transport == 1 ? 1 : count;
                 byte[] item;
-                if (db != 1 || start + length > db1.Length)
+                Check(area == 0x84 || db == 0, "S7 I/Q/M request must carry DB number 0.");
+                if (!memory.TryGetValue((area, db), out var block) || start + length > block.Length)
                     item = [0x05, 0x00, 0, 0];
                 else if (transport == 1)
-                    item = [0xff, 0x03, 0, 1, (byte)((db1[start] >> (bitAddress % 8)) & 1)];
+                    item = [0xff, 0x03, 0, 1, (byte)((block[start] >> (bitAddress % 8)) & 1)];
                 else
-                    item = [0xff, 0x04, (byte)((length * 8) >> 8), (byte)(length * 8), .. db1.AsSpan(start, length).ToArray()];
+                    item = [0xff, 0x04, (byte)((length * 8) >> 8), (byte)(length * 8), .. block.AsSpan(start, length).ToArray()];
                 await stream.WriteAsync(S7Ack(reference, [4, 1], item), ct);
             }
         }

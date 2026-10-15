@@ -108,7 +108,7 @@ Object.assign(translations.en, {
   continueAfterClear:"Continue reminders after CLEAR until ACK", continueAfterClearHelp:"Useful for short critical events that must still be seen.",
   notifyOnCleared:"Notify when CLEARED",
   notifyOnClearedHelp:"Optional recovery notification",
-  alarmSourceHelp:"BOOL / WORD digital alarms and UInt16 / Int16 / UInt32 / Int32 / Float32 numeric alarms are supported.",
+  alarmSourceHelp:"BOOL / WORD digital alarms and UInt16 / Int16 / UInt32 / Int32 / Int64 / UInt64 / Float32 / Float64 numeric alarms are supported.",
   trendsText:"Persistent SQLite Historian trends with configurable sampling, retention, colors and date-range navigation.",
   historicalTrend:"HISTORICAL TREND",
   sampleEvery:"Sample every",
@@ -1693,15 +1693,15 @@ function tagAddressText(tag) {
   if (tag.dataType === "Bool")
     return area?.bitArea ? tag.address : `${tag.address}.${tag.bitIndex ?? 0}`;
 
-  if (["UInt32","Int32","Float32"].includes(tag.dataType))
-    return `${tag.address}–${numeric + 1}`;
+  if (tagRegisterWidth(tag.dataType) > 1)
+    return `${tag.address}–${String(numeric + tagRegisterWidth(tag.dataType) - 1).padStart(tag.address.trim().length, "0")}`;
 
   return tag.address;
 }
 
 function tagDatatypeText(tag) {
   if (state.devices.find(x => x.id === tag.deviceId)?.protocol === "Modbus TCP" &&
-      ["UInt32","Int32","Float32"].includes(tag.dataType))
+      tagRegisterWidth(tag.dataType) > 1)
     return `${tag.dataType} / ${tag.byteOrder}`;
 
   return tag.dataType;
@@ -1992,6 +1992,11 @@ function openEditDeviceModal(id) {
     $("opcUaUrl").value = device.host || "";
     $("opcUaPoll").value = device.pollIntervalMs ?? 1000;
   }
+  for (const prefix of ["mqtt", "opcUa"]) {
+    $(`${prefix}Username`).value = device.username || "";
+    $(`${prefix}Password`).value = "";
+    $(`${prefix}Password`).placeholder = device.username ? "Leave empty to keep the saved password" : "";
+  }
   $("s7TestResult").classList.add("hidden");
   $("modbusPingResult").classList.add("hidden");
   $("modbusPingResult").classList.add("hidden");
@@ -2209,12 +2214,12 @@ async function saveDevice() {
       else if (state.selectedProtocol === "mqtt") {
         await api(`/api/devices/${state.editingDeviceId}`, {method:"PUT",body:JSON.stringify({
           name, host:$("mqttHost").value.trim(), port:readNumber("mqttPort"),
-          pollIntervalMs:readNumber("mqttPoll")
+          pollIntervalMs:readNumber("mqttPoll"), ...deviceCredentialFields("mqtt")
         })});
       }
       else if (state.selectedProtocol === "opc-ua") {
         await api(`/api/devices/${state.editingDeviceId}`, {method:"PUT",body:JSON.stringify({
-          name, host:$("opcUaUrl").value.trim(), pollIntervalMs:readNumber("opcUaPoll")
+          name, host:$("opcUaUrl").value.trim(), pollIntervalMs:readNumber("opcUaPoll"), ...deviceCredentialFields("opcUa")
         })});
       }
       else {
@@ -2261,12 +2266,12 @@ async function saveDevice() {
     else if (state.selectedProtocol === "mqtt") {
       await api("/api/devices/mqtt", {method:"POST",body:JSON.stringify({
         name, host:$("mqttHost").value.trim(), port:readNumber("mqttPort"),
-        pollIntervalMs:readNumber("mqttPoll")
+        pollIntervalMs:readNumber("mqttPoll"), ...deviceCredentialFields("mqtt")
       })});
     }
     else if (state.selectedProtocol === "opc-ua") {
       await api("/api/devices/opc-ua", {method:"POST",body:JSON.stringify({
-        name, endpointUrl:$("opcUaUrl").value.trim(), pollIntervalMs:readNumber("opcUaPoll")
+        name, endpointUrl:$("opcUaUrl").value.trim(), pollIntervalMs:readNumber("opcUaPoll"), ...deviceCredentialFields("opcUa")
       })});
     }
     else {
@@ -2391,13 +2396,26 @@ function refreshTagAddressExample() {
   updateTagFormVisibility();
   validateTagAddressClient();
 }
+// Absolute S7 addresses: non-optimized DBs (DB1.DBX0.0, DB1.DBW2, DB1.DBD4) and inputs, outputs and
+// bit memory (I0.0 / IW64 / ID100, Q0.1 / QW2, M10.0 / MW20 / MD30; German E/A and "%" accepted).
 function s7AddressValid(address, type) {
-  const patterns = {Bool:/^DB\d+\.DBX\d+\.[0-7]$/i,Word:/^DB\d+\.DBW\d+$/i,UInt16:/^DB\d+\.DBW\d+$/i,Int16:/^DB\d+\.DBW\d+$/i,UInt32:/^DB\d+\.DBD\d+$/i,Int32:/^DB\d+\.DBD\d+$/i,Float32:/^DB\d+\.DBD\d+$/i};
-  if (!patterns[type]?.test(address)) return false;
-  const match=/^DB(\d+)\.DB[XWD](\d+)/i.exec(address);
-  const length=type==="Bool"?1:["Word","UInt16","Int16"].includes(type)?2:4;
-  return !!match && Number(match[1])>=1 && Number(match[1])<=65535 && Number(match[2])>=0 && Number(match[2])+length<=65536;
+  const value = String(address || "").trim().replace(/^%/, "");
+  const length = type === "Bool" ? 1 : ["Word","UInt16","Int16"].includes(type) ? 2 : ["UInt32","Int32","Float32"].includes(type) ? 4 : 0;
+  if (!length) return false;
+  const size = type === "Bool" ? "X" : length === 2 ? "W" : "D";
+  const db = type === "Bool" ? /^DB(\d+)\.DBX(\d+)\.[0-7]$/i.exec(value) : new RegExp(`^DB(\\d+)\\.DB${size}(\\d+)$`, "i").exec(value);
+  if (db) return Number(db[1]) >= 1 && Number(db[1]) <= 65535 && Number(db[2]) + length <= 65536;
+  const area = type === "Bool" ? /^[IEQAM]X?(\d+)\.[0-7]$/i.exec(value) : new RegExp(`^[IEQAM]${size}(\\d+)$`, "i").exec(value);
+  return !!area && Number(area[1]) + length <= 65536;
 }
+// User name and password for an MQTT broker or OPC UA server. An empty user name removes the
+// credential; an empty password while editing keeps the saved one. The password is never read back.
+function deviceCredentialFields(prefix) {
+  const username = $(`${prefix}Username`).value.trim();
+  const password = $(`${prefix}Password`).value;
+  return { username, password: username ? password : "" };
+}
+
 async function testS7Connection() {
   if (!requireConfigurationAccess()) return;
   const box=$("s7TestResult");box.classList.remove("hidden","success","failure");box.textContent="Connecting to Siemens PLC...";
@@ -2414,9 +2432,15 @@ function updateTagFormVisibility() {
   const s7 = tagIsS7();
   const modbus = !s7 && !tagIsMqtt() && !tagIsOpcUa();
   const isBool = type === "Bool";
-  const isFloat = type === "Float32";
+  const isFloat = type === "Float32" || type === "Float64";
   const isWord = type === "Word";
-  const is32 = ["UInt32","Int32","Float32"].includes(type);
+  const is32 = tagRegisterWidth(type) > 1;
+  // S7 reads 8- to 32-bit values only; 64-bit types are for Modbus, MQTT and OPC UA.
+  for (const wide of ["Int64","UInt64","Float64"]) {
+    const option = $("tagDataType").querySelector(`option[value="${wide}"]`);
+    if (option) option.hidden = s7;
+  }
+  if (s7 && ["Int64","UInt64","Float64"].includes(type)) $("tagDataType").value = "Float32";
   const boolNeedsBit = isBool && area?.area === "Holding Register";
 
   $("tagAddress").placeholder = tagAddressExample();
@@ -2431,15 +2455,28 @@ function updateTagFormVisibility() {
 
   $("tagDecimalsLabel").textContent = isFloat ? t("displayDecimals") : t("decimalPoint");
   $("tagDecimalsHelp").textContent = isFloat ? t("displayDecimalsHelp") : t("decimalPointHelp");
-  if (tagIsMqtt()) $("tagAddressHelp").textContent = "Use an exact MQTT topic, e.g. plant/temperature. No wildcards; UTF-8 payload must be numeric or true/false. Retained values are marked uncertain.";
+  if (tagIsMqtt()) $("tagAddressHelp").textContent = "Use an exact MQTT topic, e.g. plant/temperature, when the message is a number or true/false. For a JSON message add # and the field: plant/env#temp or gw/01#sensors[0].value. No wildcards; retained values are marked uncertain.";
   else if (tagIsOpcUa()) $("tagAddressHelp").textContent = "Use ns=2;i=13 or the full Siemens http://...;i=13 NodeId. Only numeric and BOOL Values are read.";
-  else if (s7) $("tagAddressHelp").textContent = "Use an absolute S7 DB address: DB1.DBX0.0 for BOOL, DB1.DBW2 for WORD/UINT16/INT16, DB1.DBD4 for 32-bit values. The BOOL bit is in the DBX address; do not enter a separate BitIndex.";
+  else if (s7) $("tagAddressHelp").textContent = "Use an absolute S7 address. BOOL: DB1.DBX0.0, I0.0, Q0.1, M10.0. 16-bit: DB1.DBW2, IW64, QW2, MW20. 32-bit: DB1.DBD4, ID100, QD4, MD30. DBs must have optimized block access off; inputs, outputs and M need only PUT/GET.";
   else $("tagAddressHelp").textContent = t("tagAddressHelp");
 }
 
 function modbusAddressInfo(address) {
-  const numeric = Number(String(address || "").trim());
-  if (!Number.isInteger(numeric)) return null;
+  const text = String(address || "").trim();
+  if (!/^\d+$/.test(text)) return null;
+  const numeric = Number(text);
+  // Six digits reach all 65536 registers of an area (419000 = holding register 19000).
+  if (text.length === 6) {
+    if (numeric >= 1 && numeric <= 65536)
+      return { area:"Coil", functionCode:1, bitArea:true, first:1, last:65536 };
+    if (numeric >= 100001 && numeric <= 165536)
+      return { area:"Discrete Input", functionCode:2, bitArea:true, first:100001, last:165536 };
+    if (numeric >= 300001 && numeric <= 365536)
+      return { area:"Input Register", functionCode:4, bitArea:false, first:300001, last:365536 };
+    if (numeric >= 400001 && numeric <= 465536)
+      return { area:"Holding Register", functionCode:3, bitArea:false, first:400001, last:465536 };
+    return null;
+  }
   if (numeric >= 1 && numeric <= 9999)
     return { area:"Coil", functionCode:1, bitArea:true, first:1, last:9999 };
   if (numeric >= 10001 && numeric <= 19999)
@@ -2452,7 +2489,7 @@ function modbusAddressInfo(address) {
 }
 
 function tagRegisterWidth(type) {
-  return ["UInt32","Int32","Float32"].includes(type) ? 2 : 1;
+  return ["Int64","UInt64","Float64"].includes(type) ? 4 : ["UInt32","Int32","Float32"].includes(type) ? 2 : 1;
 }
 
 function nextModbusTagAddress(deviceId,type) {
@@ -2537,21 +2574,31 @@ function opcUaNodeAddressValid(address) {
     /^(?:https?:\/\/|urn:).+;[isgb]=.+$/i.test(value));
 }
 
+// MQTT Tag address: exact topic, optionally #field for a JSON message (plant/env#temp, gw#a[0].b).
+function mqttTagAddressValid(address) {
+  const [topic, ...rest] = String(address || "").split("#");
+  if (!topic.trim() || new TextEncoder().encode(topic).length > 512 || /[+\x00-\x1f\x7f]/.test(topic)) return false;
+  if (!rest.length) return true;
+  const field = rest.join("#").trim().replace(/^\$\./, "");
+  return field.length > 0 && field.length <= 256 &&
+    field.split(".").every((part, i) => /^([^.[\]]+)?(\[\d+\])*$/.test(part) && part.length > 0 && (i > 0 || part !== ""));
+}
+
 function validateTagAddressClient() {
   const stateBox = $("tagAddressState");
   const saveButton = $("saveTag");
   if (tagIsMqtt() || tagIsOpcUa()) {
     const address = $("tagAddress").value.trim();
     const good = tagIsMqtt()
-      ? address.length > 0 && new TextEncoder().encode(address).length <= 512 && !/[+#\x00-\x1f\x7f]/.test(address)
+      ? mqttTagAddressValid(address)
       : opcUaNodeAddressValid(address);
-    stateBox.textContent = good ? (tagIsMqtt() ? "MQTT topic OK" : "OPC UA NodeId OK") :
-      (tagIsMqtt() ? "Use an exact topic without + or #." : "Use ns=2;i=13 or the Siemens Node ID http://...;i=13.");
+    stateBox.textContent = good ? (tagIsMqtt() ? (address.includes("#") ? "MQTT topic + JSON field OK" : "MQTT topic OK") : "OPC UA NodeId OK") :
+      (tagIsMqtt() ? "Use an exact topic without +, optionally #field for JSON (plant/env#temp)." : "Use ns=2;i=13 or the Siemens Node ID http://...;i=13.");
     stateBox.classList.toggle("error", !good); saveButton.disabled = !good || !canMutateConfiguration(); return good;
   }
   if (tagIsS7()) {
     const good=s7AddressValid($("tagAddress").value.trim(),$("tagDataType").value);
-    stateBox.textContent=good?"S7 absolute DB address OK":"Use DB1.DBX0.0 / DB1.DBW2 / DB1.DBD4 matching datatype.";
+    stateBox.textContent=good?"S7 absolute address OK":"Use an address matching the datatype: DB1.DBX0.0 / I0.0 / M10.0, DB1.DBW2 / IW64 / MW20, DB1.DBD4 / ID100 / MD30.";
     stateBox.classList.toggle("error",!good);saveButton.disabled=!good||!canMutateConfiguration();return good;
   }
   const draft = currentTagDraft();
@@ -2560,7 +2607,7 @@ function validateTagAddressClient() {
   let message = "";
 
   if (!area) {
-    message = "Address must be in 00001..09999, 10001..19999, 30001..39999 or 40001..49999.";
+    message = "Address must be in 00001..09999, 10001..19999, 30001..39999 or 40001..49999, or six digits up to 465536 (e.g. 419000).";
   } else if (area.bitArea && draft.dataType !== "Bool") {
     message = `${area.area} supports BOOL datatype only.`;
   } else if (area.area === "Input Register" && draft.dataType === "Bool") {
@@ -2571,7 +2618,7 @@ function validateTagAddressClient() {
   } else {
     const width = area.bitArea ? 1 : tagRegisterWidth(draft.dataType);
     if (numeric + width - 1 > area.last) {
-      message = "The selected 32-bit datatype exceeds the Modbus area boundary.";
+      message = "The selected datatype exceeds the Modbus area boundary.";
     } else {
       const conflict = findTagAddressConflict(draft);
       if (conflict) {
@@ -2740,7 +2787,7 @@ async function saveTag() {
 
 function alarmSourceTags() {
   return state.tags.filter(
-    tag => ["Bool","Word","UInt16","Int16","UInt32","Int32","Float32"].includes(tag.dataType));
+    tag => ["Bool","Word","UInt16","Int16","UInt32","Int32","Float32","Int64","UInt64","Float64"].includes(tag.dataType));
 }
 
 function alarmTag(id) {
@@ -5551,7 +5598,7 @@ function dev3Number(value, fallback = 0) {
 
 function dev3Datatype(value) {
   const v = String(value || "").trim().toUpperCase().replace(/[\s_/-]/g, "");
-  const map = { BOOL:"Bool",BOOLEAN:"Bool",WORD:"Word",UINT16:"UInt16",UINT:"UInt16",INT16:"Int16",INT:"Int16",UINT32:"UInt32",UDINT:"UInt32",INT32:"Int32",DINT:"Int32",FLOAT32:"Float32",FLOAT:"Float32",REAL:"Float32" };
+  const map = { BOOL:"Bool",BOOLEAN:"Bool",WORD:"Word",UINT16:"UInt16",UINT:"UInt16",INT16:"Int16",INT:"Int16",UINT32:"UInt32",UDINT:"UInt32",INT32:"Int32",DINT:"Int32",FLOAT32:"Float32",FLOAT:"Float32",REAL:"Float32",INT64:"Int64",LINT:"Int64",UINT64:"UInt64",ULINT:"UInt64",FLOAT64:"Float64",DOUBLE:"Float64",LREAL:"Float64" };
   return map[v] || null;
 }
 
@@ -5701,7 +5748,7 @@ function dev3PreviewRow(row, dataset) {
     const requiresAcknowledgement = dev3Bool(dev3Cell(row, "RequiresAcknowledgement", "RequireAck", "AckRequired"), ALARM_DEFAULT_REQUIRES_ACK);
     if (!device) errors.push(`Unknown device: ${deviceNameValue || "(blank)"}`);
     if (!tag) errors.push(`Unknown tag: ${tagNameValue || "(blank)"}`);
-    if (tag && !["Bool","Word","UInt16","Int16","UInt32","Int32","Float32"].includes(tag.dataType)) errors.push("Unsupported alarm source datatype");
+    if (tag && !["Bool","Word","UInt16","Int16","UInt32","Int32","Float32","Int64","UInt64","Float64"].includes(tag.dataType)) errors.push("Unsupported alarm source datatype");
     if (!text) errors.push("AlarmText is required");
     if (!priority) errors.push("Priority must be Low/Medium/High/Critical");
     const digitalAlarm = tag && ["Bool","Word"].includes(tag.dataType);

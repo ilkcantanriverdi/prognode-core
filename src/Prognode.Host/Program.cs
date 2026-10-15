@@ -1,3 +1,4 @@
+using Prognode.Contracts.Devices;
 using Prognode.Backup;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
@@ -153,6 +154,7 @@ builder.Services.AddSingleton(new ProjectBackupService(dataRoot,
 builder.Services.AddHostedService<ProjectBackupHostedService>();
 
 builder.Services.AddSingleton<IDeviceRepository, SqliteDeviceRepository>();
+builder.Services.AddSingleton<IDeviceCredentialStore, SqliteDeviceCredentialStore>();
 builder.Services.AddSingleton<DeviceService>();
 builder.Services.AddSingleton<NetworkPingService>();
 

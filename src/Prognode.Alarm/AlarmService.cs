@@ -291,12 +291,7 @@ public sealed class AlarmService(
         var tag = await tags.GetByIdAsync(tagId, cancellationToken)
             ?? throw new ArgumentException("Source Tag was not found.");
 
-        var numeric = tag.DataType is
-            TagDataType.UInt16 or
-            TagDataType.Int16 or
-            TagDataType.UInt32 or
-            TagDataType.Int32 or
-            TagDataType.Float32;
+        var numeric = TagDataRange.IsNumeric(tag.DataType);
 
         if (condition == AlarmCondition.DigitalEquals)
         {

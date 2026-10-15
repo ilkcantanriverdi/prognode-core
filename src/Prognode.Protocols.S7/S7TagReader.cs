@@ -6,7 +6,7 @@ using Prognode.Protocols.Abstractions;
 namespace Prognode.Protocols.S7;
 
 /// <summary>
-/// Reads S7 Tags on the device's persistent session. Tags in the same DB that are close together
+/// Reads S7 Tags on the device's persistent session. Tags in the same DB (or I/Q/M area) that are close together
 /// are read as one byte range (fewer requests than one ReadVar per Tag); a range the PLC rejects
 /// is re-read Tag by Tag so only the offending address goes BAD (review Y2, Y3).
 /// </summary>
@@ -47,12 +47,12 @@ public sealed class S7TagReader(S7SessionPool pool) : ITagReader
             var now = DateTimeOffset.UtcNow;
             var quarantined = planned.Where(x => _rejectedUntil.TryGetValue(x.Tag.Id, out var until) && until > now).ToArray();
             var ranges = PlanRanges(planned.Except(quarantined), client.MaxReadBytes)
-                .Concat(quarantined.Select(x => { var r = new ReadRange(x.Address.Db, x.Address.ByteOffset) { End = x.Address.ByteOffset + x.Address.Length }; r.Tags.Add(x); return r; }));
+                .Concat(quarantined.Select(x => { var r = new ReadRange(x.Address.Area, x.Address.Db, x.Address.ByteOffset) { End = x.Address.ByteOffset + x.Address.Length }; r.Tags.Add(x); return r; }));
             foreach (var range in ranges)
             {
                 try
                 {
-                    var data = await client.ReadBytesAsync(range.Db, range.Start, range.Length, ct);
+                    var data = await client.ReadBytesAsync(range.Area, range.Db, range.Start, range.Length, ct);
                     foreach (var item in range.Tags)
                     {
                         _rejectedUntil.TryRemove(item.Tag.Id, out _);
@@ -65,7 +65,7 @@ public sealed class S7TagReader(S7SessionPool pool) : ITagReader
                     {
                         try
                         {
-                            var data = await client.ReadBytesAsync(item.Address.Db, item.Address.ByteOffset, item.Address.Length, ct);
+                            var data = await client.ReadBytesAsync(item.Address.Area, item.Address.Db, item.Address.ByteOffset, item.Address.Length, ct);
                             _rejectedUntil.TryRemove(item.Tag.Id, out _);
                             result.Add(Good(device, item.Tag, Decode(item.Tag, item.Address, data, 0)));
                         }
@@ -86,7 +86,7 @@ public sealed class S7TagReader(S7SessionPool pool) : ITagReader
         IEnumerable<(TagDefinition Tag, S7Address Address)> tags, int maxBytes)
     {
         var ranges = new List<ReadRange>();
-        foreach (var db in tags.GroupBy(x => x.Address.Db))
+        foreach (var db in tags.GroupBy(x => (x.Address.Area, x.Address.Db)))
         {
             ReadRange? current = null;
             foreach (var item in db.OrderBy(x => x.Address.ByteOffset))
@@ -101,7 +101,7 @@ public sealed class S7TagReader(S7SessionPool pool) : ITagReader
                     current.End = Math.Max(current.End, end);
                     continue;
                 }
-                current = new ReadRange(db.Key, start) { End = end };
+                current = new ReadRange(db.Key.Area, db.Key.Db, start) { End = end };
                 current.Tags.Add(item);
                 ranges.Add(current);
             }
@@ -130,8 +130,9 @@ public sealed class S7TagReader(S7SessionPool pool) : ITagReader
 
     public static (int Rack,int Slot) DecodeRackSlot(int encoded) => (encoded/32,encoded%32);
 
-    internal sealed class ReadRange(int db, int start)
+    internal sealed class ReadRange(S7Area area, int db, int start)
     {
+        public S7Area Area { get; } = area;
         public int Db { get; } = db;
         public int Start { get; } = start;
         public int End { get; set; }

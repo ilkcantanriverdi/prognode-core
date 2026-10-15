@@ -7,21 +7,75 @@
       "port": 102,
       "pollMs": 1000,
       "tags": [
-        { "name": "Motor speed", "address": "DB10.DBD0", "type": "Float32" },
-        { "name": "Running", "address": "DB10.DBX4.0", "type": "Bool" },
-        { "name": "Test constant", "address": "DB10.DBW6", "type": "Word", "expect": 1234 }
+        {
+          "name": "Motor speed",
+          "address": "DB10.DBD0",
+          "type": "Float32"
+        },
+        {
+          "name": "Running",
+          "address": "DB10.DBX4.0",
+          "type": "Bool"
+        },
+        {
+          "name": "Test constant",
+          "address": "DB10.DBW6",
+          "type": "Word",
+          "expect": 1234
+        },
+        {
+          "name": "Emergency stop input",
+          "address": "%I0.0",
+          "type": "Bool"
+        },
+        {
+          "name": "Analog input",
+          "address": "%IW64",
+          "type": "Int16"
+        },
+        {
+          "name": "Motor output",
+          "address": "%Q0.1",
+          "type": "Bool"
+        },
+        {
+          "name": "Setpoint (merker)",
+          "address": "%MD20",
+          "type": "Float32"
+        }
       ]
     },
     {
-      "name": "Pump skid Modbus",
+      "name": "Energy meter Modbus",
       "protocol": "Modbus TCP",
       "host": "192.168.0.20",
       "port": 502,
       "unitId": 1,
       "pollMs": 1000,
       "tags": [
-        { "name": "Pressure", "address": "40001", "type": "Float32", "byteOrder": "CDAB" },
-        { "name": "Level x100", "address": "40003", "type": "Int16", "decimals": 2 }
+        {
+          "name": "Pressure",
+          "address": "40001",
+          "type": "Float32",
+          "byteOrder": "CDAB"
+        },
+        {
+          "name": "Level x100",
+          "address": "40003",
+          "type": "Int16",
+          "decimals": 2
+        },
+        {
+          "name": "Active energy (64-bit)",
+          "address": "419000",
+          "type": "Float64"
+        },
+        {
+          "name": "Energy counter",
+          "address": "419004",
+          "type": "UInt64",
+          "byteOrder": "CDAB"
+        }
       ]
     },
     {
@@ -29,8 +83,14 @@
       "protocol": "OPC UA",
       "host": "opc.tcp://192.168.0.10:4840/",
       "pollMs": 1000,
+      "username": "prognode",
+      "password": "change-me",
       "tags": [
-        { "name": "Temperature", "address": "ns=3;s=\"DB_Process\".\"Temperature\"", "type": "Float32" }
+        {
+          "name": "Temperature",
+          "address": "ns=3;s=\"DB_Process\".\"Temperature\"",
+          "type": "Float32"
+        }
       ]
     },
     {
@@ -39,8 +99,19 @@
       "host": "mqtt://192.168.0.30",
       "port": 1883,
       "pollMs": 1000,
+      "username": "prognode",
+      "password": "change-me",
       "tags": [
-        { "name": "Flow", "address": "plant/line1/flow", "type": "Float32" }
+        {
+          "name": "Flow",
+          "address": "plant/line1/flow",
+          "type": "Float32"
+        },
+        {
+          "name": "Gateway temperature (JSON)",
+          "address": "plant/gw01/state#sensors[0].temp",
+          "type": "Float32"
+        }
       ]
     }
   ]

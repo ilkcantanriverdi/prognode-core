@@ -7,7 +7,7 @@ using Prognode.Protocols.Abstractions;
 
 namespace Prognode.Protocols.Mqtt;
 
-public sealed class MqttHealthProbe(MqttTagReader reader) : IDeviceHealthProbe
+public sealed class MqttHealthProbe(MqttTagReader reader, IDeviceCredentialStore? credentials = null) : IDeviceHealthProbe
 {
     private readonly ConcurrentDictionary<Guid, (DateTimeOffset At, DeviceHealthResult Result)> _last = new();
     public bool CanHandle(DeviceDefinition device) =>
@@ -30,6 +30,7 @@ public sealed class MqttHealthProbe(MqttTagReader reader) : IDeviceHealthProbe
                 .WithClientId($"prognode-probe-{Guid.NewGuid():N}")
                 .WithTimeout(TimeSpan.FromSeconds(5));
             if (endpoint.UseTls) builder.WithTlsOptions(options => options.UseTls(true));
+            if (credentials?.Get(device.Id) is { } credential) builder.WithCredentials(credential.Username, credential.Password);
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeout.CancelAfter(TimeSpan.FromSeconds(5));
             var result = await client.ConnectAsync(builder.Build(), timeout.Token);
