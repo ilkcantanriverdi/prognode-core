@@ -152,20 +152,57 @@ public sealed class ModbusRtuRegisterClient(Func<ModbusSerialSettings, IModbusSe
         finally { line.Gate.Release(); }
     }
 
-    /// <summary>Writes the request and reads one complete response frame (with CRC) for it.</summary>
+    /// <summary>
+    /// Writes the request and reads one complete response frame (with CRC) for it. Some RS-485
+    /// adapters echo what they send: an exact copy of the request is skipped. Bytes are only read as
+    /// far as a genuine answer is known to reach, so telling the two apart never loses answer bytes.
+    /// </summary>
     private static byte[] Transact(IModbusSerialLine port, byte[] request, byte function, int timeoutMs)
     {
         port.DiscardInput();
         port.Write(request);
         var head = port.Read(3, timeoutMs);
-        if (head[0] != request[0]) throw new IOException($"Modbus RTU answer came from unit {head[0]}, not {request[0]}.");
-        byte[] frame;
-        if (head[1] == (function | 0x80)) frame = [.. head, .. port.Read(2, timeoutMs)];
-        else if (head[1] == function) frame = [.. head, .. port.Read(head[2] + 2, timeoutMs)];
-        else throw new IOException($"Modbus RTU answer has function 0x{head[1]:X2}, expected 0x{function:X2}.");
-        var crc = Crc(frame.AsSpan(0, frame.Length - 2));
-        if (frame[^2] != (byte)crc || frame[^1] != (byte)(crc >> 8)) throw new IOException("Modbus RTU answer failed the CRC check (noise or wrong serial settings).");
+        byte[]? frame = null;
+        if (head.AsSpan().SequenceEqual(request.AsSpan(0, 3)))
+        {
+            // Either an echo (5 more request bytes follow) or an answer whose byte count happens to
+            // equal the start address high byte (head[2] + 2 more bytes follow).
+            var answerRest = head[2] + 2;
+            var probe = port.Read(Math.Min(5, answerRest), timeoutMs);
+            byte[] candidate = [.. head, .. probe];
+            if (probe.Length == answerRest && CrcMatches(candidate))
+                frame = candidate;
+            else if (probe.AsSpan().SequenceEqual(request.AsSpan(3, probe.Length)))
+            {
+                if (probe.Length < 5 && !port.Read(5 - probe.Length, timeoutMs).AsSpan().SequenceEqual(request.AsSpan(3 + probe.Length)))
+                    throw new IOException("Modbus RTU answer is garbled (partial echo of the request).");
+                head = port.Read(3, timeoutMs); // the echo is gone; the answer follows
+            }
+            else
+                frame = probe.Length == answerRest ? candidate : [.. candidate, .. port.Read(answerRest - probe.Length, timeoutMs)];
+        }
+        if (frame is null)
+        {
+            // A late answer to an earlier request (another unit, or this unit's previous request that
+            // timed out) can still be on the line: drop that frame once and keep waiting for ours.
+            if ((head[0] != request[0] || head[1] != function) && head[1] is >= 0x01 and <= 0x04)
+            {
+                port.Read(head[2] + 2, timeoutMs);
+                head = port.Read(3, timeoutMs);
+            }
+            if (head[0] != request[0]) throw new IOException($"Modbus RTU answer came from unit {head[0]}, not {request[0]}.");
+            if (head[1] == (function | 0x80)) frame = [.. head, .. port.Read(2, timeoutMs)];
+            else if (head[1] == function) frame = [.. head, .. port.Read(head[2] + 2, timeoutMs)];
+            else throw new IOException($"Modbus RTU answer has function 0x{head[1]:X2}, expected 0x{function:X2}.");
+        }
+        if (!CrcMatches(frame)) throw new IOException("Modbus RTU answer failed the CRC check (noise or wrong serial settings).");
         return frame;
+    }
+
+    private static bool CrcMatches(byte[] frame)
+    {
+        var crc = Crc(frame.AsSpan(0, frame.Length - 2));
+        return frame[^2] == (byte)crc && frame[^1] == (byte)(crc >> 8);
     }
 
     public static ushort Crc(ReadOnlySpan<byte> data)

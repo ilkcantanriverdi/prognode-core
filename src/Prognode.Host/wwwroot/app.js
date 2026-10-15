@@ -5692,15 +5692,18 @@ function dev3PreviewRow(row, dataset) {
     if (state.tags.some(t => t.name.toLowerCase() === name.toLowerCase())) errors.push("Name is already used by a Tag");
     if (!protocol) errors.push("Protocol must be Modbus TCP, Modbus RTU, Siemens S7 TCP, MQTT or OPC UA");
     if (protocol === "Modbus RTU") {
-      // Host holds the serial settings: COM3;9600;8E1.
-      const serial = /^(COM\d{1,3});(\d{3,6});([78])([NEO])([12])$/i.exec(host);
+      // Host is the port (COM3) with the Serial column ("9600 8E1", default), or the full settings
+      // "COM3;9600;8E1" as a device export writes them (quoted).
+      const settings = host.includes(";") ? host
+        : `${host};${(dev3Cell(row, "Serial", "SerialSettings") || "9600 8E1").trim().replace(/[\s,]+/, ";")}`;
+      const serial = /^(COM\d{1,3});(\d{3,6});([78])([NEO])([12])$/i.exec(settings);
       if (!serial || ![1200,2400,4800,9600,19200,38400,57600,115200].includes(Number(serial[2])))
-        errors.push("Modbus RTU Host must be serial settings such as COM3;9600;8E1");
+        errors.push("Modbus RTU needs Host COM3 and Serial such as 9600 8E1 (baud rate, data bits, parity N/E/O, stop bits)");
       if (!Number.isInteger(unitId) || unitId < 1 || unitId > 247) errors.push("Modbus RTU unit ID must be 1..247");
       if (!Number.isInteger(pollIntervalMs) || pollIntervalMs < 100 || pollIntervalMs > 3600000) errors.push("Poll interval must be 100..3600000 ms");
       payload = serial ? { kind:"modbusrtu", body:{name, serialPort:serial[1].toUpperCase(), baudRate:Number(serial[2]), dataBits:Number(serial[3]),
         parity:serial[4].toUpperCase(), stopBits:Number(serial[5]), unitId, pollIntervalMs} } : null;
-      preview = `${name || "?"} • ${host || "?"} • Unit ${unitId}`;
+      preview = `${name || "?"} • ${settings.replace(/;/g, " · ")} • Unit ${unitId}`;
     } else if (protocol) {
       if (!host) errors.push("Host / IP is required");
       if (!Number.isInteger(port) || port < 1 || port > 65535) errors.push("Port must be 1..65535");
@@ -5933,7 +5936,7 @@ async function executeCsvImport() {
 }
 
 const dev3Templates = {
-  devices: ["Name;Protocol;Host;Port;UnitId;PollIntervalMs;Rack;Slot", "Boiler PLC;Modbus TCP;192.168.1.10;502;1;1000;;", "Packing PLC;Siemens S7 TCP;192.168.1.20;102;1;1000;0;1", "Plant Broker;MQTT;broker.example.com;8883;;1000;;", "OPC Server;OPC UA;opc.tcp://192.168.1.30:4840;4840;;1000;;"].join("\r\n"),
+  devices: ["Name;Protocol;Host;Port;UnitId;PollIntervalMs;Rack;Slot;Serial", "Energy Meter RTU;Modbus RTU;COM3;;1;1000;;;9600 8E1", "Boiler PLC;Modbus TCP;192.168.1.10;502;1;1000;;", "Packing PLC;Siemens S7 TCP;192.168.1.20;102;1;1000;0;1", "Plant Broker;MQTT;broker.example.com;8883;;1000;;", "OPC Server;OPC UA;opc.tcp://192.168.1.30:4840;4840;;1000;;"].join("\r\n"),
   tags: ["Device;Name;Address;DataType;BitIndex;ByteOrder;Unit;Offset;DecimalPlaces", "Boiler PLC;Tank Level PV;30001;Float32;;ABCD;%;0;1", "Boiler PLC;Pump Running;00001;Bool;;ABCD;;0;0", "Packing PLC;Line Running;DB1.DBX0.0;Bool;;ABCD;;0;0", "Packing PLC;Motor Speed;DB1.DBD4;Float32;;ABCD;rpm;0;1", "Plant Broker;Temperature;plant/temperature;Float32;;ABCD;C;0;1", "OPC Server;Pressure;\"ns=2;s=Pressure\";Float32;;ABCD;bar;0;1"].join("\r\n"),
   alarms: ["Device;Tag;AlarmText;Priority;BitIndex;TriggerValue;Condition;Threshold;Deadband;DelayOnMs;DelayOffMs;NotifyOnActive;NotifyOnCleared;NotificationMode;RepeatIntervalSeconds;ContinueAfterClearUntilAck;RequiresAcknowledgement", "Boiler PLC;Pump Running;Pump stopped;High;;false;DigitalEquals;;;1000;500;true;false;RepeatUntilAcknowledged;60;true;true", "Boiler PLC;Tank Level PV;High level;High;;true;GreaterThanOrEqual;80;2;1000;2000;true;true;NotifyOnce;60;false;false"].join("\r\n"),
   historian: ["Device;Tag;SampleIntervalSeconds;RetentionDays", "Boiler PLC;Tank Level PV;10;365"].join("\r\n")

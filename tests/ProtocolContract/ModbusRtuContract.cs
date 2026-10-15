@@ -98,6 +98,30 @@ internal static class ModbusRtuContract
         Check((await reader.ReadAsync(meter2, tags2, CancellationToken.None)).Single().Quality == TagQuality.Good && opened == 1,
             "The line must keep working (without reopening) after a timeout or a corrupted answer.");
 
+        // Coil 258: start address high byte 1 equals the answer's byte count, so the answer begins
+        // like the request. With and without an echoing adapter both must read correctly.
+        line.Units[2].Coils[257] = true;
+        var ambiguous = Tag(meter2, "Coil258", "000258", TagDataType.Bool);
+        foreach (var echo in new[] { false, true })
+        {
+            line.Echo = echo;
+            var both = await reader.ReadAsync(meter2, [.. tags2, ambiguous], CancellationToken.None);
+            Check(both.All(v => v.Quality == TagQuality.Good) && both.Single(v => v.TagId == ambiguous.Id).Value == 1 &&
+                  both.Single(v => v.TagId == tags2[0].Id).Value == -3.5,
+                $"RTU read wrong with echo={echo}: " + string.Join(", ", both.Select(v => $"{v.Value} {v.Quality} {v.Error}")));
+        }
+        line.Echo = false;
+
+        // A late answer from unit 1 is still on the line when unit 2 is asked: skipped, not an error.
+        line.LateFrameFromUnit1 = true;
+        Check((await reader.ReadAsync(meter2, tags2, CancellationToken.None)).Single() is { Quality: TagQuality.Good, Value: -3.5 },
+            "A stale answer from another unit must be skipped.");
+        // ...and a late FC03 answer of the same unit while a coil (FC01) is read.
+        line.LateFrameFromUnit1 = true;
+        var coil = tags1.Single(t => t.Name == "Breaker");
+        Check((await reader.ReadAsync(meter1, [coil], CancellationToken.None)).Single() is { Quality: TagQuality.Good, Value: 1 },
+            "A stale answer to an earlier request of the same unit must be skipped.");
+
         line.Fail = true;
         try { await reader.ReadAsync(meter2, tags2, CancellationToken.None); throw new Exception("Unplugged adapter not reported."); }
         catch (IOException) { }
@@ -126,6 +150,10 @@ internal static class ModbusRtuContract
         private int _busy;
         public Dictionary<int, Slave> Units { get; } = [];
         public bool CorruptNext { get; set; }
+        /// <summary>Like an RS-485 adapter that echoes what it sends.</summary>
+        public bool Echo { get; set; }
+        /// <summary>Puts a valid answer from unit 1 on the line before the next answer.</summary>
+        public bool LateFrameFromUnit1 { get; set; }
         public bool Fail { get; set; }
         public bool Overlapped { get; private set; }
 
@@ -135,6 +163,7 @@ internal static class ModbusRtuContract
             if (Interlocked.Increment(ref _busy) > 1) Overlapped = true;
             try
             {
+                if (Echo) lock (_pending) foreach (var b in frame) _pending.Enqueue(b);
                 var crc = ModbusRtuRegisterClient.Crc(frame.AsSpan(0, 6));
                 Check(frame.Length == 8 && frame[6] == (byte)crc && frame[7] == (byte)(crc >> 8), "Request CRC wrong.");
                 Thread.Sleep(2);
@@ -163,6 +192,14 @@ internal static class ModbusRtuContract
                 answer[^2] = (byte)answerCrc;
                 answer[^1] = (byte)(answerCrc >> 8);
                 if (CorruptNext) { answer[^1] ^= 0xFF; CorruptNext = false; }
+                if (LateFrameFromUnit1)
+                {
+                    byte[] late = [1, 0x03, 2, 0, 42, 0, 0];
+                    var lateCrc = ModbusRtuRegisterClient.Crc(late.AsSpan(0, 5));
+                    late[5] = (byte)lateCrc; late[6] = (byte)(lateCrc >> 8);
+                    lock (_pending) foreach (var b in late) _pending.Enqueue(b);
+                    LateFrameFromUnit1 = false;
+                }
                 lock (_pending) foreach (var b in answer) _pending.Enqueue(b);
             }
             finally { Interlocked.Decrement(ref _busy); }

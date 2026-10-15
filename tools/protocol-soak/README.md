@@ -35,6 +35,16 @@ Options: `--minutes`, `--tags`, `--fault-every` (minutes), `--fault-down` (secon
 `--faults modbus,s7,opcua,mqtt-broker,mqtt` (which outages to inject; `mqtt` is the publisher),
 `--report <file.md>` (a `.json` with the raw numbers is written next to it).
 
+## Modbus RTU over a real COM port
+
+With a virtual serial pair (com0com: COM3 <-> CNCB0) the RTU reader is tested through the real
+Windows serial stack: start pymodbus RTU slaves (unit 1, and unit 2 with counters offset by 1000)
+on the second port and point a `--config` target at the first:
+
+```bash
+.venv/Scripts/python simulators.py modbus-rtu --counters 50 --serial "\\.\CNCB0"
+```
+
 ## Real devices
 
 Copy `real-plcs.example.json`, fill in your PLCs and Tags, and run:
