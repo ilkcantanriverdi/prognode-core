@@ -12,6 +12,7 @@
     <ProjectReference Include="..\..\src\Prognode.Protocols.Mitsubishi\Prognode.Protocols.Mitsubishi.csproj" />
     <ProjectReference Include="..\..\src\Prognode.Protocols.Omron\Prognode.Protocols.Omron.csproj" />
     <ProjectReference Include="..\..\src\Prognode.Protocols.EtherNetIp\Prognode.Protocols.EtherNetIp.csproj" />
+    <ProjectReference Include="..\..\src\Prognode.Protocols.Bacnet\Prognode.Protocols.Bacnet.csproj" />
     <ProjectReference Include="..\..\src\Prognode.Core\Prognode.Core.csproj" />
   </ItemGroup>
 </Project>

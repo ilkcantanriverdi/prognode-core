@@ -12,7 +12,14 @@ vm.runInContext(section('function s7AddressValid(','async function testS7Connect
 vm.runInContext(section('function modbusAddressInfo(','function nextModbusTagAddress('),context);
 vm.runInContext(section('function mcAddressValid(','// MQTT Tag address: exact topic'),context);
 vm.runInContext(section('function mqttTagAddressValid(','function validateTagAddressClient('),context);
-const {s7AddressValid:s7,modbusAddressInfo:modbus,tagRegisterWidth:width,mqttTagAddressValid:mqtt,mcAddressValid:mc,finsAddressValid:fins,logixAddressValid:logix}=context;
+const {s7AddressValid:s7,modbusAddressInfo:modbus,tagRegisterWidth:width,mqttTagAddressValid:mqtt,mcAddressValid:mc,finsAddressValid:fins,logixAddressValid:logix,bacnetAddressValid:bacnet}=context;
+
+// Same cases as BacnetContract (C# BacnetObjectAddress.Parse).
+for(const [a,t] of [['AI:1','Float32'],['analog-value:12','Float32'],['bv 3','Bool'],['MSV2','UInt16'],['multiStateValue,7','Word'],
+  ['LAV:1','Float64'],['ACC:1','UInt32'],['BI:4194302','Bool']])
+  assert.equal(bacnet(a,t),true,`BACnet ${a} ${t}`);
+for(const [a,t] of [['BI:1','Float32'],['AI:1','Bool'],['XX:1','Word'],['AI:4194303','Float32'],['AI','Float32'],['40001','Word'],['device:1','Word']])
+  assert.equal(bacnet(a,t),false,`BACnet ${a} ${t}`);
 
 // Same cases as EtherNetIpContract (C# LogixTagPath.Parse).
 for(const [a,t] of [['Speed','Float32'],['Tank.Level','Float32'],['Counters[3]','Int16'],['Grid[1,2]','Word'],['Arr[70000]','Int16'],

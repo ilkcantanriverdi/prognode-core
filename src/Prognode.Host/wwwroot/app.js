@@ -1388,7 +1388,7 @@ function selectProtocol(protocolId) {
 
   $("selectedProtocolName").textContent = protocol?.name || "—";
   $("selectedProtocolLogo").textContent =
-    protocolId === "modbus-tcp" ? "MB" : protocolId === "modbus-rtu" ? "RTU" : protocolId === "mitsubishi-mc" ? "MC" : protocolId === "omron-fins" ? "FINS" : protocolId === "ethernet-ip" ? "EIP" : protocolId === "siemens-s7-tcp" ? "S7" :
+    protocolId === "modbus-tcp" ? "MB" : protocolId === "modbus-rtu" ? "RTU" : protocolId === "mitsubishi-mc" ? "MC" : protocolId === "omron-fins" ? "FINS" : protocolId === "ethernet-ip" ? "EIP" : protocolId === "bacnet-ip" ? "BAC" : protocolId === "siemens-s7-tcp" ? "S7" :
     protocolId === "opc-ua" ? "UA" : protocolId === "mqtt" ? "MQ" : "M";
 
   $("s7Fields").classList.toggle("hidden", protocolId !== "siemens-s7-tcp");
@@ -1396,6 +1396,7 @@ function selectProtocol(protocolId) {
   $("mcFields").classList.toggle("hidden", protocolId !== "mitsubishi-mc");
   $("finsFields").classList.toggle("hidden", protocolId !== "omron-fins");
   $("enipFields").classList.toggle("hidden", protocolId !== "ethernet-ip");
+  $("bacnetFields").classList.toggle("hidden", protocolId !== "bacnet-ip");
   if (protocolId === "modbus-rtu") void loadSerialPorts();
   $("mqttFields").classList.toggle("hidden", protocolId !== "mqtt");
   $("opcUaFields").classList.toggle("hidden", protocolId !== "opc-ua");
@@ -1955,6 +1956,7 @@ function openEditDeviceModal(id) {
     device.protocol === "Mitsubishi MC" ? "mitsubishi-mc" :
     device.protocol === "Omron FINS" ? "omron-fins" :
     device.protocol === "EtherNet/IP" ? "ethernet-ip" :
+    device.protocol === "BACnet/IP" ? "bacnet-ip" :
     device.protocol === "Siemens S7 TCP" ? "siemens-s7-tcp" :
     device.protocol === "MQTT" ? "mqtt" : device.protocol === "OPC UA" ? "opc-ua" : "mock";
   state.modbusTestPassed = true;
@@ -1973,6 +1975,7 @@ function openEditDeviceModal(id) {
     state.selectedProtocol === "mitsubishi-mc" ? "MC" :
     state.selectedProtocol === "omron-fins" ? "FINS" :
     state.selectedProtocol === "ethernet-ip" ? "EIP" :
+    state.selectedProtocol === "bacnet-ip" ? "BAC" :
     state.selectedProtocol === "siemens-s7-tcp" ? "S7" :
     state.selectedProtocol === "opc-ua" ? "UA" : state.selectedProtocol === "mqtt" ? "MQ" : "M";
   $("deviceNameInput").value = device.name;
@@ -1982,6 +1985,7 @@ function openEditDeviceModal(id) {
   $("mcFields").classList.toggle("hidden", state.selectedProtocol !== "mitsubishi-mc");
   $("finsFields").classList.toggle("hidden", state.selectedProtocol !== "omron-fins");
   $("enipFields").classList.toggle("hidden", state.selectedProtocol !== "ethernet-ip");
+  $("bacnetFields").classList.toggle("hidden", state.selectedProtocol !== "bacnet-ip");
   $("mqttFields").classList.toggle("hidden", state.selectedProtocol !== "mqtt");
   $("opcUaFields").classList.toggle("hidden", state.selectedProtocol !== "opc-ua");
   $("testS7Connection").classList.toggle("hidden", state.selectedProtocol !== "siemens-s7-tcp");
@@ -2021,6 +2025,9 @@ function openEditDeviceModal(id) {
   if (state.selectedProtocol === "ethernet-ip") {
     $("enipHost").value = device.host || ""; $("enipPort").value = device.port ?? 44818;
     $("enipSlot").value = String(device.unitId ?? 0); $("enipPoll").value = device.pollIntervalMs ?? 1000;
+  }
+  if (state.selectedProtocol === "bacnet-ip") {
+    $("bacnetHost").value = device.host || ""; $("bacnetPort").value = device.port ?? 47808; $("bacnetPoll").value = device.pollIntervalMs ?? 1000;
   }
   if (state.selectedProtocol === "modbus-rtu") {
     const serial = /^([^;]+);(\d+);([78])([NEO])([12])$/i.exec(device.host || "");
@@ -2266,6 +2273,11 @@ async function saveDevice() {
           name, host:$("enipHost").value.trim(), port:readNumber("enipPort"), unitId:readNumber("enipSlot"), pollIntervalMs:readNumber("enipPoll")
         })});
       }
+      else if (state.selectedProtocol === "bacnet-ip") {
+        await api(`/api/devices/${state.editingDeviceId}`, {method:"PUT",body:JSON.stringify({
+          name, host:$("bacnetHost").value.trim(), port:readNumber("bacnetPort"), unitId:0, pollIntervalMs:readNumber("bacnetPoll")
+        })});
+      }
       else if (state.selectedProtocol === "modbus-rtu") {
         await api(`/api/devices/${state.editingDeviceId}`, {method:"PUT",body:JSON.stringify({
           name, host:rtuSerialSettings(), unitId:readNumber("rtuUnitId"), pollIntervalMs:readNumber("rtuPoll")
@@ -2338,6 +2350,11 @@ async function saveDevice() {
         name, host:$("enipHost").value.trim(), port:readNumber("enipPort"), slot:readNumber("enipSlot"), pollIntervalMs:readNumber("enipPoll")
       })});
     }
+    else if (state.selectedProtocol === "bacnet-ip") {
+      await api("/api/devices/bacnet-ip", {method:"POST",body:JSON.stringify({
+        name, host:$("bacnetHost").value.trim(), port:readNumber("bacnetPort"), pollIntervalMs:readNumber("bacnetPoll")
+      })});
+    }
     else if (state.selectedProtocol === "modbus-rtu") {
       if (!$("rtuPort").value) throw new Error("Select the serial port of the RS-485 adapter.");
       await api("/api/devices/modbus-rtu", {method:"POST",body:JSON.stringify({
@@ -2394,7 +2411,7 @@ function resetTagForm() {
 }
 
 // Every protocol whose Tags the Monitor reads; the Tag form lists only these devices.
-const TAG_PROTOCOLS = ["Modbus TCP", "Modbus RTU", "Mitsubishi MC", "Omron FINS", "EtherNet/IP", "Siemens S7 TCP", "MQTT", "OPC UA"];
+const TAG_PROTOCOLS = ["Modbus TCP", "Modbus RTU", "Mitsubishi MC", "Omron FINS", "EtherNet/IP", "BACnet/IP", "Siemens S7 TCP", "MQTT", "OPC UA"];
 
 function tagDeviceEndpoint(device) {
   // RTU keeps its serial settings in host (no port); OPC UA host is already the endpoint URL.
@@ -2472,12 +2489,14 @@ function tagIsOpcUa() { return state.devices.some(d => d.id === $("tagDevice").v
 function tagMcDevice() { return state.devices.find(d => d.id === $("tagDevice").value && d.protocol === "Mitsubishi MC"); }
 function tagIsFins() { return state.devices.some(d => d.id === $("tagDevice").value && d.protocol === "Omron FINS"); }
 function tagIsLogix() { return state.devices.some(d => d.id === $("tagDevice").value && d.protocol === "EtherNet/IP"); }
+function tagIsBacnet() { return state.devices.some(d => d.id === $("tagDevice").value && d.protocol === "BACnet/IP"); }
 function tagAddressExample() {
   const type = $("tagDataType").value;
   if (tagIsS7())
     return type === "Bool" ? "DB1.DBX0.0" : ["Word","UInt16","Int16"].includes(type) ? "DB1.DBW2" : "DB1.DBD4";
   if (tagMcDevice()) return type === "Bool" ? "M0" : "D100";
   if (tagIsFins()) return type === "Bool" ? "CIO0.00" : "D100";
+  if (tagIsBacnet()) return type === "Bool" ? "BI:1" : ["Float32","Float64"].includes(type) ? "AI:1" : "MSV:1";
   if (tagIsLogix()) return type === "Bool" ? "Motor_Running" : type === "Float32" || type === "Float64" ? "Tank_Level" : "Batch_Count";
   if (tagIsMqtt()) return type === "Bool" ? "plant/running" : "plant/temperature";
   if (tagIsOpcUa()) return type === "Bool" ? "ns=2;s=Running" : "ns=2;s=Temperature";
@@ -2542,7 +2561,7 @@ function updateTagFormVisibility() {
   const type = $("tagDataType").value;
   const area = modbusAddressInfo($("tagAddress").value);
   const s7 = tagIsS7();
-  const modbus = !s7 && !tagIsMqtt() && !tagIsOpcUa() && !tagMcDevice() && !tagIsFins() && !tagIsLogix();
+  const modbus = !s7 && !tagIsMqtt() && !tagIsOpcUa() && !tagMcDevice() && !tagIsFins() && !tagIsLogix() && !tagIsBacnet();
   const isBool = type === "Bool";
   const isFloat = type === "Float32" || type === "Float64";
   const isWord = type === "Word";
@@ -2571,6 +2590,7 @@ function updateTagFormVisibility() {
   else if (tagIsOpcUa()) $("tagAddressHelp").textContent = "Use ns=2;i=13 or the full Siemens http://...;i=13 NodeId. Only numeric and BOOL Values are read.";
   else if (tagMcDevice()) $("tagAddressHelp").textContent = `Mitsubishi device and number: D100, W1A, R100, TN0, CN0, SD0 for values (32/64-bit use the next words, low word first); M0, X1F, Y10, B0, L0, SM400 or a word bit D100.A for BOOL. ${Number(tagMcDevice().unitId) === 1 ? "FX5: X/Y numbers are octal (X17)." : "X/Y/B/W numbers are hexadecimal."}`;
   else if (tagIsFins()) $("tagAddressHelp").textContent = "Omron area and word: D100, W10, H5, A20, CIO100 (or 100), E0_100 for an EM bank, T0 / C0 for a timer or counter present value. 32/64-bit use the next words, low word first. BOOL: a bit of a word with a decimal bit 00-15 (CIO0.05, D100.15, W10.03) or T0 / C0 for the completion flag.";
+  else if (tagIsBacnet()) $("tagAddressHelp").textContent = "BACnet object type and instance; the Tag reads its Present_Value. Analog AI:1, AO:2, AV:3 (FLOAT32); binary BI:1, BO:1, BV:1 (BOOL); multi-state MSI:1, MSO:1, MSV:1 (state number, UINT16); also ACC, IV, PIV (integers) and LAV (FLOAT64). Full names such as analog-input,1 also work.";
   else if (tagIsLogix()) $("tagAddressHelp").textContent = "The tag name as in Studio 5000: Tank_Level, Motor.Speed, Counters[3], Grid[1,2] or Program:MainProgram.Pump.Amps for a program tag. BOOL: a BOOL tag, or a bit of an integer tag (Status.5). The data type must match the controller's (REAL = FLOAT32, DINT = INT32, INT = INT16). The tag's External Access must allow reading.";
   else if (s7) $("tagAddressHelp").textContent = "Use an absolute S7 address. BOOL: DB1.DBX0.0, I0.0, Q0.1, M10.0. 16-bit: DB1.DBW2, IW64, QW2, MW20. 32-bit: DB1.DBD4, ID100, QD4, MD30. DBs must have optimized block access off; inputs, outputs and M need only PUT/GET.";
   else $("tagAddressHelp").textContent = t("tagAddressHelp");
@@ -2735,6 +2755,24 @@ function logixAddressValid(address, type) {
     /^[A-Za-z_][A-Za-z0-9_]{0,39}(\[\d{1,7}(,\d{1,7}){0,2}\])?$/.test(part));
 }
 
+// BACnet object: type and instance (AI:1, BV 3, MSV2, analog-input,1). Binary objects are BOOL, others not.
+// Mirrors BacnetObjectAddress.Parse.
+const BACNET_TYPES = {ai:"AI",ao:"AO",av:"AV",bi:"BI",bo:"BO",bv:"BV",msi:"MSI",mso:"MSO",msv:"MSV",acc:"ACC",iv:"IV",lav:"LAV",piv:"PIV",
+  analoginput:"AI",analogoutput:"AO",analogvalue:"AV",binaryinput:"BI",binaryoutput:"BO",binaryvalue:"BV",multistateinput:"MSI",
+  multistateoutput:"MSO",multistatevalue:"MSV",accumulator:"ACC",integervalue:"IV",largeanalogvalue:"LAV",positiveintegervalue:"PIV"};
+function bacnetObjectParts(address) {
+  const m = /^([A-Za-z][A-Za-z_-]*?)\s*[:,\s]\s*(\d{1,7})$|^([A-Za-z]{2,3})(\d{1,7})$/.exec(String(address || "").trim());
+  if (!m) return null;
+  const type = BACNET_TYPES[(m[1] ?? m[3]).toLowerCase().replace(/[-_]/g, "")];
+  const instance = Number(m[2] ?? m[4]);
+  return type && instance <= 4194302 ? { type, instance, prefix: m[0].replace(/\d+$/, "") } : null;
+}
+function bacnetAddressValid(address, type) {
+  const o = bacnetObjectParts(address);
+  if (!o) return false;
+  return ["BI","BO","BV"].includes(o.type) ? type === "Bool" : type !== "Bool";
+}
+
 // MQTT Tag address: exact topic, optionally #field for a JSON message (plant/env#temp, gw#a[0].b).
 function mqttTagAddressValid(address) {
   const [topic, ...rest] = String(address || "").split("#");
@@ -2760,6 +2798,11 @@ function validateTagAddressClient() {
   if (tagMcDevice()) {
     const good=mcAddressValid($("tagAddress").value.trim(),$("tagDataType").value,tagMcDevice().unitId);
     stateBox.textContent=good?"Mitsubishi address OK":"Use D100 / W1A / R100 / TN0 for values, M0 / X1F / Y10 / SM400 or D100.A for BOOL.";
+    stateBox.classList.toggle("error",!good);saveButton.disabled=!good||!canMutateConfiguration();return good;
+  }
+  if (tagIsBacnet()) {
+    const good=bacnetAddressValid($("tagAddress").value.trim(),$("tagDataType").value);
+    stateBox.textContent=good?"BACnet object OK":"Use type and instance: AI:1 / AV:3 for values, BI:1 / BO:1 / BV:1 for BOOL, MSV:1 for a state number.";
     stateBox.classList.toggle("error",!good);saveButton.disabled=!good||!canMutateConfiguration();return good;
   }
   if (tagIsLogix()) {
@@ -2873,6 +2916,10 @@ function bulkTagAddress(address, dataType, bitIndex, protocol, n, series) {
     }
     const bitDevice = ["SM","SB","TS","CS","X","Y","M","L","F","V","B"].includes(device);
     return { address: format(number + n * (bitDevice ? 1 : tagRegisterWidth(dataType))), bitIndex };
+  }
+  if (protocol === "BACnet/IP") {
+    const o = bacnetObjectParts(text);
+    return o && o.instance + n <= 4194302 ? { address: `${o.prefix}${o.instance + n}`, bitIndex } : null;
   }
   if (protocol === "EtherNet/IP") {
     const bit = /^(.*\.)(\d+)$/.exec(text);
@@ -5827,7 +5874,7 @@ function dev3Priority(value) {
 
 function dev3Protocol(value) {
   const key = String(value || "Modbus TCP").toLowerCase().replace(/[^a-z0-9]/g, "");
-  return ({modbus:"Modbus TCP",modbustcp:"Modbus TCP",modbusrtu:"Modbus RTU",rtu:"Modbus RTU",mitsubishimc:"Mitsubishi MC",mitsubishi:"Mitsubishi MC",mc:"Mitsubishi MC",omronfins:"Omron FINS",omron:"Omron FINS",fins:"Omron FINS",ethernetip:"EtherNet/IP",enip:"EtherNet/IP",eip:"EtherNet/IP",logix:"EtherNet/IP",s7:"Siemens S7 TCP",s7tcp:"Siemens S7 TCP",siemenss7tcp:"Siemens S7 TCP",mqtt:"MQTT",opcua:"OPC UA"})[key] || null;
+  return ({modbus:"Modbus TCP",modbustcp:"Modbus TCP",modbusrtu:"Modbus RTU",rtu:"Modbus RTU",mitsubishimc:"Mitsubishi MC",mitsubishi:"Mitsubishi MC",mc:"Mitsubishi MC",omronfins:"Omron FINS",omron:"Omron FINS",fins:"Omron FINS",ethernetip:"EtherNet/IP",enip:"EtherNet/IP",eip:"EtherNet/IP",logix:"EtherNet/IP",bacnet:"BACnet/IP",bacnetip:"BACnet/IP",s7:"Siemens S7 TCP",s7tcp:"Siemens S7 TCP",siemenss7tcp:"Siemens S7 TCP",mqtt:"MQTT",opcua:"OPC UA"})[key] || null;
 }
 
 function dev3ImportExistingMode(){return $("importExistingMode")?.value==='skip'?'skip':'update'}
@@ -5854,13 +5901,13 @@ function dev3PreviewRow(row, dataset) {
     const name = dev3Cell(row, "Name", "Device");
     const protocol = dev3Protocol(dev3Cell(row, "Protocol"));
     const host = dev3Cell(row, "Host", "IP", "HostIP", "EndpointUrl");
-    const defaultPort = protocol === "EtherNet/IP" ? 44818 : protocol === "Omron FINS" ? 9600 : protocol === "Mitsubishi MC" ? 5007 : protocol === "Siemens S7 TCP" ? 102 : protocol === "MQTT" ? 8883 : protocol === "OPC UA" ? 4840 : 502;
+    const defaultPort = protocol === "BACnet/IP" ? 47808 : protocol === "EtherNet/IP" ? 44818 : protocol === "Omron FINS" ? 9600 : protocol === "Mitsubishi MC" ? 5007 : protocol === "Siemens S7 TCP" ? 102 : protocol === "MQTT" ? 8883 : protocol === "OPC UA" ? 4840 : 502;
     const port = dev3Number(dev3Cell(row, "Port"), defaultPort);
     const unitId = dev3Number(dev3Cell(row, "UnitId", "Unit ID", "SlaveId"), /^Modbus (TCP|RTU)$/.test(protocol || "") ? 1 : 0);
     const pollIntervalMs = dev3Number(dev3Cell(row, "PollIntervalMs", "Poll", "PollMs"), 1000);
     if (!name) errors.push("Name is required");
     if (state.tags.some(t => t.name.toLowerCase() === name.toLowerCase())) errors.push("Name is already used by a Tag");
-    if (!protocol) errors.push("Protocol must be Modbus TCP, Modbus RTU, Mitsubishi MC, Omron FINS, EtherNet/IP, Siemens S7 TCP, MQTT or OPC UA");
+    if (!protocol) errors.push("Protocol must be Modbus TCP, Modbus RTU, Mitsubishi MC, Omron FINS, EtherNet/IP, BACnet/IP, Siemens S7 TCP, MQTT or OPC UA");
     if (protocol === "Modbus RTU") {
       // Host is the port (COM3) with the Serial column ("9600 8E1", default), or the full settings
       // "COM3;9600;8E1" as a device export writes them (quoted).
@@ -5888,6 +5935,9 @@ function dev3PreviewRow(row, dataset) {
         const series = seriesText ? (seriesText.includes("FX5") || seriesText.includes("IQF") ? 1 : 0) : (unitId === 1 ? 1 : 0);
         payload = { kind:"mc", body:{name,host,port,series,pollIntervalMs} };
         preview = `${name || "?"} • ${host || "?"}:${port} • ${series === 1 ? "iQ-F (FX5)" : "iQ-R / Q / L"}`;
+      } else if (protocol === "BACnet/IP") {
+        payload = { kind:"bacnet", body:{name,host,port,pollIntervalMs} };
+        preview = `${name || "?"} • ${host || "?"}:${port} • BACnet/IP`;
       } else if (protocol === "EtherNet/IP") {
         // Slot column: the CPU slot (0..31) or "direct" (Micro800); else UnitId as a device export writes it.
         const slotText = dev3Cell(row, "Slot", "CpuSlot").trim().toLowerCase();
@@ -5956,6 +6006,9 @@ function dev3PreviewRow(row, dataset) {
     } else if (device?.protocol === "Mitsubishi MC") {
       if (!dataType || !mcAddressValid(address, dataType, device.unitId)) errors.push("Mitsubishi address must match the datatype: D100 / W1A / R100 for values, M0 / X1F / D100.A for BOOL");
       if (bitIndex !== null) errors.push("Mitsubishi bit is part of the address (D100.A); leave BitIndex blank");
+    } else if (device?.protocol === "BACnet/IP") {
+      if (!dataType || !bacnetAddressValid(address, dataType)) errors.push("BACnet address must be type and instance matching the datatype: AI:1 / AV:3 for values, BI:1 / BV:1 for BOOL, MSV:1 for a state");
+      if (bitIndex !== null) errors.push("BACnet Tags read a whole Present_Value; leave BitIndex blank");
     } else if (device?.protocol === "EtherNet/IP") {
       if (!dataType || !logixAddressValid(address, dataType)) errors.push("EtherNet/IP address must be a Logix tag name (Tank_Level, Motor.Speed, Counters[3], Program:Main.Pump.Amps; Status.5 for a BOOL bit)");
       if (bitIndex !== null) errors.push("EtherNet/IP bit is part of the address (Status.5); leave BitIndex blank");
@@ -6036,7 +6089,7 @@ function dev3PreviewRow(row, dataset) {
   const existing=dev3ImportIdentity(dataset,payload),mode=dev3ImportExistingMode();
   const action=existing?(mode==='skip'?'skip':'update'):'create';
   if(existing&&dataset==='tags'&&existing.deviceId!==payload?.body?.deviceId)errors.push('Tag name belongs to another Device; rename it before import');
-  if(existing&&dataset==='devices'&&existing.protocol!==({'modbus':'Modbus TCP','modbusrtu':'Modbus RTU','mc':'Mitsubishi MC','fins':'Omron FINS','enip':'EtherNet/IP','s7':'Siemens S7 TCP','mqtt':'MQTT','opcua':'OPC UA'}[payload.kind]))errors.push('Device protocol cannot be changed in place');
+  if(existing&&dataset==='devices'&&existing.protocol!==({'modbus':'Modbus TCP','modbusrtu':'Modbus RTU','mc':'Mitsubishi MC','fins':'Omron FINS','enip':'EtherNet/IP','bacnet':'BACnet/IP','s7':'Siemens S7 TCP','mqtt':'MQTT','opcua':'OPC UA'}[payload.kind]))errors.push('Device protocol cannot be changed in place');
   return { row:row.__row, dataset, source:row, payload, preview, errors,
     action,existingId:existing?.id||null,
     valid:errors.length === 0 && action!=='skip' };
@@ -6107,7 +6160,7 @@ async function executeCsvImport() {
           pollIntervalMs:item.payload.body.pollIntervalMs}:item.payload.body;
         await api(`${route}/${encodeURIComponent(item.existingId)}`,{method:'PUT',body:JSON.stringify(body)});
       } else if (item.dataset === "devices") {
-        const devicePaths = {modbus:"/api/devices/modbus-tcp",modbusrtu:"/api/devices/modbus-rtu",mc:"/api/devices/mitsubishi-mc",fins:"/api/devices/omron-fins",enip:"/api/devices/ethernet-ip",s7:"/api/devices/siemens-s7-tcp",mqtt:"/api/devices/mqtt",opcua:"/api/devices/opc-ua"};
+        const devicePaths = {modbus:"/api/devices/modbus-tcp",modbusrtu:"/api/devices/modbus-rtu",mc:"/api/devices/mitsubishi-mc",fins:"/api/devices/omron-fins",enip:"/api/devices/ethernet-ip",bacnet:"/api/devices/bacnet-ip",s7:"/api/devices/siemens-s7-tcp",mqtt:"/api/devices/mqtt",opcua:"/api/devices/opc-ua"};
         await api(devicePaths[item.payload.kind], { method:"POST", body:JSON.stringify(item.payload.body) });
       } else if (item.dataset === "tags") {
         await api("/api/tags", { method:"POST", body:JSON.stringify(item.payload.body) });

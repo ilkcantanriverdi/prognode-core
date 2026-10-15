@@ -9,6 +9,7 @@ Usage (the harness starts and stops these itself; each runs until killed):
   python simulators.py modbus  --port 15020 --counters 200
   python simulators.py fins    --port 19600 --counters 200
   python simulators.py enip    --port 14818 --counters 200   (cpppo Logix emulation)
+  python simulators.py bacnet  --port 47809 --counters 200   (UDP)
   python simulators.py s7      --port 11102 --counters 200
   python simulators.py opcua   --port 14841 --counters 200 --pki <folder>
   python simulators.py mqtt    --port 11883 --counters 50      (publisher; the broker runs in the harness)
@@ -336,6 +337,53 @@ def run_enip(port: int, counters: int) -> None:
     enip_main(argv=["--address", f"127.0.0.1:{port}"] + tags)
 
 
+# ----------------------------------------------------------------------------- BACnet/IP
+BACNET_DEVICE_INSTANCE = 2401
+
+
+def run_bacnet(port: int, counters: int) -> None:
+    """BACnet/IP device (bacpypes3, MIT): analog-value k counts; AI/AO/BI/BO/BV/MSI/MSV hold fixed values."""
+    from bacpypes3.argparse import SimpleArgumentParser
+    from bacpypes3.app import Application
+    from bacpypes3.local.analog import AnalogInputObject, AnalogOutputObject, AnalogValueObject
+    from bacpypes3.local.binary import BinaryInputObject, BinaryOutputObject, BinaryValueObject
+    from bacpypes3.local.multistate import MultiStateInputObject, MultiStateValueObject
+
+    n = max(counters, 1)
+
+    async def main():
+        args = SimpleArgumentParser().parse_args(
+            ["--name", "PROGNODE soak BACnet", "--instance", str(BACNET_DEVICE_INSTANCE), "--address", f"127.0.0.1:{port}"])
+        app = Application.from_args(args)
+        flags = [0, 0, 0, 0]
+        values = [AnalogValueObject(objectIdentifier=("analog-value", k), objectName=f"Counter{k}",
+                                    presentValue=float(counter(k)), statusFlags=flags, units="noUnits") for k in range(n)]
+        fixed = [
+            AnalogInputObject(objectIdentifier=("analog-input", 1), objectName="SupplyTemp", presentValue=12.5,
+                              statusFlags=flags, units="degreesCelsius", eventState="normal", outOfService=False),
+            AnalogOutputObject(objectIdentifier=("analog-output", 1), objectName="ValveCmd", presentValue=-1234.5,
+                               statusFlags=flags, units="percent", eventState="normal", outOfService=False),
+            BinaryInputObject(objectIdentifier=("binary-input", 1), objectName="FanStatus", presentValue="active",
+                              statusFlags=flags, eventState="normal", outOfService=False, polarity="normal"),
+            BinaryOutputObject(objectIdentifier=("binary-output", 1), objectName="PumpCmd", presentValue="active",
+                               statusFlags=flags, eventState="normal", outOfService=False, polarity="normal"),
+            BinaryValueObject(objectIdentifier=("binary-value", 1), objectName="Alarm", presentValue="inactive",
+                              statusFlags=flags, eventState="normal", outOfService=False),
+            MultiStateInputObject(objectIdentifier=("multi-state-input", 1), objectName="Mode", presentValue=2,
+                                  numberOfStates=4, statusFlags=flags, eventState="normal", outOfService=False),
+            MultiStateValueObject(objectIdentifier=("multi-state-value", 1), objectName="Stage", presentValue=3,
+                                  numberOfStates=4, statusFlags=flags, eventState="normal", outOfService=False),
+        ]
+        for obj in values + fixed:
+            app.add_object(obj)
+        while True:
+            for k, obj in enumerate(values):
+                obj.presentValue = float(counter(k))
+            await asyncio.sleep(0.3)
+
+    asyncio.run(main())
+
+
 # ----------------------------------------------------------------------------- Siemens S7
 def run_s7(port: int, counters: int) -> None:
     import snap7
@@ -478,7 +526,7 @@ def run_mqtt(port: int, counters: int, user: str | None = None, password: str | 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("kind", choices=["modbus", "modbus-rtu", "mc", "fins", "enip", "s7", "opcua", "mqtt"])
+    parser.add_argument("kind", choices=["modbus", "modbus-rtu", "mc", "fins", "enip", "bacnet", "s7", "opcua", "mqtt"])
     parser.add_argument("--port", type=int, default=0)
     parser.add_argument("--serial", default=r"\\.\CNCB0", help="modbus-rtu: serial port of the slave end")
     parser.add_argument("--counters", type=int, default=100)
@@ -491,6 +539,7 @@ if __name__ == "__main__":
      "mc": lambda: run_mc(a.port, a.counters),
      "fins": lambda: run_fins(a.port, a.counters),
      "enip": lambda: run_enip(a.port, a.counters),
+     "bacnet": lambda: run_bacnet(a.port, a.counters),
      "s7": lambda: run_s7(a.port, a.counters),
      "opcua": lambda: run_opcua(a.port, a.counters, a.pki, a.user, a.password),
      "mqtt": lambda: run_mqtt(a.port, a.counters, a.user, a.password)}[a.kind]()

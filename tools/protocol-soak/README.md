@@ -1,7 +1,7 @@
 # Protocol soak
 
 Long-running test of the protocols PROGNODE Monitor reads: Modbus TCP and RTU, Mitsubishi MC, Omron
-FINS, EtherNet/IP (Logix), Siemens S7, OPC UA and MQTT. The soak (`tests/ProtocolSoak`) polls every second with the same
+FINS, EtherNet/IP (Logix), BACnet/IP, Siemens S7, OPC UA and MQTT. The soak (`tests/ProtocolSoak`) polls every second with the same
 readers the Monitor uses, checks every value
 it reads, injects outages and writes a report. The quick contract tests in `tests/ProtocolContract`
 stay the CI gate; this is the long run you start by hand.
@@ -23,7 +23,7 @@ dotnet run --project tests/ProtocolSoak -c Release -- --minutes 30 --tags 200 --
 ```
 
 The soak starts the simulators in `simulators.py` (pymodbus, an MC 3E server, a FINS/TCP server,
-cpppo's Logix emulation, python-snap7, asyncua, paho-mqtt) and an
+cpppo's Logix emulation, a bacpypes3 BACnet device, python-snap7, asyncua, paho-mqtt) and an
 MQTT broker in-process, approves the OPC UA server certificate the way an administrator does in Core,
 and takes one of them down every `--fault-every` minutes for `--fault-down` seconds, in turn.
 
@@ -34,7 +34,7 @@ Every simulator serves the same values, so every reading is checked:
   (Modbus also in CDAB word order), Bool true (S7 also a false bit).
 
 Options: `--minutes`, `--tags`, `--fault-every` (minutes), `--fault-down` (seconds),
-`--faults modbus,mc,fins,enip,s7,opcua,mqtt-broker,mqtt` (which outages to inject; `mqtt` is the publisher),
+`--faults modbus,mc,fins,enip,bacnet,s7,opcua,mqtt-broker,mqtt` (which outages to inject; `mqtt` is the publisher),
 `--report <file.md>` (a `.json` with the raw numbers is written next to it).
 
 ## Modbus RTU over a real COM port
@@ -86,6 +86,8 @@ Reports go to `tools/protocol-soak/reports/` unless `--report` says otherwise.
   Tags by Studio 5000 name (`Tank_Level`, `Counters[3]`, `Program:Main.Pump.Amps`, `Status.5`); the Tag data
   type must match the controller's. The simulator is cpppo (GPL, test tool only); it is slow (hundreds of
   ms per request), real controllers answer in a few ms.
+* BACnet/IP: `"protocol": "BACnet/IP"`, UDP port 47808; Tags are objects (`AI:1`, `BV:2`, `MSV:1`) and read
+  their Present_Value. Only devices on the IP network (no MS/TP behind a router yet).
 * Modbus: six-digit addresses reach registers above 9999 (`419000` = holding register 19000);
   Int64 / UInt64 / Float64 read four registers, with the same byte orders as 32-bit values.
 * MQTT: a Tag reads a plain message (`21.5`, `true`) or one field of a JSON message

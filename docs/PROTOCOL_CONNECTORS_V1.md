@@ -1,6 +1,6 @@
 # PROGNODE Monitor protocol connectors (field-test scope)
 
-Current customer-facing catalog: Modbus TCP, Modbus RTU (RS-485), Mitsubishi MC, Omron FINS, EtherNet/IP (Logix), Siemens S7 TCP, OPC UA and MQTT.
+Current customer-facing catalog: Modbus TCP, Modbus RTU (RS-485), Mitsubishi MC, Omron FINS, EtherNet/IP (Logix), BACnet/IP, Siemens S7 TCP, OPC UA and MQTT.
 PROFINET is not offered or planned in the active catalog. The RC2 product-decision
 document records an older, superseded catalog proposal.
 
@@ -100,6 +100,25 @@ reads up to 32 bits (64-bit types are rejected for S7 Tags).
   segment 0x2A; pycomm3 sends 0x2B). The soak simulator (`simulators.py enip`) is cpppo 5.2.5's Logix
   emulation (GPL, used only as a test tool).
 
+## BACnet/IP
+
+- `POST /api/devices/bacnet-ip` accepts `{ "name", "host": "192.168.1.60", "port": 47808, "pollIntervalMs": 1000 }`.
+  BACnet/IP (Annex J) over UDP, unicast to the device's IP. Devices on an MS/TP line behind a BACnet
+  router are not reached yet (no network-layer routing). Read-only.
+- Each Tag reads the Present_Value of one object: `AI:1`, `AO:2`, `AV:3` (REAL → FLOAT32), `BI:1`, `BO:1`,
+  `BV:1` (BOOL), `MSI:1`, `MSO:1`, `MSV:1` (state number), `ACC`, `IV`, `PIV` (integers), `LAV` (DOUBLE →
+  FLOAT64). Full names (`analog-input,1`) and `AV 3` / `AV3` also work. Instance 0..4194302.
+- Up to 20 objects per ReadPropertyMultiple (no segmentation, fits a 480-byte APDU). A device that rejects
+  ReadPropertyMultiple is read with ReadProperty from then on; a batch refused as a whole is re-read object
+  by object. Each object carries its own result: unknown-object / unknown-property make only that Tag `Bad`.
+  A NULL Present_Value (relinquished output) is `Bad`. A Tag whose data type does not fit the value's type is
+  `Bad` and names it. Late answers (an earlier invoke id) are ignored.
+- Health probe: ReadProperty of the device object (wildcard instance) Object_Name; any answer counts. On
+  UDP, a closed port is reported as "no BACnet device is listening".
+  Device CSV: Protocol `BACnet/IP` (or `BACnet`), default port 47808.
+- Request APDUs are byte-identical to bacpypes3 0.0.110; the soak simulator (`simulators.py bacnet`) is a
+  bacpypes3 device, checked with bacpypes3's client.
+
 ## Siemens S7
 
 - Absolute addresses only. DBs: `DB1.DBX0.0`, `DB1.DBW2`, `DB1.DBD4` (non-optimized DBs: turn
@@ -138,15 +157,15 @@ reads up to 32 bits (64-bit types are rejected for S7 Tags).
 
 - `PUT /api/devices/{id}` edits host and poll settings (and the credential / RTU serial settings).
   `/api/tags` create/update validate by the device's protocol.
-- `/api/protocols` reports all eight as `Available`. The local commissioning UI exposes their
+- `/api/protocols` reports all nine as `Available`. The local commissioning UI exposes their
   device and Tag fields.
 - `pwsh -File scripts/Validate-Baseline.ps1` performs locked restore, Release build and the console
   contracts. The protocol contracts cover: Modbus FC01/02/03/04 and six-digit / 64-bit values in all
   byte orders against isolated TCP responders; Modbus RTU over an in-memory RS-485 line (CRC, two
   units, exception, timeout, corrupted and late answers, echo, unplugged adapter); S7 DB / I / Q / M
-  ReadVar; Mitsubishi MC, Omron FINS and EtherNet/IP frames, values and refusals against TCP responders;
+  ReadVar; Mitsubishi MC, Omron FINS, EtherNet/IP and BACnet/IP frames, values and refusals against responders;
   MQTT login and JSON fields against an in-process broker; OPC UA URL/NodeId validation and
-  application-certificate generation; the eight-protocol catalog and Tag dispatch.
+  application-certificate generation; the nine-protocol catalog and Tag dispatch.
 - `tests/ProtocolSoak` runs long tests against simulators (`tools/protocol-soak`, all requiring
   logins) or real devices (`--config`). Modbus RTU was soaked over a real Windows COM port (com0com
   pair, pymodbus RTU slaves, two units, outages) with 0 wrong values.

@@ -46,6 +46,14 @@ public sealed class ProtocolCatalog
             true,
             "Field Test"
         ),
+        new(
+            "bacnet-ip",
+            "BACnet/IP",
+            "Read-only Present_Value of analog, binary and multi-state objects from building automation controllers on the IP network.",
+            "Available",
+            true,
+            "Field Test"
+        ),
         new("siemens-s7-tcp", "Siemens S7 TCP", "Read-only ISO-on-TCP S7comm reader: inputs, outputs, bit memory and non-optimized DBs (absolute addresses); S7-1200/1500 need PUT/GET.", "Available", true, "Field Test"),
         new(
             "opc-ua",

@@ -1336,6 +1336,15 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
           <div class="info-box">Read-only tag reads by name from Allen-Bradley ControlLogix, CompactLogix, GuardLogix and Micro800 controllers. Use the IP of the controller's Ethernet port or of the Ethernet module in its chassis; CPU slot is the controller's slot on the backplane (CompactLogix: 0). Tags need External Access Read Only or Read/Write. Names as in Studio 5000: Tank_Level, Motor.Speed, Counters[3], Program:MainProgram.Pump.Amps; Status.5 for a bit.</div>
         </div>
 
+        <div id="bacnetFields" class="hidden">
+          <div class="form-grid">
+            <label class="field wide"><span>Device IP / Host</span><input id="bacnetHost" placeholder="192.168.1.60" /></label>
+            <label class="field"><span>BACnet/IP port (UDP)</span><input id="bacnetPort" type="number" min="1" max="65535" value="47808" /></label>
+            <label class="field"><span>Poll interval (ms)</span><input id="bacnetPoll" type="number" min="100" value="1000" /></label>
+          </div>
+          <div class="info-box">Read-only Present_Value of BACnet objects from a controller on the IP network (BACnet/IP, UDP 47808). Devices on an MS/TP line behind a BACnet router are not reached yet. Tags use the object type and instance: AI:1, AV:3, BI:1, BV:2, MSV:1.</div>
+        </div>
+
         <div id="s7Fields" class="hidden">
           <div class="form-grid">
             <label class="field wide"><span>PLC IP / Host</span><input id="s7Host" placeholder="192.168.1.20" /></label>

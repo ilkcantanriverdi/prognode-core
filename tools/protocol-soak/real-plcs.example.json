@@ -177,6 +177,30 @@
       ]
     },
     {
+      "name": "AHU-1 controller",
+      "protocol": "BACnet/IP",
+      "host": "192.168.1.60",
+      "port": 47808,
+      "pollMs": 2000,
+      "tags": [
+        {
+          "name": "Supply air temperature",
+          "address": "AI:1",
+          "type": "Float32"
+        },
+        {
+          "name": "Supply fan status",
+          "address": "BI:1",
+          "type": "Bool"
+        },
+        {
+          "name": "Operating mode",
+          "address": "MSV:1",
+          "type": "UInt16"
+        }
+      ]
+    },
+    {
       "name": "S7-1500 OPC UA",
       "protocol": "OPC UA",
       "host": "opc.tcp://192.168.0.10:4840/",
