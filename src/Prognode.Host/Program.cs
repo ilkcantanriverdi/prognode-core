@@ -373,6 +373,15 @@ app.Use(async (context, next) =>
     var isLoopback = remote is not null && IPAddress.IsLoopback(remote);
     var path = context.Request.Path;
 
+    // DNS rebinding: a web page whose own name resolves to 127.0.0.1 must not reach the sign-in-free local API.
+    if (isLoopback && !context.Request.IsHttps &&
+        context.Request.Host.Host is not ("localhost" or "127.0.0.1" or "[::1]" or "::1"))
+    {
+        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+        await context.Response.WriteAsJsonAsync(new { code = "LOCAL_HOST_REQUIRED", message = "Open PROGNODE Monitor at http://127.0.0.1:5080 or http://localhost:5080." });
+        return;
+    }
+
     var publicClientRoute =
         path.StartsWithSegments("/api/server/identity") ||
         (string.Equals(path.Value, "/api/client/pair", StringComparison.OrdinalIgnoreCase) ||
