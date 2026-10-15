@@ -16,6 +16,7 @@ using MQTTnet.Server;
 using Prognode.Contracts.Devices;
 using Prognode.Contracts.Tags;
 using Prognode.Protocols.Abstractions;
+using Prognode.Protocols.Mitsubishi;
 using Prognode.Protocols.Modbus;
 using Prognode.Protocols.Mqtt;
 using Prognode.Protocols.OpcUa;
@@ -112,6 +113,7 @@ ITagReader CreateReader(SoakTarget t) => t.Device.Protocol switch
     // All RTU targets share one client: devices on one COM port share the line.
     "Modbus RTU" => new ModbusTagReader(rtuClient, ModbusTagReader.RtuProtocol),
     "Siemens S7" => new S7TagReader(),
+    "Mitsubishi MC" => new McTagReader(),
     "OPC UA" => new OpcUaTagReader(opc, SoakCredentials.Store),
     "MQTT" => new MqttTagReader(SoakCredentials.Store),
     _ => throw new ArgumentException($"Unknown protocol {t.Device.Protocol}")
@@ -164,7 +166,7 @@ sealed record SoakOptions(double Minutes, int Counters, double FaultEveryMinutes
         double D(string name, double fallback) => double.TryParse(Get(name), NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : fallback;
         return new SoakOptions(D("--minutes", 10), (int)D("--tags", 200), D("--fault-every", 3), (int)D("--fault-down", 20),
             Get("--config"), Get("--report"), Get("--python"),
-            (Get("--faults") ?? "modbus,s7,opcua,mqtt-broker,mqtt").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+            (Get("--faults") ?? "modbus,mc,s7,opcua,mqtt-broker,mqtt").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
     }
 }
 
@@ -210,17 +212,17 @@ static class SoakCredentials
 
 static class SimTargets
 {
-    public const int ModbusPort = 15020, S7Port = 11102, OpcPort = 14841, MqttPort = 11883;
+    public const int ModbusPort = 15020, S7Port = 11102, OpcPort = 14841, MqttPort = 11883, McPort = 15007;
 
     public static List<SoakTarget> Build(SoakOptions o)
     {
         var now = DateTimeOffset.UtcNow;
-        SoakTarget Target(string name, string protocol, string host, int port, Func<Guid, List<SoakTag>> tags)
+        SoakTarget Target(string name, string protocol, string host, int port, Func<Guid, List<SoakTag>> tags, int unitId = 1)
         {
             var id = Guid.NewGuid();
             if (protocol is "OPC UA" or "MQTT")
                 SoakCredentials.Store.Save(id, new DeviceCredential(SoakCredentials.SimUser, SoakCredentials.SimPassword));
-            return new SoakTarget(name, new DeviceDefinition(id, name, protocol, "Configured", host, port, 1, 1000, now, now), tags(id));
+            return new SoakTarget(name, new DeviceDefinition(id, name, protocol, "Configured", host, port, unitId, 1000, now, now), tags(id));
         }
         SoakTag T(Guid device, string name, string address, TagDataType type, Expectation e,
             ModbusByteOrder order = ModbusByteOrder.ABCD, int? bit = null) =>
@@ -265,6 +267,27 @@ static class SimTargets
                 T(id, "MerkerReal", "MD4", TagDataType.Float32, new(null, 12.5)),
                 T(id, "MerkerBit", "M8.0", TagDataType.Bool, new(null, 1)),
             ]),
+            // Mitsubishi MC (3E binary), iQ-R/Q series numbering (unit 0): hex X/Y, low word first.
+            Target("MC sim", "Mitsubishi MC", "127.0.0.1", McPort, id =>
+            [
+                .. Enumerable.Range(0, Math.Min(c, 200)).Select(k => T(id, $"D{k}", $"D{k}", TagDataType.Word, new(k, null))),
+                T(id, "Word", "D1000", TagDataType.Word, new(null, 1234)),
+                T(id, "Int16", "D1001", TagDataType.Int16, new(null, -1234)),
+                T(id, "Int32", "D1002", TagDataType.Int32, new(null, -123456)),
+                T(id, "UInt32", "D1004", TagDataType.UInt32, new(null, 4000000000)),
+                T(id, "Float", "D1006", TagDataType.Float32, new(null, 12.5)),
+                T(id, "Double", "D1010", TagDataType.Float64, new(null, 12.5)),
+                T(id, "Int64", "D1014", TagDataType.Int64, new(null, -123456789012)),
+                T(id, "WordBit1", "D1020.1", TagDataType.Bool, new(null, 1)),
+                T(id, "WordBit2", "D1020.2", TagDataType.Bool, new(null, 0)),
+                T(id, "M0", "M0", TagDataType.Bool, new(null, 1)),
+                T(id, "M1", "M1", TagDataType.Bool, new(null, 0)),
+                T(id, "X1F", "X1F", TagDataType.Bool, new(null, 1)),
+                T(id, "Y10", "Y10", TagDataType.Bool, new(null, 1)),
+                T(id, "SM400", "SM400", TagDataType.Bool, new(null, 1)),
+                T(id, "W1A", "W1A", TagDataType.Word, new(null, 1234)),
+                T(id, "R1000", "R1000", TagDataType.Word, new(null, 4321)),
+            ], unitId: 0),
             Target("OPC UA sim", "OPC UA", $"opc.tcp://127.0.0.1:{OpcPort}/prognode-soak/", OpcPort, id =>
             [
                 .. Enumerable.Range(0, c).Select(k => T(id, $"Counter{k}", $"ns=2;s=Counter{k}", TagDataType.Word, new(k, null))),
@@ -472,13 +495,13 @@ sealed class Simulators(string root, string work, SoakOptions options)
         if (!File.Exists(Python))
             throw new InvalidOperationException($"Python venv not found at {Python}. See tools/protocol-soak/README.md.");
         await StartBrokerAsync();
-        foreach (var kind in new[] { "modbus", "s7", "opcua", "mqtt" }) Start(kind);
+        foreach (var kind in new[] { "modbus", "mc", "s7", "opcua", "mqtt" }) Start(kind);
         await Task.Delay(TimeSpan.FromSeconds(12)); // OPC UA creates its certificate on first start
     }
 
     private int Port(string kind) => kind switch
     {
-        "modbus" => SimTargets.ModbusPort, "s7" => SimTargets.S7Port, "opcua" => SimTargets.OpcPort, _ => SimTargets.MqttPort
+        "modbus" => SimTargets.ModbusPort, "mc" => SimTargets.McPort, "s7" => SimTargets.S7Port, "opcua" => SimTargets.OpcPort, _ => SimTargets.MqttPort
     };
 
     private void Start(string kind)
@@ -532,7 +555,7 @@ sealed class Simulators(string root, string work, SoakOptions options)
     {
         var all = new Dictionary<string, string>
         {
-            ["modbus"] = "Modbus sim", ["s7"] = "S7 sim", ["opcua"] = "OPC UA sim", ["mqtt-broker"] = "MQTT sim", ["mqtt"] = "MQTT sim",
+            ["modbus"] = "Modbus sim", ["mc"] = "MC sim", ["s7"] = "S7 sim", ["opcua"] = "OPC UA sim", ["mqtt-broker"] = "MQTT sim", ["mqtt"] = "MQTT sim",
         };
         var plan = options.Faults.Where(all.ContainsKey).Select(f => (f, all[f])).ToArray();
         if (plan.Length == 0) return;

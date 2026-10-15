@@ -87,6 +87,18 @@ public sealed class DeviceService(IDeviceRepository repository, IDeviceCapacityP
         return item;
     }
 
+    /// <summary>Mitsubishi PLC over the MC protocol (3E binary). UnitId holds the PLC series:
+    /// 0 = Q/L/iQ-R (hex X/Y), 1 = iQ-F FX5 (octal X/Y).</summary>
+    public async Task<DeviceDefinition> CreateMitsubishiMcAsync(string? name, string? host, int port, int series,
+        int pollIntervalMs, CancellationToken cancellationToken = default)
+    {
+        if (series is < 0 or > 1) throw new ArgumentException("PLC series must be Q/L/iQ-R or iQ-F (FX5).");
+        var item = BuildModbusDevice(Guid.NewGuid(), DateTimeOffset.UtcNow, name, host, port, series, pollIntervalMs)
+            with { Protocol = "Mitsubishi MC" };
+        await AddWithinCapacityAsync(item, cancellationToken);
+        return item;
+    }
+
     // UnitId encodes rack * 32 + slot; rack=0 slot=1 -> 1. No schema migration.
     public async Task<DeviceDefinition> CreateS7TcpAsync(string? name,string? host,int port,int rack,int slot,int pollIntervalMs,CancellationToken ct=default)
     {
@@ -138,7 +150,8 @@ public sealed class DeviceService(IDeviceRepository repository, IDeviceCapacityP
         DeviceDefinition updated;
 
         if (string.Equals(existing.Protocol, "Modbus TCP", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(existing.Protocol, "Siemens S7 TCP", StringComparison.OrdinalIgnoreCase))
+            string.Equals(existing.Protocol, "Siemens S7 TCP", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(existing.Protocol, "Mitsubishi MC", StringComparison.OrdinalIgnoreCase))
         {
             updated = BuildModbusDevice(
                 existing.Id,

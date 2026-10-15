@@ -122,6 +122,90 @@ def run_modbus_rtu(serial_port: str, counters: int, baud: int = 9600, parity: st
     asyncio.run(main())
 
 
+# ----------------------------------------------------------------------------- Mitsubishi MC
+MC_CODES = {0x9C: "X", 0x9D: "Y", 0x90: "M", 0x91: "SM", 0xA8: "D", 0xB4: "W", 0xAF: "R", 0xC2: "TN"}
+MC_BIT_CODES = {0x9C, 0x9D, 0x90, 0x91}
+
+
+def mc_memory() -> dict:
+    """Device memory of the MC simulator. 32/64-bit values are stored low word first (Mitsubishi)."""
+    mem = {code: {} for code in MC_CODES}
+
+    def put_words(code, start, words):
+        for i, w in enumerate(words):
+            mem[code][start + i] = w & 0xFFFF
+
+    def low_first(fmt, value):
+        raw = struct.pack("<" + fmt, value)
+        return [raw[i] | raw[i + 1] << 8 for i in range(0, len(raw), 2)]
+
+    put_words(0xA8, 1000, [1234])
+    put_words(0xA8, 1001, low_first("h", -1234))
+    put_words(0xA8, 1002, low_first("i", -123456))
+    put_words(0xA8, 1004, low_first("I", 4000000000))
+    put_words(0xA8, 1006, low_first("f", 12.5))
+    put_words(0xA8, 1010, low_first("d", 12.5))
+    put_words(0xA8, 1014, low_first("q", -123456789012))
+    put_words(0xA8, 1020, [0b1010])                       # D1020.1 and D1020.3 on
+    put_words(0xB4, 0x1A, [1234])                         # W1A
+    put_words(0xAF, 1000, [4321])                         # R1000
+    for bit_code, number in ((0x90, 0), (0x9C, 0x1F), (0x9D, 0x10), (0x91, 400)):
+        mem[bit_code][number] = 1                         # M0, X1F, Y10, SM400 on
+    return mem
+
+
+def mc_answer(request: bytes, mem: dict, counters: int) -> bytes:
+    """Answers one 3E binary batch read (0401): D0.. are counters; D/W/R at or above 20000 -> C056."""
+    command = request[11] | request[12] << 8
+    sub = request[13] | request[14] << 8
+    start = request[15] | request[16] << 8 | request[17] << 16
+    code = request[18]
+    count = request[19] | request[20] << 8
+    head = bytes([0xD0, 0x00, request[2], request[3], request[4], request[5], request[6]])
+    if command != 0x0401 or code not in MC_CODES or sub not in (0, 1) or (code not in MC_BIT_CODES and sub == 1):
+        body = struct.pack("<H", 0xC059) + bytes(9)
+    elif start + count > 20000 and code in (0xA8, 0xB4, 0xAF):
+        body = struct.pack("<H", 0xC056) + bytes(9)
+    elif sub == 1:
+        bits = [mem[code].get(start + i, 0) for i in range(count)] + [0]
+        body = b"\0\0" + bytes((bits[i] << 4) | bits[i + 1] for i in range(0, count, 2))
+    else:
+        words = []
+        for i in range(count):
+            n = start + i
+            if code in MC_BIT_CODES:
+                words.append(sum(mem[code].get(n * 16 + b, 0) << b for b in range(16)))
+            elif code == 0xA8 and n < counters:
+                words.append(counter(n))
+            else:
+                words.append(mem[code].get(n, 0))
+        body = b"\0\0" + b"".join(struct.pack("<H", w) for w in words)
+    return head + struct.pack("<H", len(body)) + body
+
+
+def run_mc(port: int, counters: int) -> None:
+    """Mitsubishi MC 3E binary server (batch read only), like an iQ-R/Q PLC's MC protocol port."""
+    mem = mc_memory()
+
+    async def handle(reader, writer):
+        try:
+            while True:
+                header = await reader.readexactly(9)
+                length = header[7] | header[8] << 8
+                rest = await reader.readexactly(length)
+                writer.write(mc_answer(header + rest, mem, counters))
+                await writer.drain()
+        except (asyncio.IncompleteReadError, ConnectionError):
+            writer.close()
+
+    async def main():
+        server = await asyncio.start_server(handle, "127.0.0.1", port)
+        async with server:
+            await server.serve_forever()
+
+    asyncio.run(main())
+
+
 # ----------------------------------------------------------------------------- Siemens S7
 def run_s7(port: int, counters: int) -> None:
     import snap7
@@ -264,7 +348,7 @@ def run_mqtt(port: int, counters: int, user: str | None = None, password: str | 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("kind", choices=["modbus", "modbus-rtu", "s7", "opcua", "mqtt"])
+    parser.add_argument("kind", choices=["modbus", "modbus-rtu", "mc", "s7", "opcua", "mqtt"])
     parser.add_argument("--port", type=int, default=0)
     parser.add_argument("--serial", default=r"\\.\CNCB0", help="modbus-rtu: serial port of the slave end")
     parser.add_argument("--counters", type=int, default=100)
@@ -274,6 +358,7 @@ if __name__ == "__main__":
     a = parser.parse_args()
     print(f"simulator {a.kind} on {a.port} with {a.counters} counters", flush=True)
     {"modbus": lambda: run_modbus(a.port, a.counters), "modbus-rtu": lambda: run_modbus_rtu(a.serial, a.counters),
+     "mc": lambda: run_mc(a.port, a.counters),
      "s7": lambda: run_s7(a.port, a.counters),
      "opcua": lambda: run_opcua(a.port, a.counters, a.pki, a.user, a.password),
      "mqtt": lambda: run_mqtt(a.port, a.counters, a.user, a.password)}[a.kind]()

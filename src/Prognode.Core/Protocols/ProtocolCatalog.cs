@@ -22,6 +22,14 @@ public sealed class ProtocolCatalog
             true,
             "Field Test"
         ),
+        new(
+            "mitsubishi-mc",
+            "Mitsubishi MC",
+            "Read-only MC protocol (SLMP 3E binary) for Q, L, iQ-R and iQ-F (FX5) PLCs: D, W, R, M, X, Y, B, L, SM, SD, timers and counters.",
+            "Available",
+            true,
+            "Field Test"
+        ),
         new("siemens-s7-tcp", "Siemens S7 TCP", "Read-only ISO-on-TCP S7comm reader: inputs, outputs, bit memory and non-optimized DBs (absolute addresses); S7-1200/1500 need PUT/GET.", "Available", true, "Field Test"),
         new(
             "opc-ua",

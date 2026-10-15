@@ -12,6 +12,7 @@
     <ProjectReference Include="..\Prognode.Protocols.Mock\Prognode.Protocols.Mock.csproj" />
     <ProjectReference Include="..\Prognode.Protocols.Modbus\Prognode.Protocols.Modbus.csproj" />
     <ProjectReference Include="..\Prognode.Protocols.S7\Prognode.Protocols.S7.csproj" />
+    <ProjectReference Include="..\Prognode.Protocols.Mitsubishi\Prognode.Protocols.Mitsubishi.csproj" />
     <ProjectReference Include="..\Prognode.Protocols.Mqtt\Prognode.Protocols.Mqtt.csproj" />
     <ProjectReference Include="..\Prognode.Protocols.OpcUa\Prognode.Protocols.OpcUa.csproj" />
     <ProjectReference Include="..\Prognode.Alarm\Prognode.Alarm.csproj" />

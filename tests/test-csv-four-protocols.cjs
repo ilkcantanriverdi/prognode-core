@@ -16,7 +16,9 @@ const devices = [
   {id:'s7',name:'Packing PLC',protocol:'Siemens S7 TCP'},
   {id:'mqtt',name:'Plant Broker',protocol:'MQTT'},
   {id:'opc',name:'OPC Server',protocol:'OPC UA'},
-  {id:'rtu',name:'Meter RTU',protocol:'Modbus RTU'}
+  {id:'rtu',name:'Meter RTU',protocol:'Modbus RTU'},
+  {id:'mc',name:'Press iQ-R',protocol:'Mitsubishi MC',unitId:0},
+  {id:'fx',name:'Feeder FX5',protocol:'Mitsubishi MC',unitId:1}
 ];
 const calls = [];
 const context = {
@@ -75,6 +77,14 @@ assert.equal(rtuRows[2].payload.body.serialPort,'COM5');
 invalid(preview('Name;Protocol;Host;UnitId;Serial\nBad;Modbus RTU;COM3;0;9600 8E1','devices')[0],'unit ID');
 invalid(preview('Name;Protocol;Host;UnitId;Serial\nBad;Modbus RTU;COM3;1;9601 8E1','devices')[0],'Serial');
 
+const mcRows = preview([
+  'Name;Protocol;Host;Port;UnitId;PollIntervalMs;Rack;Slot;Serial;Series',
+  'Press;Mitsubishi MC;192.168.3.39;5007;;1000;;;;iQ-R',
+  'Feeder;Mitsubishi MC;192.168.3.40;5000;;1000;;;;FX5',
+  'Exported;Mitsubishi MC;192.168.3.41;5007;1;1000;;;;'
+].join('\r\n'),'devices').map(valid);
+assert.equal(mcRows.map(x=>`${x.payload.kind}:${x.payload.body.series}`).join(','),'mc:0,mc:1,mc:1');
+
 const tagCsv = [
   'Device;Name;Address;DataType;BitIndex;ByteOrder;Unit;Offset;DecimalPlaces;Enabled',
   'Boiler PLC;Temperature;40001;Float32;;ABCD;C;0;1;true',
@@ -85,7 +95,10 @@ const tagCsv = [
   'Plant Broker;MQTT Json;plant/env#sensors[0].temp;Float32;;ABCD;C;0;1;true',
   'Packing PLC;S7 Input;%I0.1;Bool;;ABCD;;0;0;true',
   'Packing PLC;S7 Merker;MD20;Float32;;ABCD;;0;1;true',
-  'Meter RTU;RTU Energy;419000;Float64;;CDAB;kWh;0;2;true'
+  'Meter RTU;RTU Energy;419000;Float64;;CDAB;kWh;0;2;true',
+  'Press iQ-R;MC Pressure;D100;Float32;;ABCD;bar;0;1;true',
+  'Press iQ-R;MC Running;M0;Bool;;ABCD;;0;0;true',
+  'Feeder FX5;FX Input;X17;Bool;;ABCD;;0;0;true'
 ].join('\r\n');
 const tagRows = preview(tagCsv,'tags').map(valid);
 assert.equal(tagRows[1].payload.body.address,'DB1.DBW2');
@@ -97,6 +110,8 @@ invalid(preview('Device;Name;Address;DataType\nPacking PLC;Bad;40001;Word','tags
 invalid(preview('Device;Name;Address;DataType\nPacking PLC;Bad;DB1.DBD4;Word','tags')[0],'S7 address');
 invalid(preview('Device;Name;Address;DataType\nPlant Broker;Bad;plant/+;Float32','tags')[0],'MQTT address');
 invalid(preview('Device;Name;Address;DataType\nOPC Server;Bad;40001;Float32','tags')[0],'OPC UA address');
+invalid(preview('Device;Name;Address;DataType\nFeeder FX5;Bad;X18;Bool','tags')[0],'Mitsubishi address');
+invalid(preview('Device;Name;Address;DataType\nPress iQ-R;Bad;M0;Word','tags')[0],'Mitsubishi address');
 
 (async()=>{
   context.state.importPreview = deviceRows;
