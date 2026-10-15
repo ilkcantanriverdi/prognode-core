@@ -62,6 +62,8 @@ Reports go to `tools/protocol-soak/reports/` unless `--report` says otherwise.
   off "optimized block access" for the DBs PROGNODE reads). Inputs, outputs and bit memory: `I0.0` /
   `IW64` / `ID100`, `Q0.1` / `QW2`, `M10.0` / `MW20` / `MD30` (also `%I0.0` and the German `E`/`A`);
   these need only PUT/GET on S7-1200/1500. Optimized (symbolic) DB access is not supported.
+* Modbus RTU: `"protocol": "Modbus RTU"` with `"host": "COM3;9600;8E1"` (port, baud rate, data
+  bits, parity N/E/O, stop bits) and the device's `"unitId"`; several targets may share a COM port.
 * Modbus: six-digit addresses reach registers above 9999 (`419000` = holding register 19000);
   Int64 / UInt64 / Float64 read four registers, with the same byte orders as 32-bit values.
 * MQTT: a Tag reads a plain message (`21.5`, `true`) or one field of a JSON message

@@ -6,9 +6,14 @@ using Prognode.Protocols.Abstractions;
 
 namespace Prognode.Protocols.Modbus;
 
+/// <summary>Reads Modbus Tags over TCP or, with a <see cref="ModbusRtuRegisterClient"/>, over RS-485.</summary>
 public sealed class ModbusTagReader(
-    ModbusTcpRegisterClient client) : ITagReader
+    IModbusRegisterClient client,
+    string protocol = ModbusTagReader.TcpProtocol) : ITagReader
 {
+    public const string TcpProtocol = "Modbus TCP";
+    public const string RtuProtocol = "Modbus RTU";
+
     private const int DefaultTimeoutMs = 2000;
     // Only merge strictly contiguous addresses (review Y2): reading an undefined gap address makes
     // the PLC answer exception 0x02 for the whole block and every Tag in it.
@@ -23,7 +28,7 @@ public sealed class ModbusTagReader(
     public bool CanHandle(DeviceDefinition device) =>
         string.Equals(
             device.Protocol,
-            "Modbus TCP",
+            protocol,
             StringComparison.OrdinalIgnoreCase);
 
     public async Task<IReadOnlyList<TagValueSnapshot>> ReadAsync(
@@ -32,11 +37,11 @@ public sealed class ModbusTagReader(
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(device.Host) ||
-            device.Port is null ||
+            (device.Port is null && protocol == TcpProtocol) ||
             device.UnitId is null)
         {
             throw new InvalidOperationException(
-                $"Device '{device.Name}' has incomplete Modbus TCP settings.");
+                $"Device '{device.Name}' has incomplete {protocol} settings.");
         }
 
         var enabled = tags
@@ -108,7 +113,7 @@ public sealed class ModbusTagReader(
         CancellationToken cancellationToken)
     {
         var host = device.Host!;
-        var port = device.Port!.Value;
+        var port = device.Port ?? 0;
         var unitId = device.UnitId!.Value;
         var result = new List<TagValueSnapshot>(block.Tags.Count);
         foreach (var item in block.Tags) _rejectedUntil.TryRemove(item.Tag.Id, out _);

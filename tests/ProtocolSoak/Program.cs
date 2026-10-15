@@ -32,6 +32,7 @@ var sim = options.ConfigPath is null ? new Simulators(root, work, options) : nul
 // Simulators are child processes: stop them however the soak ends (Ctrl+C, error, normal end).
 Console.CancelKeyPress += (_, _) => sim?.StopAllAsync().GetAwaiter().GetResult();
 var opc = new OpcUaConnectionFactory(Path.Combine(work, "core-data"));
+var rtuClient = new ModbusRtuRegisterClient();
 try
 {
 if (sim is not null) await sim.StartAllAsync();
@@ -108,6 +109,8 @@ finally
 ITagReader CreateReader(SoakTarget t) => t.Device.Protocol switch
 {
     "Modbus TCP" => new ModbusTagReader(new ModbusTcpRegisterClient()),
+    // All RTU targets share one client: devices on one COM port share the line.
+    "Modbus RTU" => new ModbusTagReader(rtuClient, ModbusTagReader.RtuProtocol),
     "Siemens S7" => new S7TagReader(),
     "OPC UA" => new OpcUaTagReader(opc, SoakCredentials.Store),
     "MQTT" => new MqttTagReader(SoakCredentials.Store),

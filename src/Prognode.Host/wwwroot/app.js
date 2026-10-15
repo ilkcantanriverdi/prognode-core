@@ -1388,10 +1388,12 @@ function selectProtocol(protocolId) {
 
   $("selectedProtocolName").textContent = protocol?.name || "—";
   $("selectedProtocolLogo").textContent =
-    protocolId === "modbus-tcp" ? "MB" : protocolId === "siemens-s7-tcp" ? "S7" :
+    protocolId === "modbus-tcp" ? "MB" : protocolId === "modbus-rtu" ? "RTU" : protocolId === "siemens-s7-tcp" ? "S7" :
     protocolId === "opc-ua" ? "UA" : protocolId === "mqtt" ? "MQ" : "M";
 
   $("s7Fields").classList.toggle("hidden", protocolId !== "siemens-s7-tcp");
+  $("modbusRtuFields").classList.toggle("hidden", protocolId !== "modbus-rtu");
+  if (protocolId === "modbus-rtu") void loadSerialPorts();
   $("mqttFields").classList.toggle("hidden", protocolId !== "mqtt");
   $("opcUaFields").classList.toggle("hidden", protocolId !== "opc-ua");
   $("testS7Connection").classList.toggle("hidden", protocolId !== "siemens-s7-tcp");
@@ -1566,11 +1568,11 @@ function renderDevices() {
         <td><span class="device-name">${escapeHtml(device.name)}</span></td>
         <td><span class="protocol-badge">${escapeHtml(device.protocol)}</span></td>
         <td><span class="status-badge ${statusClass(deviceRuntimeStatus(device))}" data-device-status="${escapeHtml(String(device.id))}">${escapeHtml(deviceRuntimeStatus(device))}</span></td>
-        <td>${device.host ? `${escapeHtml(device.host)}:${device.port}` : "—"}</td>
+        <td>${device.host ? (device.port != null ? `${escapeHtml(device.host)}:${device.port}` : escapeHtml(device.protocol === "Modbus RTU" ? `${device.host.replace(/;/g, " · ")} · unit ${device.unitId}` : device.host)) : "—"}</td>
         <td>${device.pollIntervalMs} ms</td>
         <td>${new Date(device.createdAt).toLocaleString("en-US")}</td>
         <td class="actions-cell">
-          ${device.host ? `
+          ${device.host && device.protocol !== "Modbus RTU" ? `
             <button class="ping-button"
               data-ping-device="${device.id}"
               title="ICMP diagnostic only">
@@ -1680,12 +1682,16 @@ async function loadTagValues() {
     new Map(values.map(x => [x.tagId, x]));
 }
 
+function isModbusProtocol(protocol) {
+  return protocol === "Modbus TCP" || protocol === "Modbus RTU";
+}
+
 function tagDeviceName(id) {
   return state.devices.find(x => x.id === id)?.name || "—";
 }
 
 function tagAddressText(tag) {
-  if (state.devices.find(x => x.id === tag.deviceId)?.protocol !== "Modbus TCP")
+  if (!isModbusProtocol(state.devices.find(x => x.id === tag.deviceId)?.protocol))
     return tag.address;
   const numeric = Number(tag.address);
   const area = modbusAddressInfo(tag.address);
@@ -1700,7 +1706,7 @@ function tagAddressText(tag) {
 }
 
 function tagDatatypeText(tag) {
-  if (state.devices.find(x => x.id === tag.deviceId)?.protocol === "Modbus TCP" &&
+  if (isModbusProtocol(state.devices.find(x => x.id === tag.deviceId)?.protocol) &&
       tagRegisterWidth(tag.dataType) > 1)
     return `${tag.dataType} / ${tag.byteOrder}`;
 
@@ -1944,6 +1950,7 @@ function openEditDeviceModal(id) {
   state.editingDeviceId = id;
   state.editingDeviceOriginal = {...device};
   state.selectedProtocol = device.protocol === "Modbus TCP" ? "modbus-tcp" :
+    device.protocol === "Modbus RTU" ? "modbus-rtu" :
     device.protocol === "Siemens S7 TCP" ? "siemens-s7-tcp" :
     device.protocol === "MQTT" ? "mqtt" : device.protocol === "OPC UA" ? "opc-ua" : "mock";
   state.modbusTestPassed = true;
@@ -1958,11 +1965,13 @@ function openEditDeviceModal(id) {
   const protocol = state.protocols.find(x => x.id === state.selectedProtocol);
   $("selectedProtocolName").textContent = protocol?.name || device.protocol;
   $("selectedProtocolLogo").textContent = state.selectedProtocol === "modbus-tcp" ? "MB" :
+    state.selectedProtocol === "modbus-rtu" ? "RTU" :
     state.selectedProtocol === "siemens-s7-tcp" ? "S7" :
     state.selectedProtocol === "opc-ua" ? "UA" : state.selectedProtocol === "mqtt" ? "MQ" : "M";
   $("deviceNameInput").value = device.name;
 
   $("s7Fields").classList.toggle("hidden", state.selectedProtocol !== "siemens-s7-tcp");
+  $("modbusRtuFields").classList.toggle("hidden", state.selectedProtocol !== "modbus-rtu");
   $("mqttFields").classList.toggle("hidden", state.selectedProtocol !== "mqtt");
   $("opcUaFields").classList.toggle("hidden", state.selectedProtocol !== "opc-ua");
   $("testS7Connection").classList.toggle("hidden", state.selectedProtocol !== "siemens-s7-tcp");
@@ -1991,6 +2000,16 @@ function openEditDeviceModal(id) {
   if (state.selectedProtocol === "opc-ua") {
     $("opcUaUrl").value = device.host || "";
     $("opcUaPoll").value = device.pollIntervalMs ?? 1000;
+  }
+  if (state.selectedProtocol === "modbus-rtu") {
+    const serial = /^([^;]+);(\d+);([78])([NEO])([12])$/i.exec(device.host || "");
+    void loadSerialPorts(serial?.[1]);
+    if (serial) {
+      $("rtuBaud").value = serial[2]; $("rtuDataBits").value = serial[3];
+      $("rtuParity").value = serial[4].toUpperCase(); $("rtuStopBits").value = serial[5];
+    }
+    $("rtuUnitId").value = device.unitId ?? 1;
+    $("rtuPoll").value = device.pollIntervalMs ?? 1000;
   }
   for (const prefix of ["mqtt", "opcUa"]) {
     $(`${prefix}Username`).value = device.username || "";
@@ -2211,6 +2230,11 @@ async function saveDevice() {
             })
           });
       }
+      else if (state.selectedProtocol === "modbus-rtu") {
+        await api(`/api/devices/${state.editingDeviceId}`, {method:"PUT",body:JSON.stringify({
+          name, host:rtuSerialSettings(), unitId:readNumber("rtuUnitId"), pollIntervalMs:readNumber("rtuPoll")
+        })});
+      }
       else if (state.selectedProtocol === "mqtt") {
         await api(`/api/devices/${state.editingDeviceId}`, {method:"PUT",body:JSON.stringify({
           name, host:$("mqttHost").value.trim(), port:readNumber("mqttPort"),
@@ -2262,6 +2286,13 @@ async function saveDevice() {
             pollIntervalMs:readNumber("modbusPoll")
           })
         });
+    }
+    else if (state.selectedProtocol === "modbus-rtu") {
+      if (!$("rtuPort").value) throw new Error("Select the serial port of the RS-485 adapter.");
+      await api("/api/devices/modbus-rtu", {method:"POST",body:JSON.stringify({
+        name, serialPort:$("rtuPort").value, baudRate:readNumber("rtuBaud"), dataBits:readNumber("rtuDataBits"),
+        parity:$("rtuParity").value, stopBits:readNumber("rtuStopBits"), unitId:readNumber("rtuUnitId"), pollIntervalMs:readNumber("rtuPoll")
+      })});
     }
     else if (state.selectedProtocol === "mqtt") {
       await api("/api/devices/mqtt", {method:"POST",body:JSON.stringify({
@@ -2408,6 +2439,23 @@ function s7AddressValid(address, type) {
   const area = type === "Bool" ? /^[IEQAM]X?(\d+)\.[0-7]$/i.exec(value) : new RegExp(`^[IEQAM]${size}(\\d+)$`, "i").exec(value);
   return !!area && Number(area[1]) + length <= 65536;
 }
+// Serial ports of this PC for the Modbus RTU form; keeps a saved port even when it is unplugged.
+async function loadSerialPorts(selected) {
+  const select = $("rtuPort");
+  const keep = selected || select.value;
+  let ports = [];
+  try { ports = await api("/api/serial-ports"); } catch { ports = []; }
+  if (keep && !ports.includes(keep)) ports = [keep, ...ports];
+  select.innerHTML = ports.length
+    ? ports.map(port => `<option value="${escapeHtml(port)}">${escapeHtml(port)}</option>`).join("")
+    : `<option value="">No serial port found — connect the RS-485 adapter</option>`;
+  if (keep) select.value = keep;
+}
+
+function rtuSerialSettings() {
+  return `${$("rtuPort").value};${$("rtuBaud").value};${$("rtuDataBits").value}${$("rtuParity").value}${$("rtuStopBits").value}`;
+}
+
 // User name and password for an MQTT broker or OPC UA server. An empty user name removes the
 // credential; an empty password while editing keeps the saved one. The password is never read back.
 function deviceCredentialFields(prefix) {
@@ -2652,7 +2700,7 @@ function bulkTagName(base, n) {
 // S7: DBX bits 0..7 then the next byte, DBB +1, DBW +2, DBD +4. Others: the trailing number.
 function bulkTagAddress(address, dataType, bitIndex, protocol, n) {
   const text = String(address || "").trim();
-  if (protocol === "Modbus TCP") {
+  if (/^Modbus (TCP|RTU)$/.test(protocol || "")) {
     const info = modbusAddressInfo(text);
     if (!info) return null;
     const start = Number(text), pad = s => String(s).padStart(text.length, "0");
@@ -5609,7 +5657,7 @@ function dev3Priority(value) {
 
 function dev3Protocol(value) {
   const key = String(value || "Modbus TCP").toLowerCase().replace(/[^a-z0-9]/g, "");
-  return ({modbus:"Modbus TCP",modbustcp:"Modbus TCP",s7:"Siemens S7 TCP",s7tcp:"Siemens S7 TCP",siemenss7tcp:"Siemens S7 TCP",mqtt:"MQTT",opcua:"OPC UA"})[key] || null;
+  return ({modbus:"Modbus TCP",modbustcp:"Modbus TCP",modbusrtu:"Modbus RTU",rtu:"Modbus RTU",s7:"Siemens S7 TCP",s7tcp:"Siemens S7 TCP",siemenss7tcp:"Siemens S7 TCP",mqtt:"MQTT",opcua:"OPC UA"})[key] || null;
 }
 
 function dev3ImportExistingMode(){return $("importExistingMode")?.value==='skip'?'skip':'update'}
@@ -5638,12 +5686,22 @@ function dev3PreviewRow(row, dataset) {
     const host = dev3Cell(row, "Host", "IP", "HostIP", "EndpointUrl");
     const defaultPort = protocol === "Siemens S7 TCP" ? 102 : protocol === "MQTT" ? 8883 : protocol === "OPC UA" ? 4840 : 502;
     const port = dev3Number(dev3Cell(row, "Port"), defaultPort);
-    const unitId = dev3Number(dev3Cell(row, "UnitId", "Unit ID", "SlaveId"), protocol === "Modbus TCP" ? 1 : 0);
+    const unitId = dev3Number(dev3Cell(row, "UnitId", "Unit ID", "SlaveId"), /^Modbus (TCP|RTU)$/.test(protocol || "") ? 1 : 0);
     const pollIntervalMs = dev3Number(dev3Cell(row, "PollIntervalMs", "Poll", "PollMs"), 1000);
     if (!name) errors.push("Name is required");
     if (state.tags.some(t => t.name.toLowerCase() === name.toLowerCase())) errors.push("Name is already used by a Tag");
-    if (!protocol) errors.push("Protocol must be Modbus TCP, Siemens S7 TCP, MQTT or OPC UA");
-    if (protocol) {
+    if (!protocol) errors.push("Protocol must be Modbus TCP, Modbus RTU, Siemens S7 TCP, MQTT or OPC UA");
+    if (protocol === "Modbus RTU") {
+      // Host holds the serial settings: COM3;9600;8E1.
+      const serial = /^(COM\d{1,3});(\d{3,6});([78])([NEO])([12])$/i.exec(host);
+      if (!serial || ![1200,2400,4800,9600,19200,38400,57600,115200].includes(Number(serial[2])))
+        errors.push("Modbus RTU Host must be serial settings such as COM3;9600;8E1");
+      if (!Number.isInteger(unitId) || unitId < 1 || unitId > 247) errors.push("Modbus RTU unit ID must be 1..247");
+      if (!Number.isInteger(pollIntervalMs) || pollIntervalMs < 100 || pollIntervalMs > 3600000) errors.push("Poll interval must be 100..3600000 ms");
+      payload = serial ? { kind:"modbusrtu", body:{name, serialPort:serial[1].toUpperCase(), baudRate:Number(serial[2]), dataBits:Number(serial[3]),
+        parity:serial[4].toUpperCase(), stopBits:Number(serial[5]), unitId, pollIntervalMs} } : null;
+      preview = `${name || "?"} • ${host || "?"} • Unit ${unitId}`;
+    } else if (protocol) {
       if (!host) errors.push("Host / IP is required");
       if (!Number.isInteger(port) || port < 1 || port > 65535) errors.push("Port must be 1..65535");
       if (!Number.isInteger(pollIntervalMs) || pollIntervalMs < 100 || pollIntervalMs > 3600000) errors.push("Poll interval must be 100..3600000 ms");
@@ -5697,9 +5755,9 @@ function dev3PreviewRow(row, dataset) {
     if (!dataType) errors.push("Unsupported datatype");
     if (!["ABCD","CDAB","BADC","DCBA"].includes(byteOrder)) errors.push("ByteOrder must be ABCD/CDAB/BADC/DCBA");
     let effectiveBitIndex = null;
-    if (device?.protocol === "Modbus TCP") {
+    if (/^Modbus (TCP|RTU)$/.test(device?.protocol || "")) {
       const addressInfo = modbusAddressInfo(address);
-      if (!addressInfo) errors.push("Address must be in 00001/10001/30001/40001 Modbus read ranges");
+      if (!addressInfo) errors.push("Address must be in 00001/10001/30001/40001 Modbus read ranges (six digits above 9999, e.g. 419000)");
       if (addressInfo?.bitArea && dataType && dataType !== "Bool") errors.push("Coil / Discrete Input requires BOOL datatype");
       if (addressInfo?.area === "Input Register" && dataType === "Bool") errors.push("Input Register (3xxxx) does not support BOOL bit access");
       if (dataType === "Bool" && addressInfo && !addressInfo.bitArea && addressInfo.area !== "Input Register" && (bitIndex === null || !Number.isInteger(bitIndex) || bitIndex < 0 || bitIndex > 15)) errors.push("Register BOOL requires BitIndex 0..15");
@@ -5707,10 +5765,10 @@ function dev3PreviewRow(row, dataset) {
       effectiveBitIndex = dataType === "Bool" && addressInfo && !addressInfo.bitArea ? bitIndex : null;
       if (bitIndex !== null && effectiveBitIndex === null) errors.push("BitIndex is only valid for Holding Register BOOL");
     } else if (device?.protocol === "Siemens S7 TCP") {
-      if (!dataType || !s7AddressValid(address, dataType)) errors.push("S7 address must match datatype: DB1.DBX0.0 / DB1.DBW2 / DB1.DBD4");
+      if (!dataType || !s7AddressValid(address, dataType)) errors.push("S7 address must match datatype: DB1.DBX0.0 / I0.0 / M10.0, DB1.DBW2 / IW64 / MW20, DB1.DBD4 / ID100 / MD30");
       if (bitIndex !== null) errors.push("S7 bit index is part of the DBX address; leave BitIndex blank");
     } else if (device?.protocol === "MQTT") {
-      if (!address || new TextEncoder().encode(address).length > 512 || /[+#\x00-\x1f\x7f]/.test(address)) errors.push("MQTT address must be an exact topic without + or # (max 512 bytes)");
+      if (!mqttTagAddressValid(address)) errors.push("MQTT address must be an exact topic without + (max 512 bytes), optionally #field for JSON");
       if (bitIndex !== null) errors.push("MQTT BitIndex must be blank");
     } else if (device?.protocol === "OPC UA") {
       if (!opcUaNodeAddressValid(address)) errors.push("OPC UA address must be a NodeId such as ns=2;i=13 or the Siemens namespace URI;i=13");
@@ -5780,7 +5838,7 @@ function dev3PreviewRow(row, dataset) {
   const existing=dev3ImportIdentity(dataset,payload),mode=dev3ImportExistingMode();
   const action=existing?(mode==='skip'?'skip':'update'):'create';
   if(existing&&dataset==='tags'&&existing.deviceId!==payload?.body?.deviceId)errors.push('Tag name belongs to another Device; rename it before import');
-  if(existing&&dataset==='devices'&&existing.protocol!==({'modbus':'Modbus TCP','s7':'Siemens S7 TCP','mqtt':'MQTT','opcua':'OPC UA'}[payload.kind]))errors.push('Device protocol cannot be changed in place');
+  if(existing&&dataset==='devices'&&existing.protocol!==({'modbus':'Modbus TCP','modbusrtu':'Modbus RTU','s7':'Siemens S7 TCP','mqtt':'MQTT','opcua':'OPC UA'}[payload.kind]))errors.push('Device protocol cannot be changed in place');
   return { row:row.__row, dataset, source:row, payload, preview, errors,
     action,existingId:existing?.id||null,
     valid:errors.length === 0 && action!=='skip' };
@@ -5851,7 +5909,7 @@ async function executeCsvImport() {
           pollIntervalMs:item.payload.body.pollIntervalMs}:item.payload.body;
         await api(`${route}/${encodeURIComponent(item.existingId)}`,{method:'PUT',body:JSON.stringify(body)});
       } else if (item.dataset === "devices") {
-        const devicePaths = {modbus:"/api/devices/modbus-tcp",s7:"/api/devices/siemens-s7-tcp",mqtt:"/api/devices/mqtt",opcua:"/api/devices/opc-ua"};
+        const devicePaths = {modbus:"/api/devices/modbus-tcp",modbusrtu:"/api/devices/modbus-rtu",s7:"/api/devices/siemens-s7-tcp",mqtt:"/api/devices/mqtt",opcua:"/api/devices/opc-ua"};
         await api(devicePaths[item.payload.kind], { method:"POST", body:JSON.stringify(item.payload.body) });
       } else if (item.dataset === "tags") {
         await api("/api/tags", { method:"POST", body:JSON.stringify(item.payload.body) });
@@ -6059,6 +6117,7 @@ function wireEvents() {
     .addEventListener("click", testModbus);
   $("testS7Connection").addEventListener("click",testS7Connection);
   $("inspectOpcUaCertificate").addEventListener("click",inspectOpcUaCertificate);
+  $("refreshRtuPorts")?.addEventListener("click",()=>loadSerialPorts());
   $("opcUaUrl").addEventListener("input",()=>{
     state.opcUaCertificate = null;
     state.opcUaCertificateInput = "";

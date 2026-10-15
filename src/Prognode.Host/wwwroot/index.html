@@ -1314,8 +1314,29 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
             <label class="field"><span>Poll interval (ms)</span><input id="s7Poll" type="number" min="100" value="1000" /></label>
             <label class="field"><span>Timeout (ms)</span><input id="s7Timeout" type="number" min="250" max="30000" value="2000" /></label>
           </div>
-          <div class="info-box">Read-only S7 TCP · Non-optimized DB · Enable PUT/GET in TIA Portal. Addresses: DB1.DBX0.0, DB1.DBW2, DB1.DBD4. TCP 102.</div>
+          <div class="info-box">Read-only S7 TCP · Enable PUT/GET in TIA Portal. Addresses: inputs I0.0 / IW64, outputs Q0.1 / QW2, bit memory M10.0 / MD20, and DB1.DBX0.0 / DB1.DBW2 / DB1.DBD4 in DBs with optimized block access off. TCP 102.</div>
           <div id="s7TestResult" class="test-result hidden"></div>
+        </div>
+
+        <div id="modbusRtuFields" class="hidden">
+          <div class="form-grid">
+            <label class="field"><span>Serial port</span>
+              <select id="rtuPort"></select></label>
+            <label class="field"><span>Baud rate</span>
+              <select id="rtuBaud"><option>1200</option><option>2400</option><option>4800</option><option selected>9600</option><option>19200</option><option>38400</option><option>57600</option><option>115200</option></select></label>
+            <label class="field"><span>Data bits</span>
+              <select id="rtuDataBits"><option selected>8</option><option>7</option></select></label>
+            <label class="field"><span>Parity</span>
+              <select id="rtuParity"><option value="E" selected>Even</option><option value="N">None</option><option value="O">Odd</option></select></label>
+            <label class="field"><span>Stop bits</span>
+              <select id="rtuStopBits"><option selected>1</option><option>2</option></select></label>
+            <label class="field"><span>Unit ID (1–247)</span>
+              <input id="rtuUnitId" type="number" min="1" max="247" value="1" /></label>
+            <label class="field"><span>Poll interval (ms)</span>
+              <input id="rtuPoll" type="number" min="100" value="1000" /></label>
+          </div>
+          <div class="info-box">Connect the RS-485 line to a COM port or USB RS-485 adapter on this PC. Use the serial settings and unit ID from the device manual (Modbus default: 9600, 8 data bits, even parity, 1 stop bit). Several devices on one line: add each with its own unit ID and the same serial settings.</div>
+          <button type="button" class="secondary" id="refreshRtuPorts">Refresh serial ports</button>
         </div>
 
         <div id="mqttFields" class="hidden">
