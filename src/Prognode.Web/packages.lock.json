@@ -232,6 +232,13 @@
           "Prognode.Contracts": "[1.0.0-dev, )"
         }
       },
+      "prognode.protocols.bacnet": {
+        "type": "Project",
+        "dependencies": {
+          "Prognode.Contracts": "[1.0.0-dev, )",
+          "Prognode.Protocols.Abstractions": "[1.0.0-dev, )"
+        }
+      },
       "prognode.protocols.ethernetip": {
         "type": "Project",
         "dependencies": {

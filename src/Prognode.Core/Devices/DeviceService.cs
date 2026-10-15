@@ -121,6 +121,16 @@ public sealed class DeviceService(IDeviceRepository repository, IDeviceCapacityP
         return item;
     }
 
+    /// <summary>BACnet/IP device on the IP network (UDP 47808); objects are addressed per Tag.</summary>
+    public async Task<DeviceDefinition> CreateBacnetIpAsync(string? name, string? host, int port,
+        int pollIntervalMs, CancellationToken cancellationToken = default)
+    {
+        var item = BuildModbusDevice(Guid.NewGuid(), DateTimeOffset.UtcNow, name, host, port, 0, pollIntervalMs)
+            with { Protocol = "BACnet/IP" };
+        await AddWithinCapacityAsync(item, cancellationToken);
+        return item;
+    }
+
     private static void ValidateLogixSlot(int slot)
     {
         if (slot is not (255 or >= 0 and <= 31)) throw new ArgumentException("CPU slot must be 0..31, or direct (Micro800).");
@@ -180,7 +190,8 @@ public sealed class DeviceService(IDeviceRepository repository, IDeviceCapacityP
             string.Equals(existing.Protocol, "Siemens S7 TCP", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(existing.Protocol, "Mitsubishi MC", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(existing.Protocol, "Omron FINS", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(existing.Protocol, "EtherNet/IP", StringComparison.OrdinalIgnoreCase))
+            string.Equals(existing.Protocol, "EtherNet/IP", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(existing.Protocol, "BACnet/IP", StringComparison.OrdinalIgnoreCase))
         {
             if (string.Equals(existing.Protocol, "EtherNet/IP", StringComparison.OrdinalIgnoreCase))
                 ValidateLogixSlot(unitId ?? existing.UnitId ?? 0);

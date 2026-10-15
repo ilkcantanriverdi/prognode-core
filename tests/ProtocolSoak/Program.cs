@@ -17,6 +17,7 @@ using Prognode.Contracts.Devices;
 using Prognode.Contracts.Tags;
 using Prognode.Protocols.Abstractions;
 using Prognode.Protocols.Mitsubishi;
+using Prognode.Protocols.Bacnet;
 using Prognode.Protocols.EtherNetIp;
 using Prognode.Protocols.Modbus;
 using Prognode.Protocols.Omron;
@@ -118,6 +119,7 @@ ITagReader CreateReader(SoakTarget t) => t.Device.Protocol switch
     "Mitsubishi MC" => new McTagReader(),
     "Omron FINS" => new FinsTagReader(),
     "EtherNet/IP" => new LogixTagReader(),
+    "BACnet/IP" => new BacnetTagReader(),
     "OPC UA" => new OpcUaTagReader(opc, SoakCredentials.Store),
     "MQTT" => new MqttTagReader(SoakCredentials.Store),
     _ => throw new ArgumentException($"Unknown protocol {t.Device.Protocol}")
@@ -170,7 +172,7 @@ sealed record SoakOptions(double Minutes, int Counters, double FaultEveryMinutes
         double D(string name, double fallback) => double.TryParse(Get(name), NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : fallback;
         return new SoakOptions(D("--minutes", 10), (int)D("--tags", 200), D("--fault-every", 3), (int)D("--fault-down", 20),
             Get("--config"), Get("--report"), Get("--python"),
-            (Get("--faults") ?? "modbus,mc,fins,enip,s7,opcua,mqtt-broker,mqtt").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+            (Get("--faults") ?? "modbus,mc,fins,enip,bacnet,s7,opcua,mqtt-broker,mqtt").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
     }
 }
 
@@ -216,7 +218,7 @@ static class SoakCredentials
 
 static class SimTargets
 {
-    public const int ModbusPort = 15020, S7Port = 11102, OpcPort = 14841, MqttPort = 11883, McPort = 15007, FinsPort = 19600, EnipPort = 14818;
+    public const int ModbusPort = 15020, S7Port = 11102, OpcPort = 14841, MqttPort = 11883, McPort = 15007, FinsPort = 19600, EnipPort = 14818, BacnetPort = 47809;
 
     public static List<SoakTarget> Build(SoakOptions o)
     {
@@ -330,6 +332,18 @@ static class SimTargets
                 T(id, "StatusBit2", "Status.2", TagDataType.Bool, new(null, 0)),
                 T(id, "Running", "Running", TagDataType.Bool, new(null, 1)),
                 T(id, "Stopped", "Stopped", TagDataType.Bool, new(null, 0)),
+            ], unitId: 0),
+            // BACnet/IP (UDP): Present_Value of analog, binary and multi-state objects, ReadPropertyMultiple.
+            Target("BACnet sim", "BACnet/IP", "127.0.0.1", BacnetPort, id =>
+            [
+                .. Enumerable.Range(0, Math.Min(c, 200)).Select(k => T(id, $"AV{k}", $"AV:{k}", TagDataType.Float32, new(k, null))),
+                T(id, "SupplyTemp", "AI:1", TagDataType.Float32, new(null, 12.5)),
+                T(id, "ValveCmd", "AO:1", TagDataType.Float32, new(null, -1234.5)),
+                T(id, "FanStatus", "BI:1", TagDataType.Bool, new(null, 1)),
+                T(id, "PumpCmd", "BO:1", TagDataType.Bool, new(null, 1)),
+                T(id, "Alarm", "BV:1", TagDataType.Bool, new(null, 0)),
+                T(id, "Mode", "MSI:1", TagDataType.UInt16, new(null, 2)),
+                T(id, "Stage", "MSV:1", TagDataType.UInt16, new(null, 3)),
             ], unitId: 0),
             Target("OPC UA sim", "OPC UA", $"opc.tcp://127.0.0.1:{OpcPort}/prognode-soak/", OpcPort, id =>
             [
@@ -538,13 +552,13 @@ sealed class Simulators(string root, string work, SoakOptions options)
         if (!File.Exists(Python))
             throw new InvalidOperationException($"Python venv not found at {Python}. See tools/protocol-soak/README.md.");
         await StartBrokerAsync();
-        foreach (var kind in new[] { "modbus", "mc", "fins", "enip", "s7", "opcua", "mqtt" }) Start(kind);
+        foreach (var kind in new[] { "modbus", "mc", "fins", "enip", "bacnet", "s7", "opcua", "mqtt" }) Start(kind);
         await Task.Delay(TimeSpan.FromSeconds(12)); // OPC UA creates its certificate on first start
     }
 
     private int Port(string kind) => kind switch
     {
-        "modbus" => SimTargets.ModbusPort, "mc" => SimTargets.McPort, "fins" => SimTargets.FinsPort, "enip" => SimTargets.EnipPort, "s7" => SimTargets.S7Port, "opcua" => SimTargets.OpcPort, _ => SimTargets.MqttPort
+        "modbus" => SimTargets.ModbusPort, "mc" => SimTargets.McPort, "fins" => SimTargets.FinsPort, "enip" => SimTargets.EnipPort, "bacnet" => SimTargets.BacnetPort, "s7" => SimTargets.S7Port, "opcua" => SimTargets.OpcPort, _ => SimTargets.MqttPort
     };
 
     private void Start(string kind)
@@ -598,7 +612,7 @@ sealed class Simulators(string root, string work, SoakOptions options)
     {
         var all = new Dictionary<string, string>
         {
-            ["modbus"] = "Modbus sim", ["mc"] = "MC sim", ["fins"] = "FINS sim", ["enip"] = "EtherNet/IP sim", ["s7"] = "S7 sim", ["opcua"] = "OPC UA sim", ["mqtt-broker"] = "MQTT sim", ["mqtt"] = "MQTT sim",
+            ["modbus"] = "Modbus sim", ["mc"] = "MC sim", ["fins"] = "FINS sim", ["enip"] = "EtherNet/IP sim", ["bacnet"] = "BACnet sim", ["s7"] = "S7 sim", ["opcua"] = "OPC UA sim", ["mqtt-broker"] = "MQTT sim", ["mqtt"] = "MQTT sim",
         };
         var plan = options.Faults.Where(all.ContainsKey).Select(f => (f, all[f])).ToArray();
         if (plan.Length == 0) return;

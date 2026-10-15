@@ -7,6 +7,7 @@ const slice=(from,to)=>{const s=source.indexOf(from),e=source.indexOf(to,s);asse
 const context={Number,String,Math};
 vm.createContext(context);
 vm.runInContext(slice('function modbusAddressInfo(','function nextModbusTagAddress('),context);
+vm.runInContext(slice('const BACNET_TYPES','// MQTT Tag address').replace('const BACNET_TYPES','var BACNET_TYPES'),context);
 vm.runInContext(slice('function bulkTagName(','function tagFormBody('),context);
 const at=(a,type,bit,protocol,n,series)=>context.bulkTagAddress(a,type,bit,protocol,n,series);
 assert.equal(context.bulkTagName('Temp',0),'Temp1');
@@ -45,4 +46,9 @@ assert.deepEqual({...at('Grid[1,9]','Word',null,'EtherNet/IP',1)},{address:'Grid
 assert.deepEqual({...at('Status.30','Bool',null,'EtherNet/IP',1)},{address:'Status.31',bitIndex:null});
 assert.deepEqual({...at('Motor1','Float32',null,'EtherNet/IP',2)},{address:'Motor3',bitIndex:null},'numbered tag names');
 assert.equal(at('Status.63','Bool',null,'EtherNet/IP',1),null,'no bit past 63');
-console.log('PASS: bulk tag add numbers names and continues Modbus, S7, Mitsubishi, Omron, Logix and numbered addresses');
+// BACnet: next instance, same written form.
+assert.deepEqual({...at('AV:1','Float32',null,'BACnet/IP',4)},{address:'AV:5',bitIndex:null});
+assert.deepEqual({...at('analog-input,9','Float32',null,'BACnet/IP',1)},{address:'analog-input,10',bitIndex:null});
+assert.deepEqual({...at('BV 3','Bool',null,'BACnet/IP',2)},{address:'BV 5',bitIndex:null});
+assert.equal(at('AI:4194302','Float32',null,'BACnet/IP',1),null,'past the last instance');
+console.log('PASS: bulk tag add numbers names and continues Modbus, S7, Mitsubishi, Omron, Logix, BACnet and numbered addresses');

@@ -20,7 +20,8 @@ const devices = [
   {id:'mc',name:'Press iQ-R',protocol:'Mitsubishi MC',unitId:0},
   {id:'fx',name:'Feeder FX5',protocol:'Mitsubishi MC',unitId:1},
   {id:'fins',name:'Mixer CJ2',protocol:'Omron FINS',unitId:0},
-  {id:'enip',name:'Line L33ER',protocol:'EtherNet/IP',unitId:0}
+  {id:'enip',name:'Line L33ER',protocol:'EtherNet/IP',unitId:0},
+  {id:'bacnet',name:'AHU-1',protocol:'BACnet/IP',unitId:0}
 ];
 const calls = [];
 const context = {
@@ -103,6 +104,9 @@ const enipRows = preview([
 assert.equal(enipRows.map(x=>`${x.payload.kind}:${x.payload.body.port}:${x.payload.body.slot}`).join(','),'enip:44818:2,enip:44818:255,enip:44818:255');
 invalid(preview('Name;Protocol;Host;Slot\nBad;EtherNet/IP;192.168.1.20;40','devices')[0],'Slot');
 
+const bacnetRows = preview('Name;Protocol;Host;Port;PollIntervalMs\r\nAHU;BACnet/IP;192.168.1.60;;1000\r\nVAV;BACnet;192.168.1.61;47809;2000','devices').map(valid);
+assert.equal(bacnetRows.map(x=>`${x.payload.kind}:${x.payload.body.port}`).join(','),'bacnet:47808,bacnet:47809');
+
 const tagCsv = [
   'Device;Name;Address;DataType;BitIndex;ByteOrder;Unit;Offset;DecimalPlaces;Enabled',
   'Boiler PLC;Temperature;40001;Float32;;ABCD;C;0;1;true',
@@ -121,7 +125,9 @@ const tagCsv = [
   'Mixer CJ2;FINS Output;CIO100.07;Bool;;ABCD;;0;0;true',
   'Mixer CJ2;FINS Timer Done;T0;Bool;;ABCD;;0;0;true',
   'Line L33ER;Logix Level;Program:Main.Tank.Level;Float32;;ABCD;%;0;1;true',
-  'Line L33ER;Logix Bit;Status.5;Bool;;ABCD;;0;0;true'
+  'Line L33ER;Logix Bit;Status.5;Bool;;ABCD;;0;0;true',
+  'AHU-1;Supply Temp;AI:1;Float32;;ABCD;C;0;1;true',
+  'AHU-1;Fan Status;BI:1;Bool;;ABCD;;0;0;true'
 ].join('\r\n');
 const tagRows = preview(tagCsv,'tags').map(valid);
 assert.equal(tagRows[1].payload.body.address,'DB1.DBW2');
@@ -138,6 +144,7 @@ invalid(preview('Device;Name;Address;DataType\nPress iQ-R;Bad;M0;Word','tags')[0
 invalid(preview('Device;Name;Address;DataType\nMixer CJ2;Bad;D100;Bool','tags')[0],'Omron address');
 invalid(preview('Device;Name;Address;DataType\nMixer CJ2;Bad;T0;Float32','tags')[0],'Omron address');
 invalid(preview('Device;Name;Address;DataType\nLine L33ER;Bad;Status.5;Int32','tags')[0],'EtherNet/IP address');
+invalid(preview('Device;Name;Address;DataType\nAHU-1;Bad;BI:1;Float32','tags')[0],'BACnet address');
 
 (async()=>{
   context.state.importPreview = deviceRows;
