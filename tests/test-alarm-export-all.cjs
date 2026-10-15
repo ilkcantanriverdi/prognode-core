@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
-const web=fs.readFileSync(path.join(__dirname,'../src/Prognode.Web/EndpointExtensions.cs'),'utf8');
+const web=require('./lib/web-endpoints.cjs');
 const start=web.indexOf('"/api/data-exchange/alarm-history.csv"');
 const end=web.indexOf('"/api/data-exchange/historian-configurations.csv"',start);
 const exportRoutes=web.slice(start,end);

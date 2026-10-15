@@ -1,3 +1,5 @@
 # Known false positives (fingerprint = commit:file:rule:line). Each entry is a test-only value, not a secret.
 # BackupContract test passphrase ("Integration-Test-1"), used only to encrypt a temporary test archive.
 c452bfb8b7221b9558f054cb3d4a0c4557247f8b:tests/BackupContract/Program.cs:generic-api-key:7
+# LicensingContract release-signature test vector: the PUBLIC key of a throwaway Ed25519 pair (private key discarded).
+69a409b066f9a2b0dccd2e143c157ae5e1fe4d15:tests/LicensingContract/Program.cs:generic-api-key:32

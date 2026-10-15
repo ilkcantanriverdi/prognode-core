@@ -63,8 +63,10 @@ public sealed class UpdateCheckService(CoreCloudLicenseOptions options, ILogger<
                     // The link shown in Core must point at PROGNODE, whatever the response says.
                     if (!CoreCloudLicenseOptions.IsAllowedBaseUrl(page)) page = $"{baseUrl}/downloads";
                     var newer = latest is not null && ProductVersion.Compare(latest, ProductVersion.Current) > 0;
+                    // Only an installer signed with the offline release key installs: the hash alone comes from the same response.
                     _installer = newer && Uri.TryCreate(Text(core, "url"), UriKind.Absolute, out var setup) && IsAllowedDownload(setup) &&
-                        Text(core, "sha256") is { Length: 64 } sha && sha.All(Uri.IsHexDigit)
+                        Text(core, "sha256") is { Length: 64 } sha && sha.All(Uri.IsHexDigit) &&
+                        ReleaseSignature.Verify(ReleaseSignature.PublicKey, "Monitor", latest!, sha.ToLowerInvariant(), Text(core, "signature"))
                         ? new Installer(latest!, setup, sha.ToLowerInvariant()) : null;
                     _status = new Status(ProductVersion.Current, latest, newer, page, DateTimeOffset.UtcNow);
                     if (newer) logger.LogInformation("PROGNODE Monitor {Latest} is available (running {Current}).", latest, ProductVersion.Current);

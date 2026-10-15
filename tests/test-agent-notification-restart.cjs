@@ -8,7 +8,7 @@ const root=path.join(__dirname,'../src');
 const agent=fs.readFileSync(path.join(root,'Prognode.Agent.Windows/AgentApplicationContext.cs'),'utf8');
 const windows=fs.readFileSync(path.join(root,'Prognode.Agent.Windows/BrowserWindows.cs'),'utf8');
 const app=fs.readFileSync(path.join(root,'Prognode.Host/wwwroot/app.js'),'utf8');
-const web=fs.readFileSync(path.join(root,'Prognode.Web/EndpointExtensions.cs'),'utf8');
+const web=require('./lib/web-endpoints.cjs');
 
 // Restart: the cursor is kept on disk; no cursor means "start after the newest event".
 assert(agent.includes('"PROGNODE", "Agent", "notification-cursor"'),'cursor must be stored per user');

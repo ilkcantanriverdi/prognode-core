@@ -20,7 +20,7 @@ try
 
     var createRequests = Enumerable.Range(0, 15).Select(index => (index % 5) switch
     {
-        0 => (Func<Task<DeviceDefinition>>)(() => devices.CreateMockAsync($"Mock {index}")),
+        0 => (Func<Task<DeviceDefinition>>)(() => devices.CreateOmronFinsAsync($"FINS {index}", "127.0.0.1", 9600, 1000)),
         1 => () => devices.CreateModbusTcpAsync($"Modbus {index}", "127.0.0.1", 502, 1, 1000),
         2 => () => devices.CreateS7TcpAsync($"S7 {index}", "127.0.0.1", 102, 0, 1, 1000),
         3 => () => devices.CreateMqttAsync($"MQTT {index}", "mqtt://127.0.0.1", 1883, 1000),
@@ -29,7 +29,7 @@ try
     var outcomes = await Task.WhenAll(createRequests.Select(request => Task.Run(() => TryCreateAsync(request))));
     Check(outcomes.Count(x => x) == 1 && await repository.CountAsync() == 1,
         "Concurrent device creation exceeded the limit or rejected every request.");
-    Console.WriteLine("PASS concurrent Mock/Modbus/S7/MQTT/OPC UA creation admits exactly one device");
+    Console.WriteLine("PASS concurrent FINS/Modbus/S7/MQTT/OPC UA creation admits exactly one device");
 
     var first = (await repository.GetAllAsync()).Single();
     await devices.DeleteAsync(first.Id);
@@ -38,18 +38,18 @@ try
         "S7 bypassed device capacity.");
     await devices.DeleteAsync(modbus.Id);
     var s7 = await devices.CreateS7TcpAsync("S7", "127.0.0.1", 102, 0, 1, 1000);
-    Check(!await TryCreateAsync(() => devices.CreateMockAsync("Blocked Mock")),
-        "Mock bypassed device capacity.");
+    Check(!await TryCreateAsync(() => devices.CreateOmronFinsAsync("Blocked FINS", "127.0.0.1", 9600, 1000)),
+        "FINS bypassed device capacity.");
 
     policy.DeviceLimit = CapacityLimit.Unlimited;
-    var second = await devices.CreateMockAsync("Existing second device");
+    var second = await devices.CreateOmronFinsAsync("Existing second device", "127.0.0.1", 9600, 1000);
     Check(await repository.CountAsync() == 2, "Unlimited commercial device capacity was restricted.");
     policy.DeviceLimit = CapacityLimit.Limited(1);
-    Check(!await TryCreateAsync(() => devices.CreateMockAsync("Blocked third device")) &&
+    Check(!await TryCreateAsync(() => devices.CreateOmronFinsAsync("Blocked third device", "127.0.0.1", 9600, 1000)) &&
           await repository.CountAsync() == 2,
         "Over-capacity existing devices were changed or a new device was accepted.");
     await devices.DeleteAsync(second.Id);
-    Check(!await TryCreateAsync(() => devices.CreateMockAsync("Still blocked")),
+    Check(!await TryCreateAsync(() => devices.CreateOmronFinsAsync("Still blocked", "127.0.0.1", 9600, 1000)),
         "A new device was accepted while the configured count already met the limit.");
     Console.WriteLine("PASS unlimited license and over-capacity data preservation");
 

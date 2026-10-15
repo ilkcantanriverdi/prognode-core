@@ -2,7 +2,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const root=path.join(__dirname,'../src/Prognode.Host/wwwroot');
-const web=fs.readFileSync(path.join(__dirname,'../src/Prognode.Web/EndpointExtensions.cs'),'utf8');
+const web=require('./lib/web-endpoints.cjs');
 const exportBlock=web.slice(web.indexOf('"/api/historian/export.csv"'),web.indexOf('"/api/system/time"'));
 assert(exportBlock.length>0);
 assert(!exportBlock.includes('ToString("O"'),'export endpoints must not emit subsecond ISO timestamps');

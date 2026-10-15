@@ -48,20 +48,26 @@ public sealed class SqliteHistorianRepository(
         await using var connection = await OpenAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
+        // One prepared statement for the whole batch; only the values change per sample.
+        await using var command = connection.CreateCommand();
+        command.Transaction = (SqliteTransaction)transaction;
+        command.CommandText = """
+        INSERT OR IGNORE INTO historian_samples(
+            tag_id, timestamp_unix_ms, value, quality, batch_id)
+        VALUES($tagId,$timestamp,$value,$quality,$batchId);
+        """;
+        var tagId = command.Parameters.Add("$tagId", SqliteType.Text);
+        var timestamp = command.Parameters.Add("$timestamp", SqliteType.Integer);
+        var value = command.Parameters.Add("$value", SqliteType.Real);
+        var quality = command.Parameters.Add("$quality", SqliteType.Text);
+        var batchId = command.Parameters.Add("$batchId", SqliteType.Text);
         foreach (var sample in samples)
         {
-            await using var command = connection.CreateCommand();
-            command.Transaction = (SqliteTransaction)transaction;
-            command.CommandText = """
-            INSERT OR IGNORE INTO historian_samples(
-                tag_id, timestamp_unix_ms, value, quality, batch_id)
-            VALUES($tagId,$timestamp,$value,$quality,$batchId);
-            """;
-            command.Parameters.AddWithValue("$tagId", sample.TagId.ToString());
-            command.Parameters.AddWithValue("$timestamp", sample.TimestampUnixMs);
-            command.Parameters.AddWithValue("$value", (object?)sample.Value ?? DBNull.Value);
-            command.Parameters.AddWithValue("$quality", sample.Quality);
-            command.Parameters.AddWithValue("$batchId", (object?)sample.BatchId?.ToString() ?? DBNull.Value);
+            tagId.Value = sample.TagId.ToString();
+            timestamp.Value = sample.TimestampUnixMs;
+            value.Value = (object?)sample.Value ?? DBNull.Value;
+            quality.Value = sample.Quality;
+            batchId.Value = (object?)sample.BatchId?.ToString() ?? DBNull.Value;
             await command.ExecuteNonQueryAsync(cancellationToken);
         }
 

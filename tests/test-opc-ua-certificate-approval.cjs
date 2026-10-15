@@ -5,7 +5,7 @@ const vm = require('node:vm');
 
 const app = fs.readFileSync(path.join(__dirname,'../src/Prognode.Host/wwwroot/app.js'),'utf8');
 const html = fs.readFileSync(path.join(__dirname,'../src/Prognode.Host/wwwroot/index.html'),'utf8');
-const endpoint = fs.readFileSync(path.join(__dirname,'../src/Prognode.Web/EndpointExtensions.cs'),'utf8');
+const endpoint = require('./lib/web-endpoints.cjs');
 const factory = fs.readFileSync(path.join(__dirname,'../src/Prognode.Protocols.OpcUa/OpcUaConnectionFactory.cs'),'utf8');
 assert(html.includes('id="inspectOpcUaCertificate"') && html.includes('id="opcUaCertificateResult"'));
 assert(endpoint.includes('/api/devices/opc-ua/certificate/inspect') &&
