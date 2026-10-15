@@ -38,6 +38,14 @@ public sealed class ProtocolCatalog
             true,
             "Field Test"
         ),
+        new(
+            "ethernet-ip",
+            "EtherNet/IP (Logix)",
+            "Read-only tag reads by name from Allen-Bradley ControlLogix, CompactLogix, GuardLogix and Micro800 controllers.",
+            "Available",
+            true,
+            "Field Test"
+        ),
         new("siemens-s7-tcp", "Siemens S7 TCP", "Read-only ISO-on-TCP S7comm reader: inputs, outputs, bit memory and non-optimized DBs (absolute addresses); S7-1200/1500 need PUT/GET.", "Available", true, "Field Test"),
         new(
             "opc-ua",

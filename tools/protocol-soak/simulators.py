@@ -8,6 +8,7 @@ Each simulator serves the same value model so the soak harness can check every v
 Usage (the harness starts and stops these itself; each runs until killed):
   python simulators.py modbus  --port 15020 --counters 200
   python simulators.py fins    --port 19600 --counters 200
+  python simulators.py enip    --port 14818 --counters 200   (cpppo Logix emulation)
   python simulators.py s7      --port 11102 --counters 200
   python simulators.py opcua   --port 14841 --counters 200 --pki <folder>
   python simulators.py mqtt    --port 11883 --counters 50      (publisher; the broker runs in the harness)
@@ -297,6 +298,44 @@ def run_fins(port: int, counters: int) -> None:
     asyncio.run(main())
 
 
+# ----------------------------------------------------------------------------- EtherNet/IP (Logix)
+ENIP_FIXED = [
+    ("Fixed_Word", "UINT", 1234), ("Fixed_Int16", "INT", -1234), ("Fixed_Int32", "DINT", -123456),
+    ("Fixed_UInt32", "UDINT", 4000000000), ("Fixed_Float", "REAL", 12.5), ("Fixed_Double", "LREAL", 12.5),
+    ("Fixed_Int64", "LINT", -123456789012), ("Status", "DINT", 0b1010), ("Running", "BOOL", 1), ("Stopped", "BOOL", 0),
+]
+
+
+def run_enip(port: int, counters: int) -> None:
+    """Logix controller emulated by cpppo (GPL, used only as a test tool): Counters[k] counts, fixed tags hold the
+    model values. cpppo serves the tags in this process (so killing it stops the server too); a background
+    thread writes them through cpppo's own client."""
+    from cpppo.server.enip import client
+    from cpppo.server.enip.main import main as enip_main
+
+    n = max(counters, 1)
+    tags = [f"Counters=INT[{n}]"] + [f"{name}={kind}" for name, kind, _ in ENIP_FIXED]
+    fixed = [f"{name}=({kind}){value}" for name, kind, value in ENIP_FIXED]
+
+    def writer():
+        while True:
+            try:
+                with client.connector(host="127.0.0.1", port=port, timeout=2) as conn:
+                    while True:
+                        # Whole slices of the array per request: element-by-element writes are too slow in cpppo.
+                        writes = [f"Counters[{a}-{min(a + 199, n - 1)}]=(INT)" + ",".join(str(counter(k)) for k in range(a, min(a + 200, n)))
+                                  for a in range(0, n, 200)] + fixed
+                        for _, _, _, _, status, _ in conn.pipeline(operations=client.parse_operations(writes), depth=4, multiple=400):
+                            if status not in (0, None):
+                                raise IOError(f"write refused: {status}")
+                        time.sleep(0.3)
+            except Exception:  # server still starting
+                time.sleep(0.5)
+
+    threading.Thread(target=writer, daemon=True).start()
+    enip_main(argv=["--address", f"127.0.0.1:{port}"] + tags)
+
+
 # ----------------------------------------------------------------------------- Siemens S7
 def run_s7(port: int, counters: int) -> None:
     import snap7
@@ -439,7 +478,7 @@ def run_mqtt(port: int, counters: int, user: str | None = None, password: str | 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("kind", choices=["modbus", "modbus-rtu", "mc", "fins", "s7", "opcua", "mqtt"])
+    parser.add_argument("kind", choices=["modbus", "modbus-rtu", "mc", "fins", "enip", "s7", "opcua", "mqtt"])
     parser.add_argument("--port", type=int, default=0)
     parser.add_argument("--serial", default=r"\\.\CNCB0", help="modbus-rtu: serial port of the slave end")
     parser.add_argument("--counters", type=int, default=100)
@@ -451,6 +490,7 @@ if __name__ == "__main__":
     {"modbus": lambda: run_modbus(a.port, a.counters), "modbus-rtu": lambda: run_modbus_rtu(a.serial, a.counters),
      "mc": lambda: run_mc(a.port, a.counters),
      "fins": lambda: run_fins(a.port, a.counters),
+     "enip": lambda: run_enip(a.port, a.counters),
      "s7": lambda: run_s7(a.port, a.counters),
      "opcua": lambda: run_opcua(a.port, a.counters, a.pki, a.user, a.password),
      "mqtt": lambda: run_mqtt(a.port, a.counters, a.user, a.password)}[a.kind]()

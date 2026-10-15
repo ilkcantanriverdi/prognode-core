@@ -147,6 +147,36 @@
       ]
     },
     {
+      "name": "Line 2 CompactLogix",
+      "protocol": "EtherNet/IP",
+      "host": "192.168.1.20",
+      "port": 44818,
+      "unitId": 0,
+      "pollMs": 1000,
+      "tags": [
+        {
+          "name": "Tank level",
+          "address": "Tank_Level",
+          "type": "Float32"
+        },
+        {
+          "name": "Pump amps",
+          "address": "Program:MainProgram.Pump.Amps",
+          "type": "Float32"
+        },
+        {
+          "name": "Batch count",
+          "address": "Batch_Count",
+          "type": "Int32"
+        },
+        {
+          "name": "Running bit",
+          "address": "Status.0",
+          "type": "Bool"
+        }
+      ]
+    },
+    {
       "name": "S7-1500 OPC UA",
       "protocol": "OPC UA",
       "host": "opc.tcp://192.168.0.10:4840/",

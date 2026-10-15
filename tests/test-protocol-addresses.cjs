@@ -12,7 +12,15 @@ vm.runInContext(section('function s7AddressValid(','async function testS7Connect
 vm.runInContext(section('function modbusAddressInfo(','function nextModbusTagAddress('),context);
 vm.runInContext(section('function mcAddressValid(','// MQTT Tag address: exact topic'),context);
 vm.runInContext(section('function mqttTagAddressValid(','function validateTagAddressClient('),context);
-const {s7AddressValid:s7,modbusAddressInfo:modbus,tagRegisterWidth:width,mqttTagAddressValid:mqtt,mcAddressValid:mc,finsAddressValid:fins}=context;
+const {s7AddressValid:s7,modbusAddressInfo:modbus,tagRegisterWidth:width,mqttTagAddressValid:mqtt,mcAddressValid:mc,finsAddressValid:fins,logixAddressValid:logix}=context;
+
+// Same cases as EtherNetIpContract (C# LogixTagPath.Parse).
+for(const [a,t] of [['Speed','Float32'],['Tank.Level','Float32'],['Counters[3]','Int16'],['Grid[1,2]','Word'],['Arr[70000]','Int16'],
+  ['Program:MainProgram.Motor_1.Amps','Float32'],['Status.5','Bool'],['Running','Bool'],['DB1.DBW2','Word'],['_x','Int32']])
+  assert.equal(logix(a,t),true,`Logix ${a} ${t}`);
+for(const [a,t] of [['Status.5','Word'],['1Tag','Word'],['Tag[1,2,3,4]','Word'],['Tag.64','Bool'],['','Word'],['Tag-1','Word'],
+  ['Program:Main','Word'],['40001','Word']])
+  assert.equal(logix(a,t),false,`Logix ${a} ${t}`);
 
 // Same cases as OmronFinsContract (C# FinsAddress.Parse).
 for(const [a,t] of [['D100','Word'],['dm100.05','Bool'],['100.07','Bool'],['CIO100','Word'],['W10','Int16'],['H5','Word'],['A20','Word'],

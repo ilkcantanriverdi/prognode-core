@@ -325,6 +325,13 @@
           "Prognode.Contracts": "[1.0.0-dev, )"
         }
       },
+      "prognode.protocols.ethernetip": {
+        "type": "Project",
+        "dependencies": {
+          "Prognode.Contracts": "[1.0.0-dev, )",
+          "Prognode.Protocols.Abstractions": "[1.0.0-dev, )"
+        }
+      },
       "prognode.protocols.mitsubishi": {
         "type": "Project",
         "dependencies": {
@@ -403,6 +410,7 @@
           "Prognode.Historian": "[1.0.0-dev, )",
           "Prognode.Licensing": "[1.0.0-dev, )",
           "Prognode.Notifications": "[1.0.0-dev, )",
+          "Prognode.Protocols.EtherNetIp": "[1.0.0-dev, )",
           "Prognode.Protocols.Mitsubishi": "[1.0.0-dev, )",
           "Prognode.Protocols.Modbus": "[1.0.0-dev, )",
           "Prognode.Protocols.Omron": "[1.0.0-dev, )",

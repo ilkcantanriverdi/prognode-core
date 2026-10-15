@@ -109,6 +109,23 @@ public sealed class DeviceService(IDeviceRepository repository, IDeviceCapacityP
         return item;
     }
 
+    /// <summary>Logix controller over EtherNet/IP (port 44818). UnitId holds the CPU slot on the
+    /// backplane (0..31), or 255 to address the controller directly (Micro800, no backplane route).</summary>
+    public async Task<DeviceDefinition> CreateEtherNetIpAsync(string? name, string? host, int port, int slot,
+        int pollIntervalMs, CancellationToken cancellationToken = default)
+    {
+        ValidateLogixSlot(slot);
+        var item = BuildModbusDevice(Guid.NewGuid(), DateTimeOffset.UtcNow, name, host, port, slot, pollIntervalMs)
+            with { Protocol = "EtherNet/IP" };
+        await AddWithinCapacityAsync(item, cancellationToken);
+        return item;
+    }
+
+    private static void ValidateLogixSlot(int slot)
+    {
+        if (slot is not (255 or >= 0 and <= 31)) throw new ArgumentException("CPU slot must be 0..31, or direct (Micro800).");
+    }
+
     // UnitId encodes rack * 32 + slot; rack=0 slot=1 -> 1. No schema migration.
     public async Task<DeviceDefinition> CreateS7TcpAsync(string? name,string? host,int port,int rack,int slot,int pollIntervalMs,CancellationToken ct=default)
     {
@@ -162,8 +179,11 @@ public sealed class DeviceService(IDeviceRepository repository, IDeviceCapacityP
         if (string.Equals(existing.Protocol, "Modbus TCP", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(existing.Protocol, "Siemens S7 TCP", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(existing.Protocol, "Mitsubishi MC", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(existing.Protocol, "Omron FINS", StringComparison.OrdinalIgnoreCase))
+            string.Equals(existing.Protocol, "Omron FINS", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(existing.Protocol, "EtherNet/IP", StringComparison.OrdinalIgnoreCase))
         {
+            if (string.Equals(existing.Protocol, "EtherNet/IP", StringComparison.OrdinalIgnoreCase))
+                ValidateLogixSlot(unitId ?? existing.UnitId ?? 0);
             updated = BuildModbusDevice(
                 existing.Id,
                 existing.CreatedAt,

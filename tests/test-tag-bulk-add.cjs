@@ -39,4 +39,10 @@ assert.deepEqual({...at('D100','Float32',null,'Omron FINS',2)},{address:'D104',b
 assert.deepEqual({...at('CIO0.14','Bool',null,'Omron FINS',3)},{address:'CIO1.01',bitIndex:null},'bits roll over after 15');
 assert.deepEqual({...at('E0_100','Int64',null,'Omron FINS',1)},{address:'E0_104',bitIndex:null});
 assert.deepEqual({...at('T5','Bool',null,'Omron FINS',2)},{address:'T7',bitIndex:null});
-console.log('PASS: bulk tag add numbers names and continues Modbus, S7, Mitsubishi, Omron and numbered addresses');
+// Logix: array elements and bits of an integer tag.
+assert.deepEqual({...at('Counters[3]','Int16',null,'EtherNet/IP',2)},{address:'Counters[5]',bitIndex:null});
+assert.deepEqual({...at('Grid[1,9]','Word',null,'EtherNet/IP',1)},{address:'Grid[1,10]',bitIndex:null});
+assert.deepEqual({...at('Status.30','Bool',null,'EtherNet/IP',1)},{address:'Status.31',bitIndex:null});
+assert.deepEqual({...at('Motor1','Float32',null,'EtherNet/IP',2)},{address:'Motor3',bitIndex:null},'numbered tag names');
+assert.equal(at('Status.63','Bool',null,'EtherNet/IP',1),null,'no bit past 63');
+console.log('PASS: bulk tag add numbers names and continues Modbus, S7, Mitsubishi, Omron, Logix and numbered addresses');

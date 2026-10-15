@@ -14,6 +14,7 @@
     <ProjectReference Include="..\Prognode.Protocols.S7\Prognode.Protocols.S7.csproj" />
     <ProjectReference Include="..\Prognode.Protocols.Mitsubishi\Prognode.Protocols.Mitsubishi.csproj" />
     <ProjectReference Include="..\Prognode.Protocols.Omron\Prognode.Protocols.Omron.csproj" />
+    <ProjectReference Include="..\Prognode.Protocols.EtherNetIp\Prognode.Protocols.EtherNetIp.csproj" />
     <ProjectReference Include="..\Prognode.Protocols.Mqtt\Prognode.Protocols.Mqtt.csproj" />
     <ProjectReference Include="..\Prognode.Protocols.OpcUa\Prognode.Protocols.OpcUa.csproj" />
     <ProjectReference Include="..\Prognode.Alarm\Prognode.Alarm.csproj" />

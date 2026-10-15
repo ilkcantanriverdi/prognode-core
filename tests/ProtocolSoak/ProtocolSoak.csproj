@@ -11,6 +11,7 @@
     <ProjectReference Include="..\..\src\Prognode.Protocols.S7\Prognode.Protocols.S7.csproj" />
     <ProjectReference Include="..\..\src\Prognode.Protocols.Mitsubishi\Prognode.Protocols.Mitsubishi.csproj" />
     <ProjectReference Include="..\..\src\Prognode.Protocols.Omron\Prognode.Protocols.Omron.csproj" />
+    <ProjectReference Include="..\..\src\Prognode.Protocols.EtherNetIp\Prognode.Protocols.EtherNetIp.csproj" />
     <ProjectReference Include="..\..\src\Prognode.Core\Prognode.Core.csproj" />
   </ItemGroup>
 </Project>
