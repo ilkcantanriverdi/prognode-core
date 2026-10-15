@@ -9,8 +9,8 @@ namespace Prognode.Licensing;
 /// </summary>
 public static class ReleaseSignature
 {
-    /// <summary>Raw Ed25519 release public key (base64). Empty: no update can be verified, so none installs.</summary>
-    public const string PublicKey = "";
+    /// <summary>Raw Ed25519 release public key (base64); the private key is kept offline by the release owner.</summary>
+    public const string PublicKey = "XsZtNbEc9SjT7rHfgB51XHIzNzEBb584cQTRiucQVx0=";
 
     public static byte[] Message(string product, string version, string sha256) =>
         Encoding.UTF8.GetBytes($"PROGNODE-RELEASE-V1\n{product}\n{version}\n{sha256}");

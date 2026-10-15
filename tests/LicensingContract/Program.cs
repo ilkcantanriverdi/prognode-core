@@ -39,6 +39,8 @@ static void Check(bool condition, string message)
     Check(!ReleaseSignature.Verify(key, "Monitor", "1.0.0-beta.18", sha, null) && !ReleaseSignature.Verify(key, "Monitor", "1.0.0-beta.18", sha, "not base64!"),
         "A missing or malformed signature never verifies.");
     Check(!ReleaseSignature.Verify(ReleaseSignature.PublicKey, "Monitor", "1.0.0-beta.18", sha, sig), "The test key is not the release key.");
+    Check(NSec.Cryptography.PublicKey.TryImport(SignatureAlgorithm.Ed25519, Convert.FromBase64String(ReleaseSignature.PublicKey),
+        KeyBlobFormat.RawPublicKey, out _), "The built-in release public key is a valid Ed25519 key.");
     Console.WriteLine("PASS signed releases: Node signature verifies, bound to product, version and hash");
 }
 
