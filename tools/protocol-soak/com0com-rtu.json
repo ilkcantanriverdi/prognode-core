@@ -1,0 +1,790 @@
+{
+ "targets": [
+  {
+   "name": "RTU unit 1",
+   "protocol": "Modbus RTU",
+   "host": "COM3;9600;8E1",
+   "unitId": 1,
+   "pollMs": 1000,
+   "tags": [
+    {
+     "name": "HR0",
+     "address": "40001",
+     "type": "Word",
+     "expect": "counter:0"
+    },
+    {
+     "name": "HR1",
+     "address": "40002",
+     "type": "Word",
+     "expect": "counter:1"
+    },
+    {
+     "name": "HR2",
+     "address": "40003",
+     "type": "Word",
+     "expect": "counter:2"
+    },
+    {
+     "name": "HR3",
+     "address": "40004",
+     "type": "Word",
+     "expect": "counter:3"
+    },
+    {
+     "name": "HR4",
+     "address": "40005",
+     "type": "Word",
+     "expect": "counter:4"
+    },
+    {
+     "name": "HR5",
+     "address": "40006",
+     "type": "Word",
+     "expect": "counter:5"
+    },
+    {
+     "name": "HR6",
+     "address": "40007",
+     "type": "Word",
+     "expect": "counter:6"
+    },
+    {
+     "name": "HR7",
+     "address": "40008",
+     "type": "Word",
+     "expect": "counter:7"
+    },
+    {
+     "name": "HR8",
+     "address": "40009",
+     "type": "Word",
+     "expect": "counter:8"
+    },
+    {
+     "name": "HR9",
+     "address": "40010",
+     "type": "Word",
+     "expect": "counter:9"
+    },
+    {
+     "name": "HR10",
+     "address": "40011",
+     "type": "Word",
+     "expect": "counter:10"
+    },
+    {
+     "name": "HR11",
+     "address": "40012",
+     "type": "Word",
+     "expect": "counter:11"
+    },
+    {
+     "name": "HR12",
+     "address": "40013",
+     "type": "Word",
+     "expect": "counter:12"
+    },
+    {
+     "name": "HR13",
+     "address": "40014",
+     "type": "Word",
+     "expect": "counter:13"
+    },
+    {
+     "name": "HR14",
+     "address": "40015",
+     "type": "Word",
+     "expect": "counter:14"
+    },
+    {
+     "name": "HR15",
+     "address": "40016",
+     "type": "Word",
+     "expect": "counter:15"
+    },
+    {
+     "name": "HR16",
+     "address": "40017",
+     "type": "Word",
+     "expect": "counter:16"
+    },
+    {
+     "name": "HR17",
+     "address": "40018",
+     "type": "Word",
+     "expect": "counter:17"
+    },
+    {
+     "name": "HR18",
+     "address": "40019",
+     "type": "Word",
+     "expect": "counter:18"
+    },
+    {
+     "name": "HR19",
+     "address": "40020",
+     "type": "Word",
+     "expect": "counter:19"
+    },
+    {
+     "name": "HR20",
+     "address": "40021",
+     "type": "Word",
+     "expect": "counter:20"
+    },
+    {
+     "name": "HR21",
+     "address": "40022",
+     "type": "Word",
+     "expect": "counter:21"
+    },
+    {
+     "name": "HR22",
+     "address": "40023",
+     "type": "Word",
+     "expect": "counter:22"
+    },
+    {
+     "name": "HR23",
+     "address": "40024",
+     "type": "Word",
+     "expect": "counter:23"
+    },
+    {
+     "name": "HR24",
+     "address": "40025",
+     "type": "Word",
+     "expect": "counter:24"
+    },
+    {
+     "name": "HR25",
+     "address": "40026",
+     "type": "Word",
+     "expect": "counter:25"
+    },
+    {
+     "name": "HR26",
+     "address": "40027",
+     "type": "Word",
+     "expect": "counter:26"
+    },
+    {
+     "name": "HR27",
+     "address": "40028",
+     "type": "Word",
+     "expect": "counter:27"
+    },
+    {
+     "name": "HR28",
+     "address": "40029",
+     "type": "Word",
+     "expect": "counter:28"
+    },
+    {
+     "name": "HR29",
+     "address": "40030",
+     "type": "Word",
+     "expect": "counter:29"
+    },
+    {
+     "name": "HR30",
+     "address": "40031",
+     "type": "Word",
+     "expect": "counter:30"
+    },
+    {
+     "name": "HR31",
+     "address": "40032",
+     "type": "Word",
+     "expect": "counter:31"
+    },
+    {
+     "name": "HR32",
+     "address": "40033",
+     "type": "Word",
+     "expect": "counter:32"
+    },
+    {
+     "name": "HR33",
+     "address": "40034",
+     "type": "Word",
+     "expect": "counter:33"
+    },
+    {
+     "name": "HR34",
+     "address": "40035",
+     "type": "Word",
+     "expect": "counter:34"
+    },
+    {
+     "name": "HR35",
+     "address": "40036",
+     "type": "Word",
+     "expect": "counter:35"
+    },
+    {
+     "name": "HR36",
+     "address": "40037",
+     "type": "Word",
+     "expect": "counter:36"
+    },
+    {
+     "name": "HR37",
+     "address": "40038",
+     "type": "Word",
+     "expect": "counter:37"
+    },
+    {
+     "name": "HR38",
+     "address": "40039",
+     "type": "Word",
+     "expect": "counter:38"
+    },
+    {
+     "name": "HR39",
+     "address": "40040",
+     "type": "Word",
+     "expect": "counter:39"
+    },
+    {
+     "name": "HR40",
+     "address": "40041",
+     "type": "Word",
+     "expect": "counter:40"
+    },
+    {
+     "name": "HR41",
+     "address": "40042",
+     "type": "Word",
+     "expect": "counter:41"
+    },
+    {
+     "name": "HR42",
+     "address": "40043",
+     "type": "Word",
+     "expect": "counter:42"
+    },
+    {
+     "name": "HR43",
+     "address": "40044",
+     "type": "Word",
+     "expect": "counter:43"
+    },
+    {
+     "name": "HR44",
+     "address": "40045",
+     "type": "Word",
+     "expect": "counter:44"
+    },
+    {
+     "name": "HR45",
+     "address": "40046",
+     "type": "Word",
+     "expect": "counter:45"
+    },
+    {
+     "name": "HR46",
+     "address": "40047",
+     "type": "Word",
+     "expect": "counter:46"
+    },
+    {
+     "name": "HR47",
+     "address": "40048",
+     "type": "Word",
+     "expect": "counter:47"
+    },
+    {
+     "name": "HR48",
+     "address": "40049",
+     "type": "Word",
+     "expect": "counter:48"
+    },
+    {
+     "name": "HR49",
+     "address": "40050",
+     "type": "Word",
+     "expect": "counter:49"
+    },
+    {
+     "name": "IR0",
+     "address": "30001",
+     "type": "Word",
+     "expect": "counter:0"
+    },
+    {
+     "name": "IR1",
+     "address": "30002",
+     "type": "Word",
+     "expect": "counter:1"
+    },
+    {
+     "name": "IR2",
+     "address": "30003",
+     "type": "Word",
+     "expect": "counter:2"
+    },
+    {
+     "name": "IR3",
+     "address": "30004",
+     "type": "Word",
+     "expect": "counter:3"
+    },
+    {
+     "name": "IR4",
+     "address": "30005",
+     "type": "Word",
+     "expect": "counter:4"
+    },
+    {
+     "name": "IR5",
+     "address": "30006",
+     "type": "Word",
+     "expect": "counter:5"
+    },
+    {
+     "name": "IR6",
+     "address": "30007",
+     "type": "Word",
+     "expect": "counter:6"
+    },
+    {
+     "name": "IR7",
+     "address": "30008",
+     "type": "Word",
+     "expect": "counter:7"
+    },
+    {
+     "name": "IR8",
+     "address": "30009",
+     "type": "Word",
+     "expect": "counter:8"
+    },
+    {
+     "name": "IR9",
+     "address": "30010",
+     "type": "Word",
+     "expect": "counter:9"
+    },
+    {
+     "name": "Word",
+     "address": "41001",
+     "type": "Word",
+     "expect": 1234
+    },
+    {
+     "name": "Float",
+     "address": "41007",
+     "type": "Float32",
+     "expect": 12.5
+    },
+    {
+     "name": "Float64",
+     "address": "419000",
+     "type": "Float64",
+     "expect": 12.5
+    },
+    {
+     "name": "Coil",
+     "address": "00001",
+     "type": "Bool",
+     "expect": 1
+    }
+   ]
+  },
+  {
+   "name": "RTU unit 2",
+   "protocol": "Modbus RTU",
+   "host": "COM3;9600;8E1",
+   "unitId": 2,
+   "pollMs": 1000,
+   "tags": [
+    {
+     "name": "HR0",
+     "address": "40001",
+     "type": "Word",
+     "expect": "counter:1000"
+    },
+    {
+     "name": "HR1",
+     "address": "40002",
+     "type": "Word",
+     "expect": "counter:1001"
+    },
+    {
+     "name": "HR2",
+     "address": "40003",
+     "type": "Word",
+     "expect": "counter:1002"
+    },
+    {
+     "name": "HR3",
+     "address": "40004",
+     "type": "Word",
+     "expect": "counter:1003"
+    },
+    {
+     "name": "HR4",
+     "address": "40005",
+     "type": "Word",
+     "expect": "counter:1004"
+    },
+    {
+     "name": "HR5",
+     "address": "40006",
+     "type": "Word",
+     "expect": "counter:1005"
+    },
+    {
+     "name": "HR6",
+     "address": "40007",
+     "type": "Word",
+     "expect": "counter:1006"
+    },
+    {
+     "name": "HR7",
+     "address": "40008",
+     "type": "Word",
+     "expect": "counter:1007"
+    },
+    {
+     "name": "HR8",
+     "address": "40009",
+     "type": "Word",
+     "expect": "counter:1008"
+    },
+    {
+     "name": "HR9",
+     "address": "40010",
+     "type": "Word",
+     "expect": "counter:1009"
+    },
+    {
+     "name": "HR10",
+     "address": "40011",
+     "type": "Word",
+     "expect": "counter:1010"
+    },
+    {
+     "name": "HR11",
+     "address": "40012",
+     "type": "Word",
+     "expect": "counter:1011"
+    },
+    {
+     "name": "HR12",
+     "address": "40013",
+     "type": "Word",
+     "expect": "counter:1012"
+    },
+    {
+     "name": "HR13",
+     "address": "40014",
+     "type": "Word",
+     "expect": "counter:1013"
+    },
+    {
+     "name": "HR14",
+     "address": "40015",
+     "type": "Word",
+     "expect": "counter:1014"
+    },
+    {
+     "name": "HR15",
+     "address": "40016",
+     "type": "Word",
+     "expect": "counter:1015"
+    },
+    {
+     "name": "HR16",
+     "address": "40017",
+     "type": "Word",
+     "expect": "counter:1016"
+    },
+    {
+     "name": "HR17",
+     "address": "40018",
+     "type": "Word",
+     "expect": "counter:1017"
+    },
+    {
+     "name": "HR18",
+     "address": "40019",
+     "type": "Word",
+     "expect": "counter:1018"
+    },
+    {
+     "name": "HR19",
+     "address": "40020",
+     "type": "Word",
+     "expect": "counter:1019"
+    },
+    {
+     "name": "HR20",
+     "address": "40021",
+     "type": "Word",
+     "expect": "counter:1020"
+    },
+    {
+     "name": "HR21",
+     "address": "40022",
+     "type": "Word",
+     "expect": "counter:1021"
+    },
+    {
+     "name": "HR22",
+     "address": "40023",
+     "type": "Word",
+     "expect": "counter:1022"
+    },
+    {
+     "name": "HR23",
+     "address": "40024",
+     "type": "Word",
+     "expect": "counter:1023"
+    },
+    {
+     "name": "HR24",
+     "address": "40025",
+     "type": "Word",
+     "expect": "counter:1024"
+    },
+    {
+     "name": "HR25",
+     "address": "40026",
+     "type": "Word",
+     "expect": "counter:1025"
+    },
+    {
+     "name": "HR26",
+     "address": "40027",
+     "type": "Word",
+     "expect": "counter:1026"
+    },
+    {
+     "name": "HR27",
+     "address": "40028",
+     "type": "Word",
+     "expect": "counter:1027"
+    },
+    {
+     "name": "HR28",
+     "address": "40029",
+     "type": "Word",
+     "expect": "counter:1028"
+    },
+    {
+     "name": "HR29",
+     "address": "40030",
+     "type": "Word",
+     "expect": "counter:1029"
+    },
+    {
+     "name": "HR30",
+     "address": "40031",
+     "type": "Word",
+     "expect": "counter:1030"
+    },
+    {
+     "name": "HR31",
+     "address": "40032",
+     "type": "Word",
+     "expect": "counter:1031"
+    },
+    {
+     "name": "HR32",
+     "address": "40033",
+     "type": "Word",
+     "expect": "counter:1032"
+    },
+    {
+     "name": "HR33",
+     "address": "40034",
+     "type": "Word",
+     "expect": "counter:1033"
+    },
+    {
+     "name": "HR34",
+     "address": "40035",
+     "type": "Word",
+     "expect": "counter:1034"
+    },
+    {
+     "name": "HR35",
+     "address": "40036",
+     "type": "Word",
+     "expect": "counter:1035"
+    },
+    {
+     "name": "HR36",
+     "address": "40037",
+     "type": "Word",
+     "expect": "counter:1036"
+    },
+    {
+     "name": "HR37",
+     "address": "40038",
+     "type": "Word",
+     "expect": "counter:1037"
+    },
+    {
+     "name": "HR38",
+     "address": "40039",
+     "type": "Word",
+     "expect": "counter:1038"
+    },
+    {
+     "name": "HR39",
+     "address": "40040",
+     "type": "Word",
+     "expect": "counter:1039"
+    },
+    {
+     "name": "HR40",
+     "address": "40041",
+     "type": "Word",
+     "expect": "counter:1040"
+    },
+    {
+     "name": "HR41",
+     "address": "40042",
+     "type": "Word",
+     "expect": "counter:1041"
+    },
+    {
+     "name": "HR42",
+     "address": "40043",
+     "type": "Word",
+     "expect": "counter:1042"
+    },
+    {
+     "name": "HR43",
+     "address": "40044",
+     "type": "Word",
+     "expect": "counter:1043"
+    },
+    {
+     "name": "HR44",
+     "address": "40045",
+     "type": "Word",
+     "expect": "counter:1044"
+    },
+    {
+     "name": "HR45",
+     "address": "40046",
+     "type": "Word",
+     "expect": "counter:1045"
+    },
+    {
+     "name": "HR46",
+     "address": "40047",
+     "type": "Word",
+     "expect": "counter:1046"
+    },
+    {
+     "name": "HR47",
+     "address": "40048",
+     "type": "Word",
+     "expect": "counter:1047"
+    },
+    {
+     "name": "HR48",
+     "address": "40049",
+     "type": "Word",
+     "expect": "counter:1048"
+    },
+    {
+     "name": "HR49",
+     "address": "40050",
+     "type": "Word",
+     "expect": "counter:1049"
+    },
+    {
+     "name": "IR0",
+     "address": "30001",
+     "type": "Word",
+     "expect": "counter:1000"
+    },
+    {
+     "name": "IR1",
+     "address": "30002",
+     "type": "Word",
+     "expect": "counter:1001"
+    },
+    {
+     "name": "IR2",
+     "address": "30003",
+     "type": "Word",
+     "expect": "counter:1002"
+    },
+    {
+     "name": "IR3",
+     "address": "30004",
+     "type": "Word",
+     "expect": "counter:1003"
+    },
+    {
+     "name": "IR4",
+     "address": "30005",
+     "type": "Word",
+     "expect": "counter:1004"
+    },
+    {
+     "name": "IR5",
+     "address": "30006",
+     "type": "Word",
+     "expect": "counter:1005"
+    },
+    {
+     "name": "IR6",
+     "address": "30007",
+     "type": "Word",
+     "expect": "counter:1006"
+    },
+    {
+     "name": "IR7",
+     "address": "30008",
+     "type": "Word",
+     "expect": "counter:1007"
+    },
+    {
+     "name": "IR8",
+     "address": "30009",
+     "type": "Word",
+     "expect": "counter:1008"
+    },
+    {
+     "name": "IR9",
+     "address": "30010",
+     "type": "Word",
+     "expect": "counter:1009"
+    },
+    {
+     "name": "Word",
+     "address": "41001",
+     "type": "Word",
+     "expect": 1234
+    },
+    {
+     "name": "Float",
+     "address": "41007",
+     "type": "Float32",
+     "expect": 12.5
+    },
+    {
+     "name": "Float64",
+     "address": "419000",
+     "type": "Float64",
+     "expect": 12.5
+    },
+    {
+     "name": "Coil",
+     "address": "00001",
+     "type": "Bool",
+     "expect": 1
+    }
+   ]
+  }
+ ]
+}

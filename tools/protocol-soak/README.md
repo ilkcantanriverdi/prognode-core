@@ -35,6 +35,16 @@ Options: `--minutes`, `--tags`, `--fault-every` (minutes), `--fault-down` (secon
 `--faults modbus,s7,opcua,mqtt-broker,mqtt` (which outages to inject; `mqtt` is the publisher),
 `--report <file.md>` (a `.json` with the raw numbers is written next to it).
 
+## Modbus RTU over a real COM port
+
+With a virtual serial pair (com0com: COM3 <-> CNCB0) the RTU reader is tested through the real
+Windows serial stack: start pymodbus RTU slaves (unit 1, and unit 2 with counters offset by 1000)
+on the second port and point a `--config` target at the first:
+
+```bash
+.venv/Scripts/python simulators.py modbus-rtu --counters 50 --serial "\\.\CNCB0"
+```
+
 ## Real devices
 
 Copy `real-plcs.example.json`, fill in your PLCs and Tags, and run:
@@ -62,6 +72,8 @@ Reports go to `tools/protocol-soak/reports/` unless `--report` says otherwise.
   off "optimized block access" for the DBs PROGNODE reads). Inputs, outputs and bit memory: `I0.0` /
   `IW64` / `ID100`, `Q0.1` / `QW2`, `M10.0` / `MW20` / `MD30` (also `%I0.0` and the German `E`/`A`);
   these need only PUT/GET on S7-1200/1500. Optimized (symbolic) DB access is not supported.
+* Modbus RTU: `"protocol": "Modbus RTU"` with `"host": "COM3;9600;8E1"` (port, baud rate, data
+  bits, parity N/E/O, stop bits) and the device's `"unitId"`; several targets may share a COM port.
 * Modbus: six-digit addresses reach registers above 9999 (`419000` = holding register 19000);
   Int64 / UInt64 / Float64 read four registers, with the same byte orders as 32-bit values.
 * MQTT: a Tag reads a plain message (`21.5`, `true`) or one field of a JSON message

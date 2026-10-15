@@ -17,7 +17,7 @@ public sealed class ModbusExceptionResponseException(byte functionCode, byte exc
 /// the socket; the next request reconnects. A request on a reused socket that the peer already
 /// closed is retried once on a fresh connection.
 /// </summary>
-public sealed class ModbusTcpRegisterClient : IAsyncDisposable
+public sealed class ModbusTcpRegisterClient : IModbusRegisterClient, IAsyncDisposable
 {
     private static readonly TimeSpan IdleTimeout = TimeSpan.FromMinutes(2);
     private readonly ConcurrentDictionary<string, Connection> _connections = new(StringComparer.OrdinalIgnoreCase);

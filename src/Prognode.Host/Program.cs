@@ -164,7 +164,10 @@ builder.Services.AddSingleton<TagService>();
 
 builder.Services.AddSingleton<ModbusTcpProbe>();
 builder.Services.AddSingleton<ModbusTcpRegisterClient>();
-builder.Services.AddSingleton<ITagReader, ModbusTagReader>();
+builder.Services.AddSingleton<ModbusRtuRegisterClient>();
+builder.Services.AddSingleton<ITagReader>(sp => new ModbusTagReader(sp.GetRequiredService<ModbusTcpRegisterClient>()));
+builder.Services.AddSingleton<ITagReader>(sp => new ModbusTagReader(sp.GetRequiredService<ModbusRtuRegisterClient>(), ModbusTagReader.RtuProtocol));
+builder.Services.AddSingleton<IDeviceHealthProbe, ModbusRtuHealthProbe>();
 builder.Services.AddSingleton<ITagDefinitionValidator, ModbusTagDefinitionValidator>();
 builder.Services.AddSingleton<IDeviceHealthProbe, ModbusTcpHealthProbe>();
 builder.Services.AddSingleton<S7SessionPool>();

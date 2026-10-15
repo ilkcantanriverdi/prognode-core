@@ -84,6 +84,44 @@ def run_modbus(port: int, counters: int) -> None:
     asyncio.run(main())
 
 
+# ----------------------------------------------------------------------------- Modbus RTU
+def run_modbus_rtu(serial_port: str, counters: int, baud: int = 9600, parity: str = "E") -> None:
+    r"""pymodbus RTU slaves on a serial port (e.g. one end of a com0com pair, \\.\CNCB0).
+    Unit 1 serves the Modbus TCP simulator's map; unit 2 the same map with counters offset by 1000,
+    so a reader that mixes up units on a shared line reads wrong values."""
+    from pymodbus import FramerType
+    from pymodbus.datastore import ModbusDeviceContext, ModbusSequentialDataBlock, ModbusServerContext
+    from pymodbus.server import StartAsyncSerialServer
+
+    def unit(shift: int):
+        hr = ModbusSequentialDataBlock(0, [0] * (19100 + 1))
+        ir = ModbusSequentialDataBlock(0, [0] * 1101)
+        co = ModbusSequentialDataBlock(0, [False] * 1101)
+        di = ModbusSequentialDataBlock(0, [False] * 1101)
+        hr.setValues(1001, [1234])
+        hr.setValues(1007, words_float(12.5, "ABCD"))
+        hr.setValues(19000, words64(struct.pack(">d", 12.5)))
+        co.setValues(1, [True])
+        return hr, ir, co, di, shift, ModbusDeviceContext(hr=hr, ir=ir, co=co, di=di)
+
+    units = {1: unit(0), 2: unit(1000)}
+    context = ModbusServerContext(devices={k: v[5] for k, v in units.items()}, single=False)
+
+    async def update():
+        while True:
+            for hr, ir, _, _, shift, _ in units.values():
+                hr.setValues(1, [counter(k + shift) for k in range(counters)])
+                ir.setValues(1, [counter(k + shift) for k in range(min(counters, 100))])
+            await asyncio.sleep(0.2)
+
+    async def main():
+        asyncio.get_running_loop().create_task(update())
+        await StartAsyncSerialServer(context=context, framer=FramerType.RTU, port=serial_port,
+                                     baudrate=baud, bytesize=8, parity=parity, stopbits=1)
+
+    asyncio.run(main())
+
+
 # ----------------------------------------------------------------------------- Siemens S7
 def run_s7(port: int, counters: int) -> None:
     import snap7
@@ -226,15 +264,17 @@ def run_mqtt(port: int, counters: int, user: str | None = None, password: str | 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("kind", choices=["modbus", "s7", "opcua", "mqtt"])
-    parser.add_argument("--port", type=int, required=True)
+    parser.add_argument("kind", choices=["modbus", "modbus-rtu", "s7", "opcua", "mqtt"])
+    parser.add_argument("--port", type=int, default=0)
+    parser.add_argument("--serial", default=r"\\.\CNCB0", help="modbus-rtu: serial port of the slave end")
     parser.add_argument("--counters", type=int, default=100)
     parser.add_argument("--pki", default="soak-pki")
     parser.add_argument("--user", help="OPC UA login / MQTT broker user (anonymous when omitted)")
     parser.add_argument("--password")
     a = parser.parse_args()
     print(f"simulator {a.kind} on {a.port} with {a.counters} counters", flush=True)
-    {"modbus": lambda: run_modbus(a.port, a.counters), "s7": lambda: run_s7(a.port, a.counters),
+    {"modbus": lambda: run_modbus(a.port, a.counters), "modbus-rtu": lambda: run_modbus_rtu(a.serial, a.counters),
+     "s7": lambda: run_s7(a.port, a.counters),
      "opcua": lambda: run_opcua(a.port, a.counters, a.pki, a.user, a.password),
      "mqtt": lambda: run_mqtt(a.port, a.counters, a.user, a.password)}[a.kind]()
     sys.exit(0)

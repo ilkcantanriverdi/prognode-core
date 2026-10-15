@@ -73,6 +73,20 @@ public sealed class DeviceService(IDeviceRepository repository, IDeviceCapacityP
         return device;
     }
 
+    /// <summary>
+    /// Modbus RTU device on an RS-485 line. Host holds the serial settings ("COM3;9600;8E1",
+    /// validated by the caller); several devices can share a line with different unit IDs.
+    /// </summary>
+    public async Task<DeviceDefinition> CreateModbusRtuAsync(string? name, string serialSettings, int unitId,
+        int pollIntervalMs, CancellationToken cancellationToken = default)
+    {
+        if (unitId is < 1 or > 247) throw new ArgumentException("Modbus RTU unit ID must be between 1 and 247.");
+        var item = BuildModbusDevice(Guid.NewGuid(), DateTimeOffset.UtcNow, name, serialSettings, 1, unitId, pollIntervalMs)
+            with { Protocol = "Modbus RTU", Port = null };
+        await AddWithinCapacityAsync(item, cancellationToken);
+        return item;
+    }
+
     // UnitId encodes rack * 32 + slot; rack=0 slot=1 -> 1. No schema migration.
     public async Task<DeviceDefinition> CreateS7TcpAsync(string? name,string? host,int port,int rack,int slot,int pollIntervalMs,CancellationToken ct=default)
     {
@@ -134,6 +148,13 @@ public sealed class DeviceService(IDeviceRepository repository, IDeviceCapacityP
                 port ?? existing.Port ?? 502,
                 unitId ?? existing.UnitId ?? 1,
                 pollIntervalMs ?? existing.PollIntervalMs) with { Protocol = existing.Protocol };
+        }
+        else if (string.Equals(existing.Protocol, "Modbus RTU", StringComparison.OrdinalIgnoreCase))
+        {
+            var rtuUnit = unitId ?? existing.UnitId ?? 1;
+            if (rtuUnit is < 1 or > 247) throw new ArgumentException("Modbus RTU unit ID must be between 1 and 247.");
+            updated = BuildModbusDevice(existing.Id, existing.CreatedAt, name, host ?? existing.Host, 1, rtuUnit,
+                pollIntervalMs ?? existing.PollIntervalMs) with { Protocol = "Modbus RTU", Port = null };
         }
         else if (string.Equals(existing.Protocol, "MQTT", StringComparison.OrdinalIgnoreCase))
         {
