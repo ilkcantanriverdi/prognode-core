@@ -3,7 +3,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
 const source=fs.readFileSync(path.join(__dirname,'../src/Prognode.Host/wwwroot/app.js'),'utf8');
-const host=fs.readFileSync(path.join(__dirname,'../src/Prognode.Host/Program.cs'),'utf8');
+const host=fs.readFileSync(path.join(__dirname,'../src/Prognode.Web/AccessGate.cs'),'utf8');
 const begin=source.indexOf('function applyAccessMode()'),end=source.indexOf('function syncTrendRangePills(',begin);
 assert(begin>=0&&end>begin);
 let signedIn=false;
@@ -27,6 +27,6 @@ assert(source.includes('saveButton.disabled = !good || !canMutateConfiguration()
 assert(source.includes('saveButton.disabled=!good||!canMutateConfiguration()'),'S7 validation may not unlock Save while signed out');
 assert(source.includes('if (!requireConfigurationAccess()) return;\n        const tag ='),'Tag delete handler must enforce login');
 assert(source.includes('applyAccessMode();\n}\n\nfunction populateTagDeviceSelect'),'Tag table rerender must reapply login gate');
-assert(host.includes('if (!sessions.Validate(sessionToken) && !occurrenceAckRoute && !pairedSelfRemoteRoute)'),'server must reject unauthenticated mutations');
+assert(host.includes('if (!validSession(context.Request.Headers["X-PROGNODE-Session"].ToString()) && !occurrenceAckRoute && !pairedSelfRemoteRoute)'),'server must reject unauthenticated mutations');
 assert(host.includes('var pairedSelfRemoteRoute = context.Items.ContainsKey("PROGNODE_CLIENT_ID") &&'),'Remote Access self-registration is open only to a validated paired device');
 console.log('PASS: signed-out Tag creation, editing, deletion and Save stay locked in UI and API');
