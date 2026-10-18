@@ -931,7 +931,7 @@ function navigate(page) {
     x.classList.toggle("active", x.dataset.page === page));
 
   const labels = {
-    overview:t("overview"), devices:t("devices"), tags:t("tags"),
+    overview:t("overview"), equipment:"Equipment", devices:t("devices"), tags:t("tags"),
     alarms:t("alarms"), trends:t("trends"), historian:t("historian"),
     diagnostics:t("diagnostics"), notifications:t("notifications"), dataexchange:t("dataExchange"),
     license:t("license"), settings:t("settings")
