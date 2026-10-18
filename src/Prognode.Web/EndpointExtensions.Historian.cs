@@ -130,7 +130,7 @@ public static partial class EndpointExtensions
         endpoints.MapGet(
             "/api/historian/export.zip",
             async (Guid trendId, string? from, string? to, TrendService trends,
-                HistorianService historian, TagService tags, CancellationToken ct) =>
+                HistorianService historian, TagService tags, DeviceService devices, CancellationToken ct) =>
             {
                 var trend = await trends.GetByIdAsync(trendId, ct);
                 if (trend is null) return Results.NotFound();
@@ -138,9 +138,9 @@ public static partial class EndpointExtensions
                 var start = TryParseDate(from) ?? end.AddMinutes(-trend.DefaultWindowMinutes);
                 if (end <= start) return Results.BadRequest(new { message = "End time must be after start time." });
                 var names = (await tags.GetAllAsync(ct)).Where(x => trend.TagIds.Contains(x.Id))
-                    .ToDictionary(x => x.Id, x => x.Name);
+                    .ToDictionary(x => x.Id);
                 return await CreateHistorianArchiveDownloadAsync(historian, names, start, end,
-                    $"PROGNODE_Trend_{SafeFileName(trend.Name)}_{DateTime.Now:yyyyMMdd_HHmmss}.zip", ct);
+                    HistorianZipName(names, await devices.GetAllAsync(ct), trend.Name), ct);
             });
 
         endpoints.MapGet(
@@ -182,7 +182,7 @@ public static partial class EndpointExtensions
                 }
 
                 var names = (await tags.GetAllAsync(ct)).Where(x => trend.TagIds.Contains(x.Id))
-                    .ToDictionary(x => x.Id, x => x.Name);
+                    .ToDictionary(x => x.Id);
                 return Results.Stream(stream => WriteHistorianCsvAsync(stream, historian, names, start, end, ct),
                     "text/csv; charset=utf-8", $"PROGNODE_{SafeFileName(trend.Name)}_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
             });

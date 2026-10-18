@@ -6,7 +6,9 @@ const repo=fs.readFileSync(path.join(__dirname,'../src/Prognode.Data/Sqlite/Sqli
 const ui=fs.readFileSync(path.join(__dirname,'../src/Prognode.Host/wwwroot/app.js'),'utf8');
 assert(web.includes('"/api/historian/export.zip"'));
 assert(web.includes('"/api/data-exchange/historian/{tagId:guid}.zip"'));
-assert(web.includes('const int rowsPerFile = 500_000'));
+assert(web.includes('const int rowsPerFile = 10_000'));
+assert(web.includes('_{Stamp(first)}_to_{Stamp(last)}.csv'),'each part is named after its first and last sample');
+assert(web.includes('HistorianZipName(names, await devices.GetAllAsync(ct)'),'ZIP is named Device_Tag');
 assert(web.includes('WriteHistorianCsvAsync(stream, historian, names'));
 assert(web.includes('CreateHistorianArchiveDownloadAsync(historian, names'));
 assert(web.includes('FileOptions.Asynchronous | FileOptions.SequentialScan | FileOptions.DeleteOnClose'));
@@ -14,4 +16,4 @@ assert(web.includes('return Results.File(file, "application/zip", fileName)'));
 assert(!web.slice(web.indexOf('"/api/historian/export.csv"'),web.indexOf('"/api/system/time"')).includes('250_000'));
 assert(repo.includes('AND timestamp_unix_ms < $to'));
 assert(ui.includes('/api/data-exchange/historian/${encodeURIComponent(tagId)}.zip'));
-console.log('PASS: Historian CSV streams without 250k cap; ZIP splits into Excel-sized parts');
+console.log('PASS: Historian CSV streams without 250k cap; ZIP splits into 10,000-row parts named by date');

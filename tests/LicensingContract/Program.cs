@@ -305,6 +305,16 @@ if (OperatingSystem.IsWindows())
           labelled["displayMetadata"]!["source"]!.GetValue<string>() == "Boiler PLC · LT-301" && !labelled.ContainsKey("message"),
         "Off-site phones get the configured alarm text and its source, not the message.");
 
+    var allowed = Guid.NewGuid();
+    await relay.PublishNotificationAsync("activation-token", new Prognode.Contracts.Notifications.NotificationEvent(
+        44, "HIGH", "x", "", DateTimeOffset.UtcNow, OccurrenceId: occurrence, EventType: "ALARM_ACTIVE"), default, null, [allowed]);
+    var targeted = JsonNode.Parse(handler.Requests[^1].Body!)!.AsObject();
+    Check(targeted["pushClientIds"]!.AsArray().Select(x => x!.GetValue<string>()).SequenceEqual([allowed.ToString("D")]),
+        "Core names the Remote Access devices allowed to get the push (alarm view and notifications on).");
+    await relay.PublishNotificationAsync("activation-token", new Prognode.Contracts.Notifications.NotificationEvent(
+        45, "HIGH", "x", "", DateTimeOffset.UtcNow, OccurrenceId: occurrence, EventType: "ALARM_ACTIVE"), default, null, []);
+    Check(JsonNode.Parse(handler.Requests[^1].Body!)!["pushClientIds"]!.AsArray().Count == 0, "An empty list means push to no one.");
+
     handler.Reply = _ => ("{\"ok\":true,\"cleared\":2}", 200);
     var synced = await relay.SyncActiveAlarmsAsync("activation-token",
         [new Prognode.RemoteAccess.RemoteActiveAlarm(occurrence.ToString("D"), "ACKNOWLEDGED")], DateTimeOffset.Parse("2026-10-08T10:20:00Z"));

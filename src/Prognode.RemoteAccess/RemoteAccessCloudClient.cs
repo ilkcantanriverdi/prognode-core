@@ -150,7 +150,8 @@ public sealed class RemoteAccessCloudClient(HttpClient httpClient, CoreCloudLice
         return new RemoteAccessCloudOperationResponse { Success = true, Code = "REVOKED", Message = "Remote Access revoked and the seat was released. LAN pairing remains available." };
     }
 
-    internal async Task<RemoteRelayResult> PublishNotificationAsync(string token, NotificationEvent notification, CancellationToken cancellationToken = default, RemoteAlarmLabel? label = null)
+    internal async Task<RemoteRelayResult> PublishNotificationAsync(string token, NotificationEvent notification, CancellationToken cancellationToken = default, RemoteAlarmLabel? label = null,
+        IReadOnlyCollection<Guid>? pushClientIds = null)
     {
         // Decision: only alarm name, severity, state and time leave the site. Message text (which
         // may contain process values) is never sent.
@@ -172,6 +173,9 @@ public sealed class RemoteAccessCloudClient(HttpClient httpClient, CoreCloudLice
             displayMetadata = new { repeatSequence = notification.RepeatSequence, requiresAcknowledgement = notification.RequiresAcknowledgement,
                 source = label?.Source is { Length: > 0 } source ? Truncate(source, 240) : null,
                 alarmKey = string.IsNullOrWhiteSpace(notification.AlarmKey) ? null : Truncate(notification.AlarmKey, 120) },
+            // The Remote Access devices allowed to get this alarm as a push (alarm view on, notifications
+            // on in Core); the cloud pushes to no one else. Null (older callers) pushes to every device.
+            pushClientIds = pushClientIds?.Select(id => id.ToString("D")).ToArray(),
         }, cancellationToken);
         var json = string.Equals(response.Content.Headers.ContentType?.MediaType, "application/json", StringComparison.OrdinalIgnoreCase);
         if (!response.IsSuccessStatusCode || !json)
