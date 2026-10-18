@@ -369,7 +369,10 @@ public sealed class RemoteAccessService(
         catch (Exception ex) when (ex is not OperationCanceledException) { /* Fall back to the plain name. */ }
         try
         {
-            var result = await cloud.PublishNotificationAsync(token, notification, cancellationToken, label);
+            var pushClientIds = serverAccess.GetClients()
+                .Where(c => c.RemoteClientId is not null && c.CanViewAlarms && serverAccess.DeliveryEnabledFor(c.ClientId))
+                .Select(c => c.RemoteClientId!.Value).ToArray();
+            var result = await cloud.PublishNotificationAsync(token, notification, cancellationToken, label, pushClientIds);
             RecordRelay(result.Accepted, result.Error, result.Pushed, result.PushTargets, result.PushConfigured);
             return result.Accepted;
         }
