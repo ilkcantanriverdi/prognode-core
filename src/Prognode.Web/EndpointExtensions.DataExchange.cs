@@ -312,16 +312,16 @@ public static partial class EndpointExtensions
 
         endpoints.MapGet(
             "/api/data-exchange/historian/{tagId:guid}.zip",
-            async (Guid tagId, HistorianService historian, TagService tags, CancellationToken ct) =>
+            async (Guid tagId, HistorianService historian, TagService tags, DeviceService devices, CancellationToken ct) =>
             {
                 var tag = (await tags.GetAllAsync(ct)).FirstOrDefault(x => x.Id == tagId);
                 if (tag is null) return Results.NotFound();
                 var status = (await historian.GetConfigurationsAsync(ct)).FirstOrDefault(x => x.Configuration.TagId == tagId);
                 var from = status?.FirstSample ?? DateTimeOffset.FromUnixTimeSeconds(0);
                 var to = DateTimeOffset.UtcNow.AddMinutes(1);
-                var names = new Dictionary<Guid, string> { [tagId] = tag.Name };
+                var names = new Dictionary<Guid, Prognode.Contracts.Tags.TagDefinition> { [tagId] = tag };
                 return await CreateHistorianArchiveDownloadAsync(historian, names, from, to,
-                    $"PROGNODE_Historian_{SafeFileName(tag.Name)}_{DateTime.Now:yyyyMMdd_HHmmss}.zip", ct);
+                    HistorianZipName(names, await devices.GetAllAsync(ct), tag.Name), ct);
             });
 
         endpoints.MapGet(
@@ -339,7 +339,7 @@ public static partial class EndpointExtensions
                 var status = (await historian.GetConfigurationsAsync(ct)).FirstOrDefault(x => x.Configuration.TagId == tagId);
                 var from = status?.FirstSample ?? DateTimeOffset.FromUnixTimeSeconds(0);
                 var to = DateTimeOffset.UtcNow.AddMinutes(1);
-                var names = new Dictionary<Guid, string> { [tagId] = tag.Name };
+                var names = new Dictionary<Guid, Prognode.Contracts.Tags.TagDefinition> { [tagId] = tag };
                 return Results.Stream(stream => WriteHistorianCsvAsync(stream, historian, names, from, to, ct),
                     "text/csv; charset=utf-8", $"PROGNODE_Historian_{SafeFileName(tag.Name)}_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
             });

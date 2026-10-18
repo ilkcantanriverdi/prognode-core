@@ -328,7 +328,7 @@ public static partial class EndpointExtensions
         string.Concat(name.Select(c => char.IsLetterOrDigit(c) ? c : '_'));
 
     private static async Task WriteHistorianCsvAsync(
-        Stream output, HistorianService historian, IReadOnlyDictionary<Guid, string> names,
+        Stream output, HistorianService historian, IReadOnlyDictionary<Guid, Prognode.Contracts.Tags.TagDefinition> tags,
         DateTimeOffset from, DateTimeOffset to, CancellationToken ct)
     {
         await using var writer = new StreamWriter(output, new UTF8Encoding(true), 8192, leaveOpen: true);
@@ -337,23 +337,40 @@ public static partial class EndpointExtensions
         {
             var monthEnd = new DateTimeOffset(cursor.Year, cursor.Month, 1, 0, 0, 0, TimeSpan.Zero).AddMonths(1);
             var next = monthEnd < to ? monthEnd : to;
-            await foreach (var sample in historian.StreamRawAsync(names.Keys.ToArray(), cursor, next, ct))
-                await writer.WriteLineAsync(HistorianCsvRow(sample, names));
+            await foreach (var sample in historian.StreamRawAsync(tags.Keys.ToArray(), cursor, next, ct))
+                await writer.WriteLineAsync(HistorianCsvRow(sample, tags));
             await writer.FlushAsync(ct);
             cursor = next;
         }
     }
 
     private static string HistorianCsvRow(
-        Prognode.Contracts.Historian.HistorianSample sample, IReadOnlyDictionary<Guid, string> names)
+        Prognode.Contracts.Historian.HistorianSample sample, IReadOnlyDictionary<Guid, Prognode.Contracts.Tags.TagDefinition> tags)
     {
         var timestamp = ExportUtcSeconds(DateTimeOffset.FromUnixTimeMilliseconds(sample.TimestampUnixMs));
-        var tagName = names.TryGetValue(sample.TagId, out var name) ? name : sample.TagId.ToString();
-        return $"{timestamp};{Csv(tagName)};{sample.Value?.ToString(CultureInfo.InvariantCulture) ?? string.Empty};{Csv(sample.Quality)}";
+        tags.TryGetValue(sample.TagId, out var tag);
+        return $"{timestamp};{Csv(tag?.Name ?? sample.TagId.ToString())};{CsvNumber(sample.Value, tag)};{Csv(sample.Quality)}";
+    }
+
+    // Excel reads the value with the Windows region's decimal separator ("12,34" in Turkey). The tag's
+    // Decimal places sets the digits, as on screen; a REAL tag without one keeps its 7 meaningful
+    // digits instead of the float noise of the stored double (26.673110961914 -> 26.67311).
+    private static readonly NumberFormatInfo CsvNumbers = new()
+    {
+        NumberDecimalSeparator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator == "," ? "," : ".",
+    };
+
+    public static string CsvNumber(double? value, Prognode.Contracts.Tags.TagDefinition? tag)
+    {
+        if (value is not { } v) return string.Empty;
+        if (tag is { DecimalPlaces: > 0 }) return v.ToString("F" + Math.Min(tag.DecimalPlaces, 6), CsvNumbers);
+        if (tag?.DataType == Prognode.Contracts.Tags.TagDataType.Float32)
+            v = double.Parse(v.ToString("G7", CultureInfo.InvariantCulture), CultureInfo.InvariantCulture);
+        return v.ToString("R", CsvNumbers);
     }
 
     private static async Task<IResult> CreateHistorianArchiveDownloadAsync(
-        HistorianService historian, IReadOnlyDictionary<Guid, string> names,
+        HistorianService historian, IReadOnlyDictionary<Guid, Prognode.Contracts.Tags.TagDefinition> tags,
         DateTimeOffset from, DateTimeOffset to, string fileName, CancellationToken ct)
     {
         // ZipArchive writes its final central directory synchronously when disposed.
@@ -364,7 +381,7 @@ public static partial class EndpointExtensions
             81920, FileOptions.Asynchronous | FileOptions.SequentialScan | FileOptions.DeleteOnClose);
         try
         {
-            await WriteHistorianArchiveAsync(file, historian, names, from, to, ct);
+            await WriteHistorianArchiveAsync(file, historian, tags, from, to, ct);
             await file.FlushAsync(ct);
             file.Position = 0;
             return Results.File(file, "application/zip", fileName);
@@ -376,45 +393,55 @@ public static partial class EndpointExtensions
         }
     }
 
-    private static async Task WriteHistorianArchiveAsync(
-        Stream output, HistorianService historian, IReadOnlyDictionary<Guid, string> names,
+    public static async Task WriteHistorianArchiveAsync(
+        Stream output, HistorianService historian, IReadOnlyDictionary<Guid, Prognode.Contracts.Tags.TagDefinition> tags,
         DateTimeOffset from, DateTimeOffset to, CancellationToken ct)
     {
-        const int rowsPerFile = 500_000; // Safely below Excel's worksheet row limit.
+        // A file people can open and scroll: 10,000 rows, named after the first and last sample it holds.
+        const int rowsPerFile = 10_000;
         using var archive = new ZipArchive(output, ZipArchiveMode.Create, leaveOpen: true);
-        StreamWriter? writer = null;
+        var rows = new List<string>(rowsPerFile);
+        long first = 0, last = 0;
         var part = 0;
-        var rows = 0;
-        try
+
+        async Task WritePartAsync()
         {
-            // Monthly slices release SQLite read transactions instead of pinning the WAL
-            // for an entire multi-year download. Each CSV part is streamed, never buffered.
-            for (var cursor = from; cursor < to;)
-            {
-                var monthEnd = new DateTimeOffset(cursor.Year, cursor.Month, 1, 0, 0, 0, TimeSpan.Zero).AddMonths(1);
-                var next = monthEnd < to ? monthEnd : to;
-                await foreach (var sample in historian.StreamRawAsync(names.Keys.ToArray(), cursor, next, ct))
-                {
-                    if (writer is null || rows >= rowsPerFile)
-                    {
-                        if (writer is not null) await writer.DisposeAsync();
-                        writer = new StreamWriter(archive.CreateEntry($"historian_part_{++part:D4}.csv", CompressionLevel.Fastest).Open(),
-                            new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
-                        await writer.WriteLineAsync("Timestamp UTC;Tag;Value;Quality");
-                        rows = 0;
-                    }
-                    await writer.WriteLineAsync(HistorianCsvRow(sample, names));
-                    rows++;
-                }
-                cursor = next;
-            }
-            if (writer is null)
-            {
-                await using var empty = new StreamWriter(archive.CreateEntry("historian_part_0001.csv").Open(), new UTF8Encoding(true));
-                await empty.WriteLineAsync("Timestamp UTC;Tag;Value;Quality");
-            }
+            // 001_2026-10-18_100200_to_2026-10-18_120959.csv: the number keeps the parts in order and unique.
+            static string Stamp(long ms) => DateTimeOffset.FromUnixTimeMilliseconds(ms).UtcDateTime.ToString("yyyy-MM-dd_HHmmss", CultureInfo.InvariantCulture);
+            var name = rows.Count == 0 ? "no_samples.csv" : $"{++part:D3}_{Stamp(first)}_to_{Stamp(last)}.csv";
+            await using var writer = new StreamWriter(archive.CreateEntry(name, CompressionLevel.Fastest).Open(),
+                new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+            await writer.WriteLineAsync("Timestamp UTC;Tag;Value;Quality");
+            foreach (var row in rows) await writer.WriteLineAsync(row);
+            rows.Clear();
         }
-        finally { if (writer is not null) await writer.DisposeAsync(); }
+
+        // Monthly slices release SQLite read transactions instead of pinning the WAL
+        // for an entire multi-year download. Only one part is held in memory at a time.
+        for (var cursor = from; cursor < to;)
+        {
+            var monthEnd = new DateTimeOffset(cursor.Year, cursor.Month, 1, 0, 0, 0, TimeSpan.Zero).AddMonths(1);
+            var next = monthEnd < to ? monthEnd : to;
+            await foreach (var sample in historian.StreamRawAsync(tags.Keys.ToArray(), cursor, next, ct))
+            {
+                if (rows.Count == 0) first = sample.TimestampUnixMs;
+                last = sample.TimestampUnixMs;
+                rows.Add(HistorianCsvRow(sample, tags));
+                if (rows.Count == rowsPerFile) await WritePartAsync();
+            }
+            cursor = next;
+        }
+        if (rows.Count > 0 || part == 0) await WritePartAsync();
+    }
+
+    /// <summary>"PLC1_Tank_Level.zip": the device and tag of a single-tag export, else the given name.</summary>
+    public static string HistorianZipName(IReadOnlyDictionary<Guid, Prognode.Contracts.Tags.TagDefinition> tags,
+        IEnumerable<Prognode.Contracts.Devices.DeviceDefinition> devices, string fallback)
+    {
+        if (tags.Count != 1) return SafeFileName(fallback) + ".zip";
+        var tag = tags.Values.First();
+        var device = devices.FirstOrDefault(d => d.Id == tag.DeviceId)?.Name;
+        return (device is null ? "" : SafeFileName(device) + "_") + SafeFileName(tag.Name) + ".zip";
     }
 
     private static IResult CsvDownload(
