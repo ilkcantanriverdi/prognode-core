@@ -2,7 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const dir = path.join(__dirname, '../../src/Prognode.Web');
-const parts = ['Pairing', 'License', 'RemoteAccess', 'Devices', 'Tags', 'Batches', 'Alarms', 'Trends',
+const parts = ['Pairing', 'License', 'RemoteAccess', 'Devices', 'Tags', 'Batches', 'Alarms', 'Trends', 'Equipment',
   'Historian', 'DataExchange', 'System', 'Mobile'];
 const files = [...parts.map(p => `EndpointExtensions.${p}.cs`), 'EndpointExtensions.cs'];
 const extra = fs.readdirSync(dir).filter(f => /^EndpointExtensions\..+\.cs$/.test(f) && !files.includes(f));

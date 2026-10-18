@@ -17,6 +17,7 @@ try
     await AccessGateContract.RunAsync(root);
     CsvNumberContract.Run();
     await HistorianArchiveContract.RunAsync(root);
+    await EquipmentContract.RunAsync(root);
     var server=new ServerAccessService(root,5080,5081,"TEST");
     var paired=server.Pair("Shift Phone",server.GetPairingCode(),"ANDROID","publicKeyForUnitTest");
     var initial=server.GetClient(paired.ClientId)!;
