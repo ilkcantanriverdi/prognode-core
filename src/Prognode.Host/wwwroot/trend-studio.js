@@ -620,10 +620,14 @@
     }
     // Ad-hoc views have no saved trend ID: export only displayed/downsampled points.
     const rows=['Timestamp UTC;Tag;Value;Quality;Export detail'];
-    for(const s of payload.series||[]){const tag=selectedTag(s.tagId);for(const p of s.points||[]){const q=x=>'"'+String(x??'').replaceAll('"','""')+'"';rows.push([q(new Date(p.timestamp).toISOString().slice(0,19).replace('T',' ')),q(tag?.name||s.tagId),p.value??'',q(p.quality),q('displayed points (downsampled)')].join(';'));}}
+    for(const s of payload.series||[]){const tag=selectedTag(s.tagId);for(const p of s.points||[]){const q=x=>'"'+String(x??'').replaceAll('"','""')+'"';rows.push([q(new Date(p.timestamp).toISOString().slice(0,19).replace('T',' ')),q(tag?.name||s.tagId),csvNumber(p.value,tag),q(p.quality),q('displayed points (downsampled)')].join(';'));}}
     saveBlob(new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8'}),'PROGNODE_TrendStudio_VISIBLE.csv');
     showToast('Ad-hoc view: exported plotted samples, not full raw historian.');
   }
+  // Same rule as the server CSV: the tag's decimal places, REAL to 7 digits, the browser's decimal separator for Excel.
+  function csvNumber(value,tag){if(value==null||value==='')return '';const n=Number(value),places=Number(tag?.decimalPlaces||0);
+    const text=places>0?n.toFixed(Math.min(places,6)):String(tag?.dataType==='Float32'?Number(n.toPrecision(7)):n);
+    return (1.5).toLocaleString().charAt(1)===','?text.replace('.',','):text;}
   function saveBlob(blob,filename){const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
   function exportPng(event){event?.preventDefault();event?.stopImmediatePropagation();
     if(!state.trendPayload){showToast('Select a signal first.');return;}

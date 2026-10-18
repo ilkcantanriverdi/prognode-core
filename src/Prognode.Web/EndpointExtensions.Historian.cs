@@ -138,7 +138,7 @@ public static partial class EndpointExtensions
                 var start = TryParseDate(from) ?? end.AddMinutes(-trend.DefaultWindowMinutes);
                 if (end <= start) return Results.BadRequest(new { message = "End time must be after start time." });
                 var names = (await tags.GetAllAsync(ct)).Where(x => trend.TagIds.Contains(x.Id))
-                    .ToDictionary(x => x.Id, x => x.Name);
+                    .ToDictionary(x => x.Id);
                 return await CreateHistorianArchiveDownloadAsync(historian, names, start, end,
                     $"PROGNODE_Trend_{SafeFileName(trend.Name)}_{DateTime.Now:yyyyMMdd_HHmmss}.zip", ct);
             });
@@ -182,7 +182,7 @@ public static partial class EndpointExtensions
                 }
 
                 var names = (await tags.GetAllAsync(ct)).Where(x => trend.TagIds.Contains(x.Id))
-                    .ToDictionary(x => x.Id, x => x.Name);
+                    .ToDictionary(x => x.Id);
                 return Results.Stream(stream => WriteHistorianCsvAsync(stream, historian, names, start, end, ct),
                     "text/csv; charset=utf-8", $"PROGNODE_{SafeFileName(trend.Name)}_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
             });
