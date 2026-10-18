@@ -280,7 +280,7 @@ if (OperatingSystem.IsWindows())
     handler.Reply = _ => ("{\"ok\":true,\"eventId\":\"" + occurrence + "\",\"pushed\":1,\"pushTargets\":2,\"pushConfigured\":true}", 200);
     var published = await relay.PublishNotificationAsync("activation-token", new Prognode.Contracts.Notifications.NotificationEvent(
         42, "HIGH", "Tank 3 high level", "Level 97.4 % at 10:15", DateTimeOffset.Parse("2026-10-08T10:15:00Z"),
-        RequiresAcknowledgement: true, RepeatSequence: 2, OccurrenceId: occurrence, EventType: "ALARM_ACTIVE", SourceName: "Tank 3 high level"));
+        AlarmKey: "alarm:tank3-high", RequiresAcknowledgement: true, RepeatSequence: 2, OccurrenceId: occurrence, EventType: "ALARM_ACTIVE", SourceName: "Tank 3 high level"));
     var sent = handler.Requests[^1];
     Check(published.Accepted, "A relay ACK for the same event id counts as delivered.");
     Check(published.Pushed == 1 && published.PushTargets == 2 && published.PushConfigured == true,
@@ -291,6 +291,8 @@ if (OperatingSystem.IsWindows())
     Check(eventBody["eventId"]!.GetValue<string>() == occurrence.ToString() && eventBody["state"]!.GetValue<string>() == "ACTIVE" &&
           eventBody["severity"]!.GetValue<string>() == "HIGH" && eventBody["displayMetadata"]!["repeatSequence"]!.GetValue<int>() == 2,
         "The event carries the occurrence id, state, severity and reminder number.");
+    Check(eventBody["displayMetadata"]!["alarmKey"]!.GetValue<string>() == "alarm:tank3-high",
+        "The event names its alarm, so the cloud keeps one entry per alarm when it comes back.");
     Check(!sent.Body!.Contains("97.4") && !eventBody.ContainsKey("message"), "Process values in the message text never leave the site.");
 
     handler.Reply = _ => ("{\"ok\":true,\"eventId\":\"" + occurrence + "\"}", 200);

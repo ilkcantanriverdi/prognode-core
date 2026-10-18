@@ -167,8 +167,11 @@ public sealed class RemoteAccessCloudClient(HttpClient httpClient, CoreCloudLice
             severity = Truncate(string.IsNullOrWhiteSpace(notification.Severity) ? "INFO" : notification.Severity, 64),
             state = Truncate(CloudState(notification), 64),
             timestampUtc = (notification.ActiveAtUtc ?? notification.Timestamp).ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
+            // alarmKey names the alarm (not the occurrence): when the alarm comes back, PROGNODE Cloud closes its
+            // earlier occurrence at once, so phones show one entry per alarm, as Core does.
             displayMetadata = new { repeatSequence = notification.RepeatSequence, requiresAcknowledgement = notification.RequiresAcknowledgement,
-                source = label?.Source is { Length: > 0 } source ? Truncate(source, 240) : null },
+                source = label?.Source is { Length: > 0 } source ? Truncate(source, 240) : null,
+                alarmKey = string.IsNullOrWhiteSpace(notification.AlarmKey) ? null : Truncate(notification.AlarmKey, 120) },
         }, cancellationToken);
         var json = string.Equals(response.Content.Headers.ContentType?.MediaType, "application/json", StringComparison.OrdinalIgnoreCase);
         if (!response.IsSuccessStatusCode || !json)
