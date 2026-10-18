@@ -312,7 +312,7 @@ public static partial class EndpointExtensions
 
         endpoints.MapGet(
             "/api/data-exchange/historian/{tagId:guid}.zip",
-            async (Guid tagId, HistorianService historian, TagService tags, CancellationToken ct) =>
+            async (Guid tagId, HistorianService historian, TagService tags, DeviceService devices, CancellationToken ct) =>
             {
                 var tag = (await tags.GetAllAsync(ct)).FirstOrDefault(x => x.Id == tagId);
                 if (tag is null) return Results.NotFound();
@@ -321,7 +321,7 @@ public static partial class EndpointExtensions
                 var to = DateTimeOffset.UtcNow.AddMinutes(1);
                 var names = new Dictionary<Guid, Prognode.Contracts.Tags.TagDefinition> { [tagId] = tag };
                 return await CreateHistorianArchiveDownloadAsync(historian, names, from, to,
-                    $"PROGNODE_Historian_{SafeFileName(tag.Name)}_{DateTime.Now:yyyyMMdd_HHmmss}.zip", ct);
+                    HistorianZipName(names, await devices.GetAllAsync(ct), tag.Name), ct);
             });
 
         endpoints.MapGet(
