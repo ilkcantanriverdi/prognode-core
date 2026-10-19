@@ -38,6 +38,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
 <link rel="stylesheet" href="/manual-pairing.css?v=hf65" />
 <link rel="stylesheet" href="/sidebar-v3.css?v=20261013-cordara" />
 <link rel="stylesheet" href="/progress-overlay.css?v=20261013" />
+<link rel="stylesheet" href="/equipment.css?v=20261018" />
 </head>
 <body class="customer-v2">
   <div class="app-shell">
@@ -60,6 +61,10 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
         <button class="nav-item active" data-page="overview">
           <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span>
           <span data-i18n="overview">Overview</span>
+        </button>
+        <button class="nav-item" data-page="equipment">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="8" height="7" rx="1.5"/><rect x="13" y="4" width="8" height="7" rx="1.5"/><rect x="3" y="13" width="8" height="7" rx="1.5"/><rect x="13" y="13" width="8" height="7" rx="1.5"/></svg></span>
+          <span>Equipment</span>
         </button>
         <button class="nav-item" data-page="devices">
           <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="4" y="3" width="16" height="7" rx="1"/><rect x="4" y="14" width="16" height="7" rx="1"/><path d="M8 6h.01M8 17h.01"/></svg></span>
@@ -159,6 +164,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
             </div>
             <div class="customer-intro customer-intro-ready" id="customerIntroReady" hidden><div><span class="customer-intro-kicker">● <span data-customer-en="ON-SITE MONITORING">ON-SITE MONITORING</span></span><h2 data-customer-en="A clear picture of your critical processes.">A clear picture of your critical processes.</h2><p data-customer-en="Your local devices, live signals and alarms. No cloud connection required.">Your local devices, live signals and alarms. No cloud connection required.</p></div><button id="customerOpenTrends" class="customer-primary" type="button">Open Trend Studio →</button></div>
             <div class="customer-kpis"><button class="customer-kpi" data-customer-page="devices" type="button"><span class="customer-kpi-top"><span data-customer-en="CONNECTED DEVICES">CONNECTED DEVICES</span><span class="customer-kpi-icon">▣</span></span><strong id="customerDeviceCount">0</strong><small data-customer-en="Your local device connections">Your local device connections</small></button><button class="customer-kpi" data-customer-page="alarms" type="button"><span class="customer-kpi-top"><span data-customer-en="ACTIVE ALARMS">ACTIVE ALARMS</span><span class="customer-kpi-icon">△</span></span><strong id="customerAlarmCount">0</strong><small data-customer-en="Conditions requiring attention">Conditions requiring attention</small></button><button class="customer-kpi" data-customer-page="historian" type="button"><span class="customer-kpi-top"><span>HISTORIAN</span><span class="customer-kpi-icon">▤</span></span><strong id="customerRecordingCount">—</strong><small id="customerHistorianHelp" data-customer-en="Set up local signal recording">Set up local signal recording</small></button></div>
+            <div id="overviewEquipment" class="hidden"></div>
             <div class="customer-overview-bottom" id="customerEmptyBottom"><article class="customer-panel"><div class="customer-panel-head"><div><h3 data-customer-en="Plant activity">Plant activity</h3><p data-customer-en="Trends and events will appear here as signals arrive.">Trends and events will appear here as signals arrive.</p></div><button type="button" data-customer-page="trends" class="customer-text-action" data-customer-en="Open Trend Studio →">Open Trend Studio →</button></div><div class="customer-empty-activity"><span class="customer-empty-icon">⌁</span><strong data-customer-en="No data to display yet">No data to display yet</strong><p data-customer-en="Your first live signals will appear after setup.">Your first live signals will appear after setup.</p></div></article><article class="customer-panel customer-help"><h3 data-customer-en="Deployment checklist">Deployment checklist</h3><p data-customer-en="Everything needed to bring this site online.">Everything needed to bring this site online.</p><div class="customer-help-card"><span class="customer-help-icon">♢</span><div><strong data-customer-en="Designed to work offline">Designed to work offline</strong><p data-customer-en="Local monitoring, historian and LAN clients work without cloud connectivity.">Local monitoring, historian and LAN clients work without cloud connectivity.</p><button type="button" class="customer-text-action" data-customer-page="settings" data-customer-en="Explore system settings →">Explore system settings →</button></div></div><hr/><button type="button" class="customer-text-action" data-customer-page="license" data-customer-en="Go to license setup →">Go to license setup →</button></article></div>
           </section>
           <div id="customerLegacyOverview">
@@ -280,6 +286,27 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
             </div>
           </div>
         </div>
+        </section>
+
+        <section class="page" id="page-equipment">
+          <div class="page-actions">
+            <div>
+              <span class="kicker">MACHINES AT A GLANCE</span>
+              <h2>Equipment</h2>
+              <p>Group the Tags of a machine on one card: a few values, a chart, and its alarms. Optional.</p>
+            </div>
+            <button class="primary" id="equipmentAdd">+ Add equipment</button>
+          </div>
+          <div class="eq-toolbar" role="group" aria-label="Show">
+            <button class="active" data-eq-filter="all">All</button>
+            <button data-eq-filter="alarm">In alarm</button>
+          </div>
+          <div class="eq-grid" id="equipmentGrid"></div>
+          <div class="empty-state hidden" id="equipmentEmpty">
+            <strong>Create your first equipment card</strong>
+            <p>Name a machine, pick up to 8 of its Tags and choose which ones show a chart. The card lights up in the alarm's color when one of them is in alarm.</p>
+            <button class="primary" id="equipmentEmptyAdd">+ Add equipment</button>
+          </div>
         </section>
 
         <section class="page" id="page-devices">
@@ -1702,6 +1729,37 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
   </div>
 
 
+  <div class="modal-backdrop hidden" id="equipmentModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <span class="kicker">EQUIPMENT CARD</span>
+          <h2 id="equipmentModalTitle">Add equipment</h2>
+        </div>
+        <button class="icon-button" id="closeEquipmentModal" aria-label="Close">×</button>
+      </div>
+      <div class="form-grid">
+        <label class="field">
+          <span>Name</span>
+          <input id="equipmentName" maxlength="100" placeholder="Line 2 · Press" />
+        </label>
+        <label class="field">
+          <span>Device (status on the card)</span>
+          <select id="equipmentDevice"></select>
+        </label>
+      </div>
+      <div class="field">
+        <span>Tags on the card <b id="equipmentPickCount">0 / 8</b> · show each as a value or a chart</span>
+        <div id="equipmentTagList" class="eq-pick-list"></div>
+      </div>
+      <p class="eq-error" id="equipmentError" role="alert"></p>
+      <div class="modal-actions">
+        <button class="danger-button hidden" id="deleteEquipment">Delete</button>
+        <button class="primary" id="saveEquipment">Save equipment</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-backdrop hidden" id="historianModal">
     <div class="modal compact-modal">
       <div class="modal-head">
@@ -1862,6 +1920,7 @@ body:has(#page-trends.active) .main>.content{width:100%;max-width:none;padding:0
   <script src="/qr-local.js?v=0.7.2-rc6.4.7-hf5-ui-stabilization"></script>
   <script src="/app.js?v=20261014-relay-status"></script>
   <script src="/trend-studio.js?v=20261004-csv-audit"></script>
+  <script src="/equipment.js?v=20261018"></script>
   <script src="/trend-studio-mount.js?v=rc647-hf63-auth-catalog"></script>
   <script src="/hf5-ui.js?v=20261004-bulk-management"></script>
   <script defer src="/customer-v2.js?v=20261013-guided-setup"></script>

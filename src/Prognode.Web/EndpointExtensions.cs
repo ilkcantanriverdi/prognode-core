@@ -119,6 +119,7 @@ public static partial class EndpointExtensions
         MapBatchesEndpoints(endpoints);
         MapAlarmsEndpoints(endpoints);
         MapTrendsEndpoints(endpoints);
+        MapEquipmentEndpoints(endpoints);
         MapHistorianEndpoints(endpoints);
         MapDataExchangeEndpoints(endpoints);
         MapSystemEndpoints(endpoints);

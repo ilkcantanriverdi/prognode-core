@@ -219,6 +219,8 @@ builder.Services.AddSingleton<TagQualityMonitor>();
 
 builder.Services.AddSingleton<ITrendRepository, SqliteTrendRepository>();
 builder.Services.AddSingleton<TrendService>();
+builder.Services.AddSingleton<IEquipmentRepository, SqliteEquipmentRepository>();
+builder.Services.AddSingleton<EquipmentService>();
 
 builder.Services.AddSingleton<IHistorianRepository, SqliteHistorianRepository>();
 builder.Services.AddSingleton<IHistorianConfigurationRepository, SqliteHistorianConfigurationRepository>();

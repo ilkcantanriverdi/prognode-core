@@ -1,0 +1,69 @@
+.eq-toolbar { display: flex; gap: 8px; margin: 0 0 16px; }
+.eq-toolbar button { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); background: transparent; cursor: pointer; font-size: 13px; color: var(--muted); }
+.eq-toolbar button.active { border-color: var(--cyan); color: var(--cyan); background: color-mix(in srgb, var(--cyan) 10%, transparent); }
+
+/* Every card has the same size; the Tag grid gets denser (1-4 rows) and its text smaller as Tags are added. */
+.eq-grid { --eq-mono: "JetBrains Mono", "Cascadia Mono", Consolas, ui-monospace, monospace; display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 18px; align-items: start; }
+.eq-card { --eq-color: transparent; height: 400px; display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; }
+.eq-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line-soft); }
+.eq-head h3 { margin: 0; font: 600 12px/1.2 var(--eq-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.eq-head-side { display: flex; align-items: center; gap: 8px; flex: none; }
+.eq-status { font: 600 11px/1 var(--eq-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.eq-status::before { content: "●"; margin-right: 6px; color: var(--yellow); }
+.eq-status.on { color: var(--green); }
+.eq-status.on::before { color: var(--green); }
+.eq-edit { border: 0; background: none; padding: 2px 4px; color: var(--muted-2); cursor: pointer; font-size: 13px; opacity: 0; transition: opacity .15s; }
+.eq-card:hover .eq-edit, .eq-edit:focus-visible { opacity: 1; }
+.eq-edit:disabled { cursor: default; }
+
+/* Hairline dividers: the 1px gap shows the background line color between cells. */
+.eq-cells { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: minmax(0, 1fr); gap: 1px; background: var(--line-soft); border-bottom: 1px solid var(--line-soft); min-height: 0; }
+.eq-cell { --eq-value: 28px; --eq-spark: 26px; background: var(--panel); padding: 12px 18px; display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 0; min-height: 0; overflow: hidden; }
+.eq-rows-1 .eq-cell { --eq-value: 34px; --eq-spark: 44px; }
+.eq-rows-3 .eq-cell { --eq-value: 22px; --eq-spark: 18px; padding: 8px 16px; }
+.eq-rows-4 .eq-cell { --eq-value: 18px; --eq-spark: 14px; padding: 6px 16px; gap: 2px; }
+.eq-label { font: 600 10.5px/1.2 var(--eq-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.eq-value { font: 500 var(--eq-value)/1.1 var(--eq-mono); font-variant-numeric: tabular-nums; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.eq-value small { font-size: max(11px, calc(var(--eq-value) * .45)); color: var(--muted); margin-left: 6px; font-weight: 400; }
+.eq-cell.alarmed .eq-value { color: var(--danger); }
+.eq-cell.bad .eq-value { color: var(--muted-2); }
+.eq-spark { width: 100%; height: var(--eq-spark); display: block; flex: none; }
+.eq-spark polyline { fill: none; stroke: var(--cyan); stroke-width: 1.8; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.eq-spark.alarmed polyline { stroke: var(--danger); }
+.eq-spark .eq-limit { stroke: var(--danger); stroke-width: 1; stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; opacity: .75; }
+.eq-chart-empty { font-size: 11px; color: var(--muted-2); }
+
+.eq-events { height: 108px; padding: 4px 18px 6px; display: grid; grid-template-rows: repeat(3, 1fr); }
+.eq-event { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; font: 400 12.5px/1.2 var(--eq-mono); }
+.eq-event-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.eq-event time { color: var(--muted); font-variant-numeric: tabular-nums; }
+.eq-events-empty { grid-row: 1 / -1; align-self: center; text-align: center; font: 400 12px var(--eq-mono); color: var(--muted-2); }
+.eq-tag { font: 700 10px/1 var(--eq-mono); letter-spacing: .08em; padding: 5px 7px; border-radius: 5px; min-width: 52px; text-align: center; }
+.eq-tag-critical { color: var(--danger); background: color-mix(in srgb, var(--danger) 16%, transparent); }
+.eq-tag-high { color: #ff9b69; background: rgba(255, 155, 105, .16); }
+.eq-tag-medium { color: var(--yellow); background: color-mix(in srgb, var(--yellow) 16%, transparent); }
+.eq-tag-low { color: var(--muted); background: color-mix(in srgb, var(--muted) 14%, transparent); }
+.eq-tag-ack { color: var(--cyan); background: color-mix(in srgb, var(--cyan) 14%, transparent); }
+.eq-tag-normal { color: var(--muted); background: color-mix(in srgb, var(--muted) 10%, transparent); }
+
+/* Alarm state: the frame takes the highest active priority's color and blinks while an ACK is pending. */
+.eq-alarm-low { --eq-color: var(--muted); }
+.eq-alarm-medium { --eq-color: var(--yellow); }
+.eq-alarm-high { --eq-color: #ff9b69; }
+.eq-alarm-critical { --eq-color: var(--danger); }
+[class*="eq-alarm-"].eq-card { border-color: var(--eq-color); box-shadow: 0 0 0 1px var(--eq-color), 0 0 24px color-mix(in srgb, var(--eq-color) 35%, transparent); }
+.eq-card.eq-blink { animation: eq-blink 1.2s ease-in-out infinite; }
+@keyframes eq-blink { 50% { box-shadow: 0 0 0 1px color-mix(in srgb, var(--eq-color) 25%, transparent); border-color: var(--line); } }
+@media (prefers-reduced-motion: reduce) { .eq-card.eq-blink { animation: none; border-width: 2px; } }
+
+.eq-strip { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 16px; margin-bottom: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); cursor: pointer; text-align: left; }
+.eq-strip span:nth-child(2) { flex: 1; color: var(--muted); }
+#overviewEquipment { margin-bottom: 18px; }
+
+.eq-pick-list { display: grid; gap: 6px; max-height: 340px; overflow-y: auto; padding-right: 4px; }
+.eq-pick { display: grid; grid-template-columns: auto minmax(0, 1fr) 110px; gap: 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--line-soft); border-radius: 8px; cursor: pointer; }
+.eq-pick span { display: grid; min-width: 0; }
+.eq-pick small { color: var(--muted); font-size: 12px; }
+.eq-pick select:disabled { opacity: .4; }
+.eq-error { color: var(--danger); font-size: 13px; min-height: 18px; margin: 4px 0 0; }
+@media (max-width: 720px) { .eq-grid { grid-template-columns: minmax(0, 1fr); } .eq-card { height: 380px; } }

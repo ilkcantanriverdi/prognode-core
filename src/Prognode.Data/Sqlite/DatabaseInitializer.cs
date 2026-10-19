@@ -82,6 +82,16 @@ public sealed class DatabaseInitializer(SqliteDatabaseOptions options)
           FOREIGN KEY(trend_id) REFERENCES trend_definitions(id) ON DELETE CASCADE,
           FOREIGN KEY(tag_id) REFERENCES tags(id) ON DELETE CASCADE);
 
+        CREATE TABLE IF NOT EXISTS equipment(
+          id TEXT PRIMARY KEY,name TEXT NOT NULL,device_id TEXT NULL,
+          created_at TEXT NOT NULL,updated_at TEXT NOT NULL,
+          FOREIGN KEY(device_id) REFERENCES devices(id) ON DELETE SET NULL);
+        CREATE TABLE IF NOT EXISTS equipment_tags(
+          equipment_id TEXT NOT NULL,tag_id TEXT NOT NULL,sort_order INTEGER NOT NULL,
+          view TEXT NOT NULL DEFAULT 'VALUE',PRIMARY KEY(equipment_id,tag_id),
+          FOREIGN KEY(equipment_id) REFERENCES equipment(id) ON DELETE CASCADE,
+          FOREIGN KEY(tag_id) REFERENCES tags(id) ON DELETE CASCADE);
+
         CREATE TABLE IF NOT EXISTS historian_recording_configs(
           id TEXT PRIMARY KEY,tag_id TEXT NOT NULL UNIQUE,sample_interval_seconds INTEGER NOT NULL,
           retention_days INTEGER NOT NULL,enabled INTEGER NOT NULL DEFAULT 1,

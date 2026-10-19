@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.join(__dirname,'../src/Prognode.Host/wwwroot');
+const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const js=fs.readFileSync(path.join(root,'equipment.js'),'utf8');
+const css=fs.readFileSync(path.join(root,'equipment.css'),'utf8');
+const web=require('./lib/web-endpoints.cjs');
+assert(html.includes('data-page="equipment"'),'Equipment is in the menu');
+assert(html.includes('id="page-equipment"') && html.includes('id="equipmentModal"') && html.includes('id="overviewEquipment"'));
+assert(html.includes('src="/equipment.js') && html.includes('href="/equipment.css'));
+for(const route of ['"/api/equipment"','"/api/equipment/{id:guid}"']) assert(web.includes(route),route);
+assert(js.includes('/api/trend-studio/series?tagIds='),'charts read Historian through the existing series API');
+assert(js.includes('eq-blink') && js.includes('requiresAcknowledgement'),'a card blinks while an ACK is pending');
+assert(css.includes('@media (prefers-reduced-motion: reduce)'),'no blinking for reduced motion');
+for(const p of ['low','medium','high','critical']) assert(css.includes(`.eq-alarm-${p}`),`frame color for ${p}`);
+assert(js.includes('canMutateConfiguration()'),'editing follows View Only');
+console.log('PASS: Equipment page (menu, cards, alarm frame and blink, Historian charts, View Only)');
