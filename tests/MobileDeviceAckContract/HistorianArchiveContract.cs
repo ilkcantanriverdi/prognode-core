@@ -52,6 +52,17 @@ internal static class HistorianArchiveContract
         using var emptyArchive = new ZipArchive(empty, ZipArchiveMode.Read);
         Require(emptyArchive.Entries.Single().FullName == "no_samples.csv", "an empty range still gives a readable ZIP");
         Console.WriteLine("PASS: historian ZIP (10,000-row parts named by date, Device_Tag.zip)");
+
+        // Disk use: no time index, the batch index holds only samples recorded in a batch, and reads still use the key.
+        await using var db = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={options.DatabasePath}");
+        await db.OpenAsync();
+        string Scalar(string sql) { using var c = db.CreateCommand(); c.CommandText = sql; return string.Join(" | ", Rows(c)); }
+        static IEnumerable<string> Rows(Microsoft.Data.Sqlite.SqliteCommand c) { using var r = c.ExecuteReader(); while (r.Read()) yield return r.GetValue(r.FieldCount - 1).ToString()!; }
+        Require(Scalar("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='historian_samples' AND sql IS NOT NULL") == "ix_historian_samples_batch_set",
+            "only the partial batch index on historian_samples");
+        Require(Scalar("EXPLAIN QUERY PLAN SELECT * FROM historian_samples WHERE batch_id='b1'").Contains("ix_historian_samples_batch_set"), "batch reads use the partial index");
+        Require(Scalar("EXPLAIN QUERY PLAN SELECT * FROM historian_samples WHERE tag_id='t' AND timestamp_unix_ms>=1 AND timestamp_unix_ms<2").Contains("PRIMARY KEY"), "range reads use the key");
+        Console.WriteLine("PASS: historian indexes (no time index, partial batch index)");
     }
 
     private static void Require(bool condition, string message)

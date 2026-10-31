@@ -103,7 +103,6 @@ public sealed class DatabaseInitializer(SqliteDatabaseOptions options)
           batch_id TEXT NULL,
           PRIMARY KEY(tag_id,timestamp_unix_ms),FOREIGN KEY(tag_id) REFERENCES tags(id) ON DELETE CASCADE
         ) WITHOUT ROWID;
-        CREATE INDEX IF NOT EXISTS ix_historian_samples_time ON historian_samples(timestamp_unix_ms);
         """, ct);
 
         // RC6.1 -> RC6.3 additive migration. Existing BOOL/WORD definitions remain DigitalEquals.
@@ -130,7 +129,11 @@ public sealed class DatabaseInitializer(SqliteDatabaseOptions options)
         await Exec(connection, "CREATE INDEX IF NOT EXISTS ix_alarm_events_batch ON alarm_events(batch_id);", ct);
         await Exec(connection, "CREATE INDEX IF NOT EXISTS ix_alarm_events_active_id ON alarm_events(id DESC) WHERE event_type='Active';", ct);
         await Exec(connection, "CREATE INDEX IF NOT EXISTS ix_alarm_events_occurrence ON alarm_events(occurrence_id,id);", ct);
-        await Exec(connection, "CREATE INDEX IF NOT EXISTS ix_historian_samples_batch ON historian_samples(batch_id);", ct);
+        // Historian disk use: every read goes through the (tag_id, timestamp) key, so the time index only cost
+        // space, and most samples have no batch. Both indexes repeated the 36-character tag_id of every sample.
+        await Exec(connection, "DROP INDEX IF EXISTS ix_historian_samples_time;", ct);
+        await Exec(connection, "DROP INDEX IF EXISTS ix_historian_samples_batch;", ct);
+        await Exec(connection, "CREATE INDEX IF NOT EXISTS ix_historian_samples_batch_set ON historian_samples(batch_id) WHERE batch_id IS NOT NULL;", ct);
 
         // RC6.4.4: Historian enrollment is manual only; saved Trends never create recordings.
         // Keep existing configurations/samples intact; customers can stop legacy entries in Historian.
