@@ -280,18 +280,19 @@ public static class BackupArchive
             return Convert.ToInt64(cmd.ExecuteScalar()??0L);
         }
         using var range=c.CreateCommand();
-        range.CommandText="SELECT (SELECT timestamp_unix_ms FROM historian_samples ORDER BY timestamp_unix_ms ASC LIMIT 1),"+
-            " (SELECT timestamp_unix_ms FROM historian_samples ORDER BY timestamp_unix_ms DESC LIMIT 1)";
+        // One pass: there is no time index on historian_samples.
+        range.CommandText="SELECT COUNT(*),MIN(timestamp_unix_ms),MAX(timestamp_unix_ms) FROM historian_samples";
         using var reader=range.ExecuteReader();
-        long? min=null,max=null;
+        long samples=0; long? min=null,max=null;
         if(reader.Read())
         {
-            if(!reader.IsDBNull(0)) min=reader.GetInt64(0);
-            if(!reader.IsDBNull(1)) max=reader.GetInt64(1);
+            samples=reader.GetInt64(0);
+            if(!reader.IsDBNull(1)) min=reader.GetInt64(1);
+            if(!reader.IsDBNull(2)) max=reader.GetInt64(2);
         }
         reader.Close();
         return new BackupOverview((int)Count("devices"),(int)Count("tags"),
-            (int)Count("alarm_definitions"),Count("historian_samples"),min,max);
+            (int)Count("alarm_definitions"),samples,min,max);
     }
     // A new backup needs a passphrase that meets the policy; opening one only needs a non-empty passphrase,
     // so backups made under the earlier 12-character rule keep working.

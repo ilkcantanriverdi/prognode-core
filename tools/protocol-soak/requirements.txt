@@ -2,9 +2,10 @@ pymodbus==3.11.3
 python-snap7==2.0.2
 asyncua==2.1.0
 paho-mqtt==2.1.0
-# Transitive dependencies of asyncua, pinned above versions with known vulnerabilities (OSV scan).
+# Transitive dependencies, pinned above versions with known vulnerabilities (OSV scan).
 anyio==4.14.2
 idna==3.15
+certifi==2026.10.18
 pyserial==3.5
 pymcprotocol==0.3.0
 # Test tools only (GPL / MIT), never shipped: FINS, EtherNet/IP Logix emulation and an independent EtherNet/IP encoder.
