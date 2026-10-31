@@ -398,18 +398,18 @@ public static partial class EndpointExtensions
         Stream output, HistorianService historian, IReadOnlyDictionary<Guid, Prognode.Contracts.Tags.TagDefinition> tags,
         DateTimeOffset from, DateTimeOffset to, CancellationToken ct)
     {
-        // A file people can open and scroll: 10,000 rows, named after the first and last sample it holds.
-        const int rowsPerFile = 10_000;
+        // A file Excel opens quickly: 100,000 rows, named after its first sample (the next file shows where it ends).
+        const int rowsPerFile = 100_000;
         using var archive = new ZipArchive(output, ZipArchiveMode.Create, leaveOpen: true);
         var rows = new List<string>(rowsPerFile);
-        long first = 0, last = 0;
+        long first = 0;
         var part = 0;
 
         async Task WritePartAsync()
         {
-            // 001_2026-10-18_100200_to_2026-10-18_120959.csv: the number keeps the parts in order and unique.
-            static string Stamp(long ms) => DateTimeOffset.FromUnixTimeMilliseconds(ms).UtcDateTime.ToString("yyyy-MM-dd_HHmmss", CultureInfo.InvariantCulture);
-            var name = rows.Count == 0 ? "no_samples.csv" : $"{++part:D3}_{Stamp(first)}_to_{Stamp(last)}.csv";
+            // 001_2026-10-18_10-02.csv (UTC): the number keeps the parts in order and unique.
+            static string Stamp(long ms) => DateTimeOffset.FromUnixTimeMilliseconds(ms).UtcDateTime.ToString("yyyy-MM-dd_HH-mm", CultureInfo.InvariantCulture);
+            var name = rows.Count == 0 ? "no_samples.csv" : $"{++part:D3}_{Stamp(first)}.csv";
             await using var writer = new StreamWriter(archive.CreateEntry(name, CompressionLevel.Fastest).Open(),
                 new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
             await writer.WriteLineAsync("Timestamp UTC;Tag;Value;Quality");
@@ -426,7 +426,6 @@ public static partial class EndpointExtensions
             await foreach (var sample in historian.StreamRawAsync(tags.Keys.ToArray(), cursor, next, ct))
             {
                 if (rows.Count == 0) first = sample.TimestampUnixMs;
-                last = sample.TimestampUnixMs;
                 rows.Add(HistorianCsvRow(sample, tags));
                 if (rows.Count == rowsPerFile) await WritePartAsync();
             }

@@ -6,7 +6,7 @@ using Prognode.Data.Sqlite;
 using Prognode.Historian;
 using Prognode.Web;
 
-/// <summary>Historian ZIP: 10,000-row parts named by their first and last sample, the ZIP named Device_Tag.</summary>
+/// <summary>Historian ZIP: 100,000-row parts named by their first sample, the ZIP named Device_Tag.</summary>
 internal static class HistorianArchiveContract
 {
     public static async Task RunAsync(string root)
@@ -22,25 +22,25 @@ internal static class HistorianArchiveContract
         var repository = new SqliteHistorianRepository(options);
         var historian = new HistorianService(repository, new SqliteHistorianConfigurationRepository(options), tags);
 
-        // 25,000 samples one second apart from 2026-10-18 10:00:00 UTC: parts of 10,000, 10,000 and 5,000.
+        // 250,000 samples one second apart from 2026-10-18 10:00:00 UTC: parts of 100,000, 100,000 and 50,000.
         var start = new DateTimeOffset(2026, 10, 18, 10, 0, 0, TimeSpan.Zero);
-        await repository.WriteBatchAsync(Enumerable.Range(0, 25_000)
+        await repository.WriteBatchAsync(Enumerable.Range(0, 250_000)
             .Select(i => new HistorianSample(tag.Id, start.AddSeconds(i).ToUnixTimeMilliseconds(), 26.67311f, "Good")).ToList());
 
         var map = new Dictionary<Guid, TagDefinition> { [tag.Id] = tag };
         using var zip = new MemoryStream();
-        await EndpointExtensions.WriteHistorianArchiveAsync(zip, historian, map, start, start.AddDays(1), default);
+        await EndpointExtensions.WriteHistorianArchiveAsync(zip, historian, map, start, start.AddDays(3), default);
         zip.Position = 0;
         using var archive = new ZipArchive(zip, ZipArchiveMode.Read);
         var names = archive.Entries.Select(e => e.FullName).ToArray();
         Require(names.SequenceEqual([
-            "001_2026-10-18_100000_to_2026-10-18_124639.csv",
-            "002_2026-10-18_124640_to_2026-10-18_153319.csv",
-            "003_2026-10-18_153320_to_2026-10-18_165639.csv"]), "parts named by first and last sample: " + string.Join(", ", names));
+            "001_2026-10-18_10-00.csv",
+            "002_2026-10-19_13-46.csv",
+            "003_2026-10-20_17-33.csv"]), "parts named by their first sample: " + string.Join(", ", names));
         using (var reader = new StreamReader(archive.Entries[0].Open()))
         {
             var lines = (await reader.ReadToEndAsync()).Split('\n', StringSplitOptions.RemoveEmptyEntries);
-            Require(lines.Length == 10_001 && lines[1].Contains(";\"tag1\";26") && lines[1].Contains("67;\"Good\""), $"10,000 rows plus header, 2 decimals: {lines.Length} {lines[1]}");
+            Require(lines.Length == 100_001 && lines[1].Contains(";\"tag1\";26") && lines[1].Contains("67;\"Good\""), $"100,000 rows plus header, 2 decimals: {lines.Length} {lines[1]}");
         }
 
         Require(EndpointExtensions.HistorianZipName(map, [device], "Trend") == "PLC1_tag1.zip", "single tag: Device_Tag.zip");
@@ -51,7 +51,7 @@ internal static class HistorianArchiveContract
         empty.Position = 0;
         using var emptyArchive = new ZipArchive(empty, ZipArchiveMode.Read);
         Require(emptyArchive.Entries.Single().FullName == "no_samples.csv", "an empty range still gives a readable ZIP");
-        Console.WriteLine("PASS: historian ZIP (10,000-row parts named by date, Device_Tag.zip)");
+        Console.WriteLine("PASS: historian ZIP (100,000-row parts named by date, Device_Tag.zip)");
 
         // Disk use: no time index, the batch index holds only samples recorded in a batch, and reads still use the key.
         await using var db = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={options.DatabasePath}");
