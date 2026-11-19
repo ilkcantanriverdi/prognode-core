@@ -94,6 +94,9 @@ public static class AccessGate
             string.Equals(path.Value, "/api/system/update/check", StringComparison.OrdinalIgnoreCase) ||
             // Connecting to an account installs a license; once one is valid this needs a signed-in session.
             (path.StartsWithSegments("/api/license/link") && !license().IsValid) ||
+            // Offline activation: sign-in needs an activated license, so the signed .pgnact must get in first.
+            // Core accepts it only for this license, server and machine; once licensed it needs a session.
+            (path.StartsWithSegments("/api/license/activation/import") && !license().IsValid) ||
             path.StartsWithSegments("/api/access/login") ||
             path.StartsWithSegments("/api/access/logout") ||
             (string.Equals(path.Value, "/api/client/pair", StringComparison.OrdinalIgnoreCase) ||

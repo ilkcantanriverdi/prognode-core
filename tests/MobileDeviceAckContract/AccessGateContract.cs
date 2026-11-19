@@ -62,6 +62,8 @@ internal static class AccessGateContract
         Require((await Change("/api/license/import", unlicensed)).Passed, "A license can be imported without one.");
         Require((await Change("/api/license/link/start", unlicensed)).Passed, "An account can be linked while unlicensed.");
         Require((await Change("/api/license/link/start", licensed)).Status == 401, "Re-linking a licensed Monitor needs a session.");
+        Require((await Change("/api/license/activation/import", unlicensed)).Passed, "An offline activation can be imported before sign-in.");
+        Require((await Change("/api/license/activation/import", licensed)).Status == 401, "Re-activating a licensed Monitor needs a session.");
         Require((await Change("/api/access/login", licensed)).Passed, "Sign-in itself is exempt.");
         Require((await Change($"/api/mobile/v2/alarms/{Guid.NewGuid()}/ack", licensed)).Passed, "Occurrence ACK checks its own device grant.");
         Require((await Change("/api/remote-access/clients/register", licensed, pairedDevice: true)).Passed, "A paired device registers itself for Remote Access.");
