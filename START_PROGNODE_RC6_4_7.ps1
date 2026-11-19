@@ -72,15 +72,15 @@ if (Test-Path $oldDb) {
   $existing = @(Get-ChildItem $bkDir -Filter 'PREUPGRADE-HF4.1-*.pgnbackup' -ErrorAction SilentlyContinue)
   if ($existing.Count -eq 0) {
     $backupPassWasPrompted=$false
-    if (-not $env:PROGNODE_BACKUP_PASSWORD -or $env:PROGNODE_BACKUP_PASSWORD.Length -lt 12) {
+    if (-not $env:PROGNODE_BACKUP_PASSWORD -or $env:PROGNODE_BACKUP_PASSWORD.Length -lt 8) {
       Write-Host '[PROGNODE] First HF4.1 start: encryption password needed for the pre-upgrade snapshot.' -ForegroundColor Cyan
-      $secure = Read-Host 'Backup passphrase (at least 12 characters; keep it safe)' -AsSecureString
+      $secure = Read-Host 'Backup passphrase (8+ characters: A-Z, a-z, 0-9 and a symbol; keep it safe)' -AsSecureString
       $ptr=[Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
       try { $env:PROGNODE_BACKUP_PASSWORD=[Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr) }
       finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr) }
       $backupPassWasPrompted=$true
     }
-    if ($env:PROGNODE_BACKUP_PASSWORD.Length -lt 12) { throw 'Pre-upgrade backup password must have 12+ characters. Old Core left intact.' }
+    if ($env:PROGNODE_BACKUP_PASSWORD.Length -lt 8) { throw 'Pre-upgrade backup password must have 8+ characters with A-Z, a-z, 0-9 and a symbol. Old Core left intact.' }
     $backupFile=Join-Path $bkDir ('PREUPGRADE-HF4.1-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss')+'-'+[guid]::NewGuid().ToString('N')+'.pgnbackup')
     Write-Host '[PROGNODE] Making a verified encrypted snapshot before upgrade...' -ForegroundColor Cyan
     try {

@@ -27,6 +27,10 @@ cpppo's Logix emulation, a bacpypes3 BACnet device, python-snap7, asyncua, paho-
 MQTT broker in-process, approves the OPC UA server certificate the way an administrator does in Core,
 and takes one of them down every `--fault-every` minutes for `--fault-down` seconds, in turn.
 
+To feed a running Core by hand instead, start one simulator, e.g. `.venv/Scripts/python simulators.py modbus --port 5110 --counters 50`.
+The `mqtt` simulator only publishes: it needs a broker on its `--port`, e.g. Mosquitto (`mosquitto -p 11883`);
+in the soak the harness runs that broker.
+
 Every simulator serves the same values, so every reading is checked:
 
 * counter *k* = (whole Unix seconds + *k*) mod 30000, for `--tags` counters per protocol (MQTT: up to 50);

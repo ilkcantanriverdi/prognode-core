@@ -510,6 +510,26 @@ function canMutateConfiguration() {
   return hasConfigurationAccess() && !isLicenseOverCapacity();
 }
 
+function explainLockedAction() {
+  if (isLicenseOverCapacity()) {
+    showToast("Over capacity: reduce configured Tags or upgrade the license first.");
+    navigate("license");
+  } else if (!state.license?.isValid) {
+    showToast("Activate a license first: start the free trial or connect your account.");
+    navigate("license");
+  } else {
+    showToast("Sign in with the licensed account to change configuration.");
+    openAccountModal();
+  }
+}
+
+document.addEventListener("click", event => {
+  if (!event.target.closest?.(".locked-action")) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  explainLockedAction();
+}, true);
+
 function requireConfigurationAccess() {
   if (hasConfigurationAccess()) return true;
   showToast("Sign in with the licensed account to change configuration.");
@@ -821,11 +841,24 @@ function applyAccessMode() {
   const access = hasConfigurationAccess();
   const writable = canMutateConfiguration();
   const overCapacity = isLicenseOverCapacity();
-  const selectors = [
+  const lockedTitle = overCapacity
+    ? 'OVER_CAPACITY — reduce configured Tags or upgrade the license before changing configuration.'
+    : 'View Only — activate a license and sign in to edit configuration.';
+  // Entry points stay clickable while locked: a click explains why and leads to the License page or sign-in.
+  const entryPoints = [
     '#devicesAddDevice','#emptyAddDevice','#tagsAddTag','#emptyAddTag','#alarmsAddAlarm',
-    '#historianAddTag','#trendsAddTrend','#executeImport','#saveDevice','#saveTag','#saveAlarm',
-    '#saveTrend','#saveHistorianConfig','#devicesImport','#tagsImport','#alarmsImport','#historianImport',
-    '#opAddDevice','#opAddTag','#opAddAlarm','#opHistorian','#opTrend','#opImport',
+    '#historianAddTag','#trendsAddTrend','#devicesImport','#tagsImport','#alarmsImport','#historianImport',
+    '#opAddDevice','#opAddTag','#opAddAlarm','#opHistorian','#opTrend','#opImport'
+  ];
+  entryPoints.forEach(selector => document.querySelectorAll(selector).forEach(el => {
+    el.disabled = false;
+    el.classList.toggle('locked-action', !writable);
+    el.setAttribute('aria-disabled', String(!writable));
+    el.title = writable ? '' : lockedTitle;
+  }));
+  // Form actions stay disabled: their validation also drives the disabled state.
+  const selectors = [
+    '#executeImport','#saveDevice','#saveTag','#saveAlarm','#saveTrend','#saveHistorianConfig',
     '#pingModbusHost','#testModbusConnection','#sendTestNotification'
   ];
   selectors.forEach(selector => document.querySelectorAll(selector).forEach(el => {
@@ -5283,7 +5316,8 @@ function renderAgentStatus() {
 async function loadNotifications() {
   state.notifications = await api("/api/notifications");
   await loadNotificationDelivery().catch(() => {});
-  try {
+  // Storage health is for a signed-in engineer; asking without a session only produces a 401.
+  if (state.accessSession?.authenticated) try {
     const health = await api("/api/mobile/v2/notifications/health");
     const node = $("notificationStorageHealth");
     if (node) {

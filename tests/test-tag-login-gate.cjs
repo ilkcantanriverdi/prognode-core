@@ -8,7 +8,9 @@ const begin=source.indexOf('function applyAccessMode()'),end=source.indexOf('fun
 assert(begin>=0&&end>begin);
 let signedIn=false;
 const controls=new Map();
-const element=key=>{if(!controls.has(key))controls.set(key,{disabled:false,title:'',classList:{toggle(){}}});return controls.get(key)};
+const element=key=>{if(!controls.has(key))controls.set(key,{disabled:false,title:'',locked:false,setAttribute(){},classList:{toggle(name,on){if(name==='locked-action')controls.get(key).locked=on}}});return controls.get(key)};
+// Entry points lock with the locked-action class (still clickable, the click explains why); form actions are disabled.
+const locked=el=>el.disabled||el.locked;
 const document={querySelectorAll:selector=>{
   if(selector.startsWith('#'))return [element(selector)];
   if(selector.includes('data-edit-tag'))return [element('edit-tag')];
@@ -19,9 +21,9 @@ const context={document,hasConfigurationAccess:()=>signedIn,canMutateConfigurati
  isLicenseOverCapacity:()=>false,updateCommissioningAssistant:()=>{},updateOverviewCommandStrip:()=>{}};
 vm.createContext(context);vm.runInContext(source.slice(begin,end),context);
 context.applyAccessMode();
-for(const key of ['#tagsAddTag','#emptyAddTag','#saveTag','edit-tag','delete-tag'])assert(element(key).disabled,`${key} must be locked while signed out`);
+for(const key of ['#tagsAddTag','#emptyAddTag','#saveTag','edit-tag','delete-tag'])assert(locked(element(key)),`${key} must be locked while signed out`);
 signedIn=true;context.applyAccessMode();
-for(const key of ['#tagsAddTag','#emptyAddTag','#saveTag','edit-tag','delete-tag'])assert(!element(key).disabled,`${key} must unlock after sign-in`);
+for(const key of ['#tagsAddTag','#emptyAddTag','#saveTag','edit-tag','delete-tag'])assert(!locked(element(key)),`${key} must unlock after sign-in`);
 assert(source.includes('saveButton.disabled = !!message || !canMutateConfiguration()'),'Tag validation may not unlock Save while signed out');
 assert(source.includes('saveButton.disabled = !good || !canMutateConfiguration()'),'MQTT/OPC validation may not unlock Save while signed out');
 assert(source.includes('saveButton.disabled=!good||!canMutateConfiguration()'),'S7 validation may not unlock Save while signed out');
