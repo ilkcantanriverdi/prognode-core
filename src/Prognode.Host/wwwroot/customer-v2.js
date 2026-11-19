@@ -29,6 +29,8 @@ window.customerV2Refresh=function(s){if(!s)return;window.__customerV2State=s;
   byId('customerRecordingCount').textContent=s.recording?s.recording.toLocaleString('en-US'):'—';
   byId('customerHistorianHelp').textContent=s.recording?locale().configured:locale().unconfigured;
   const mark=(id,on)=>{const el=byId(id);el.textContent=on?locale().done:locale().pending;el.classList.toggle('done',!!on)};
+  // Until a license is active the first step is the license, so the main button says so.
+  const firstAction=byId('customerAddFirstDevice');firstAction.textContent=firstAction.dataset.customerEn=s.licensed?'Connect a device →':'Activate your license →';
   mark('customerStepLicense',s.licensed);mark('customerStepDevice',s.devices>0);mark('customerStepSignals',s.tags>0);
   byId('customerCoreText').textContent=s.coreHealthy?locale().running:locale().offline;
   byId('customerLiveStatus').textContent=s.coreHealthy?locale().live:locale().offline;

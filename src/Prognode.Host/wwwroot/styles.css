@@ -4871,7 +4871,8 @@ html[data-theme="light"] .overview-metric-card:hover {
 /* Locked actions must look locked, not merely fail after click. */
 .quick-action:disabled,
 .data-tool-card:disabled,
-.access-locked {
+.access-locked,
+.locked-action {
   opacity: .38 !important;
   cursor: not-allowed !important;
   filter: saturate(.55);
